@@ -11,45 +11,42 @@
 	./ActiveRecord
 */
 
-using GLib;
-using Gee;
-using Sqlite;
+import std.stdio;
+import mysql;
+import mysql_wrapper;
 
-public errordomain ModelErrors {
-	SqlError
+
+typedef void delegate(string value) SetFieldDelegate;
+typedef string delegate() GetFieldDelegate; 
+
+
+public class SqlError : Exception {
+	public this(string message) {
+		super(message);
+	}
 }
 
-public delegate string GetFieldDelegate();
-public delegate void SetFieldDelegate(string value);
-
-public class ModelBase : Object {
-	private static Database _db = null;
+public class ModelBase {
+	//private static sqlite3* _db = null;
 	private static string _table_name = null;
 	private static ModelBase _new_model = null; // FIXME: This is just needed because we need a way to return info from the callbacks. Thread unsafe fail.
 
-	//protected HashTable<string, GetFieldDelegate> _get_field_map = null;
-	//protected HashTable<string, SetFieldDelegate> _set_field_map = null;
-
-	protected HashMap<string, GetFieldDelegate> _get_field_map = null;
-	protected HashMap<string, SetFieldDelegate> _set_field_map = null;
+	protected SetFieldDelegate[string] _set_field_map;
+	protected GetFieldDelegate[string] _get_field_map;
 
 	public void map_fields(string name, SetFieldDelegate setter, GetFieldDelegate getter) {
-		if(_set_field_map == null)
-			_set_field_map = new HashMap<string, SetFieldDelegate>(str_hash, str_equal);
-		if(_get_field_map == null) 
-			_get_field_map = new HashMap<string, GetFieldDelegate>(str_hash, str_equal);
-
 		_set_field_map[name] = setter;
 		_get_field_map[name] = getter;
 	}
 
 	public static void connect_to_database(string name) {
-		int rc = Database.open(name, out _db);
-		if (rc != Sqlite.OK) {
-			throw new ModelErrors.SqlError("Can't open database: %d, %s\n", rc, _db.errmsg());
-		}
+	//	int rc = sqlite3_open("thing.db", &_db);
+	//	if (rc != SQLITE_OK) {
+	//		throw new SqlError("Can't open database: %d, %s\n", rc, _db.errmsg());
+	//	}
 	}
 
+	/*
 	public static ModelBase find_by_id(int id) {
 		// Get the sql for that row
 		string query = "select * from %s where id=%d;".printf("users", id);
@@ -65,8 +62,9 @@ public class ModelBase : Object {
 
 		return model;
 	}
+	*/
 
-	[NoArrayLength ()]
+	//[NoArrayLength ()]
 	private static int find_one_callback(void* data, 
 								int n_columns, 
 								string[] values,
@@ -94,13 +92,12 @@ public class ModelBase : Object {
 public class User : ModelBase {
 	private string _name;
 
-	construct {
-		map_fields("name", set_name, get_name);
+	public this() {
+		map_fields("name", &set_name, &get_name);
 	}
 
 	public void set_name(string value) {
 		_name = value;
-		stdout.printf("setting name to [%s]\n", _name);
 	}
 
 	public string get_name() {
@@ -113,33 +110,31 @@ public class User : ModelBase {
 	//}
 
 	public static User find_by_id(int id) {
-		return (User)ModelBase.find_by_id(id);
+		return null; //(User)ModelBase.find_by_id(id);
 	}
 }
 
-public class ProgramStart : Object {
-	public static int main(string[] args) {
-		ModelBase.connect_to_database("thing.db");
+void main() {
+	//ModelBase.connect_to_database("thing.db");
 
-		User user = new User();
-		user.set_name("first name");
-		stdout.printf("[%s]\n", user.get_name());
+	User user = new User();
+	user.set_name("first name");
+	writefln("[%s]", user.get_name());
 
-		SetFieldDelegate setter = user._set_field_map["name"];
-		//SetFieldDelegate setter = user.set_name;
-		setter("Second name");
-		stdout.printf("[%s]\n", user.get_name());
+	SetFieldDelegate setter = user._set_field_map["name"];
+	//SetFieldDelegate setter = &user.set_name;
+	setter("Second name");
+	writefln("[%s]\n", user.get_name());
 
-		//User model = User.find_by_id(1);
-		//stdout.printf("[%s]\n", model.get_name());
+	//User model = User.find_by_id(1);
+	//writefln("[%s]\n", model.get_name());
 
-		//model._set_field_map.lookup("name")("Swiffer");
-		//stdout.printf("[%s]\n", model.get_name());
+	//model._set_field_map.lookup("name")("Swiffer");
+	//writefln("[%s]\n", model.get_name());
 
-		stdout.printf("Done!\n");
+	writefln("Done!");
 
-		return 0;
-	}
+	return 0;
 }
 
 
