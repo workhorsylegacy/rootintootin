@@ -24,7 +24,6 @@ public class SqlError : Exception {
 
 public class ModelBase {
 	//private static sqlite3* _db = null;
-	private static string _table_name = null;
 	private static ModelBase _new_model = null; // FIXME: This is just needed because we need a way to return info from the callbacks. Thread unsafe fail.
 
 	public static void connect_to_database(string name) {
@@ -93,29 +92,34 @@ public class Field(T) {
 	}
 }
 
-public template Poop(T) {
-	T static find_by_id(int id) {
-		return null;
+template ModelBaseMixin(T, string table_name) {
+	static string _table_name = table_name;
+
+	static int find_by_id(int id) {
+		string query = "select * from " ~ typeof(T)._table_name ~ " where id=" ~ std.string.toString(id);
+		return 7;
 	}
 }
 
 public class User : ModelBase {
+	mixin ModelBaseMixin!(User, "user");
+
 	private Field!(string) name = null;
 	private Field!(bool) hide_email_address = null;
 
 	public this() {
 		name = new Field!(string)("name");
 		hide_email_address = new Field!(bool)("hide_email_address");
-		mixin Poop(User);
-		User b = this.find_by_id(7);
 	}
 }
 
 void main() {
+	// NOTE: to convert a string to a char* use std.string.toStringz(s1)
 	//ModelBase.connect_to_database("thing.db");
 	
 	User user = new User();
 	user.name = "first name";
+	writefln("[%s]", user.find_by_id(7));
 	writefln("[%s]", user.name());
 	//TypeInfo t = typeid(int);
 
