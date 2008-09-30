@@ -7,37 +7,25 @@
 	ctrl + D #to edit
 
 	to compile:
-	clear; valac --pkg gee-1.0 --pkg sqlite3 -o ActiveRecord ActiveRecord.vala
+	clear; gdc -o ActiveRecord ActiveRecord.d
 	./ActiveRecord
 */
 
 import std.stdio;
-import mysql;
-import mysql_wrapper;
-
-
-typedef void delegate(string value) SetFieldDelegate;
-typedef string delegate() GetFieldDelegate; 
+//import mysql;
+//import mysql_wrapper;
 
 
 public class SqlError : Exception {
 	public this(string message) {
 		super(message);
 	}
-}
+} 
 
 public class ModelBase {
 	//private static sqlite3* _db = null;
 	private static string _table_name = null;
 	private static ModelBase _new_model = null; // FIXME: This is just needed because we need a way to return info from the callbacks. Thread unsafe fail.
-
-	protected SetFieldDelegate[string] _set_field_map;
-	protected GetFieldDelegate[string] _get_field_map;
-
-	public void map_fields(string name, SetFieldDelegate setter, GetFieldDelegate getter) {
-		_set_field_map[name] = setter;
-		_get_field_map[name] = getter;
-	}
 
 	public static void connect_to_database(string name) {
 	//	int rc = sqlite3_open("thing.db", &_db);
@@ -89,48 +77,39 @@ public class ModelBase {
 	}
 }
 
-public class User : ModelBase {
+public class Field(T) {
+	private T _value;
 	private string _name;
 
+	public this(string name) {
+		_name = name;
+	}
+
+	public void opAssign(T value) {
+		_value = value;
+	}
+	public T opCall() {
+		return _value;
+	}
+}
+
+public class User : ModelBase {
+	private Field!(string) name = null;
+	private Field!(bool) hide_email_address = null;
+
 	public this() {
-		map_fields("name", &set_name, &get_name);
-	}
-
-	public void set_name(string value) {
-		_name = value;
-	}
-
-	public string get_name() {
-		return _name;
-	}
-
-	//public string name {
-	//	get { return _name; }
-	//	set { _name = value; }
-	//}
-
-	public static User find_by_id(int id) {
-		return null; //(User)ModelBase.find_by_id(id);
+		name = new Field!(string)("name");
+		hide_email_address = new Field!(bool)("hide_email_address");
 	}
 }
 
 void main() {
 	//ModelBase.connect_to_database("thing.db");
-
+	
 	User user = new User();
-	user.set_name("first name");
-	writefln("[%s]", user.get_name());
-
-	SetFieldDelegate setter = user._set_field_map["name"];
-	//SetFieldDelegate setter = &user.set_name;
-	setter("Second name");
-	writefln("[%s]\n", user.get_name());
-
-	//User model = User.find_by_id(1);
-	//writefln("[%s]\n", model.get_name());
-
-	//model._set_field_map.lookup("name")("Swiffer");
-	//writefln("[%s]\n", model.get_name());
+	user.name = "first name";
+	writefln("[%s]", user.name());
+	//TypeInfo t = typeid(int);
 
 	writefln("Done!");
 
