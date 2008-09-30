@@ -93,6 +93,12 @@ public class Field(T) {
 	}
 }
 
+public template Poop(T) {
+	T static find_by_id(int id) {
+		return null;
+	}
+}
+
 public class User : ModelBase {
 	private Field!(string) name = null;
 	private Field!(bool) hide_email_address = null;
@@ -100,6 +106,8 @@ public class User : ModelBase {
 	public this() {
 		name = new Field!(string)("name");
 		hide_email_address = new Field!(bool)("hide_email_address");
+		mixin Poop(User);
+		User b = this.find_by_id(7);
 	}
 }
 
