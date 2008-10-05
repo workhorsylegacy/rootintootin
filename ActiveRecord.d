@@ -9,10 +9,15 @@
 	to compile:
 	clear; gdc -o ActiveRecord ActiveRecord.d
 	./ActiveRecord
+
+	to benchmark:
+	ab -c 100 -n 10000 http://127.0.0.1:2345/
+
 */
 
 import std.stdio;
 import std.socket;
+import std.regexp;
 //import mysql;
 //import mysql_wrapper;
 
@@ -186,13 +191,12 @@ void main() {
      respStatus.Add(503, "503 Service Unavailable");
 
 	*/
+	const int MAX_CONNECTIONS = 100;
 	TcpSocket listener = new TcpSocket();
 	listener.blocking = false;
 	listener.bind(new InternetAddress(2345));
-	listener.listen(10);
-
-	const int MAX_CONNECTIONS = 60;
-	SocketSet sset = new SocketSet(MAX_CONNECTIONS + 1); // Room for listener.
+	listener.listen(MAX_CONNECTIONS);
+	SocketSet sset = new SocketSet(MAX_CONNECTIONS + 1);
 	Socket[] reads;
 
 	while(true) {
@@ -203,13 +207,14 @@ void main() {
 		}
 		Socket.select(sset, null, null);
 
+		int read = 0;
 		for(int i=0; i<reads.length; i++) {
 			if(sset.isSet(reads[i]) == false) {
 				continue;
 			}
 
-			char[1024] buf;
-			int read = reads[i].receive(buf);
+			char[1024] buffer;
+			read = reads[i].receive(buffer);
 
 			if(Socket.ERROR == read) {
 				printf("Connection error.\n");
@@ -220,7 +225,52 @@ void main() {
 				} catch {
 				}
 			} else {
-				printf("Received %d bytes from %.*s: \"%.*s\"\n", read, reads[i].remoteAddress().toString(), buf[0 .. read]);
+				printf("Received %d bytes from %.*s: \n\"%.*s\"\n", read, reads[i].remoteAddress().toString(), buffer[0 .. read]);
+
+				// Get the request
+				string[] request = std.string.splitlines(buffer[0 .. read]);
+
+				// Get the header
+				string[] header = std.string.split(request[0]);
+				string method = header[0];
+				string uri = header[1];
+				string http_version = header[2];
+
+				// Get the host
+				string host = null;
+				foreach(string line ; request) {
+					auto reg = std.regexp.search(line, ": ");
+					if(reg && reg.pre == "Host") {
+						host = reg.post;
+						break;
+					}
+				}
+
+				// get the user agent
+				string user_agent = null;
+				foreach(string line ; request) {
+					auto reg = std.regexp.search(line, ": ");
+					if(reg && reg.pre == "User-Agent") {
+						user_agent = reg.post;
+						break;
+					}
+				}
+
+				// get the params
+				string[string] params;
+				if(std.regexp.search(uri, "[?]")) {
+					foreach(string param ; std.string.split(std.string.split(uri, "?")[1], "&")) {
+						string[] pair = std.string.split(param, "=");
+						params[pair[0]] = pair[1];
+					}
+				}
+
+				// get the controller and action
+				string[] route = std.string.split(std.string.split(uri, "[?]")[0], "/");
+				string controller = route.length > 1 ? route[1] : null;
+				string action = route.length > 2 ? route[2] : "index";
+				string id = route.length > 3 ? route[3] : null;
+
 				reads[i].send("<html><body><h1>lookie! HTMLs!</h1></body></html>");
 			}
 
