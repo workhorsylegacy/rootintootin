@@ -129,7 +129,7 @@ public class User : ModelBase {
 	}
 }
 
-template ControllerBase(T) {
+template ControllerBaseMixin(T) {
 	Object[][string] _members;
 	Object[string] _member;
 
@@ -151,7 +151,7 @@ template ControllerBase(T) {
 }
 
 public class UserController {
-	mixin ControllerBase!(UserController);
+	mixin ControllerBaseMixin!(UserController);
 
 	public void index() {
 		User[] users = User.find_all();
@@ -168,6 +168,35 @@ public class UserController {
 	}
 }
 
+public string render(UserController controller, out int[int] line_translations) {
+	// Generate the view as an array of strings
+	string[] builder;
+	builder ~= "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n";
+	builder ~= "       \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n";
+	builder ~= "\n";
+	builder ~= "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n";
+	builder ~= "	<head>\n";
+	builder ~= "		<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />\n";
+	builder ~= "		<title>Example D View</title>\n";
+	builder ~= "	</head>\n";
+	builder ~= "	<body>\n";
+	builder ~= "		<table border=\"1\">\n";
+				foreach(User user ; controller.get_array!(User[])("users")) {
+	builder ~= "			<tr>\n";
+	builder ~= "				<td>"; builder ~= user.name(); builder ~= "</td>\n";
+	builder ~= "			</tr>\n";
+				}
+	builder ~= "		</table>\n";
+	builder ~= "	</body>\n";
+	builder ~= "</html>\n";
+
+	// Set the line translations so we can match lines in the blah.html.d with lines in the blah.html.dll
+	line_translations[20] = 10;
+	line_translations[22] = 12;
+	line_translations[24] = 14;
+
+	return std.string.join(builder, "");
+}
 
 void main() {
 	/*
@@ -271,7 +300,12 @@ void main() {
 				string action = route.length > 2 ? route[2] : "index";
 				string id = route.length > 3 ? route[3] : null;
 
-				reads[i].send("<html><body><h1>lookie! HTMLs!</h1></body></html>");
+				// FIXME: Just render the /user/index action for now.
+				UserController con = new UserController();
+				con.index();
+				int[int] line_translations;
+				// FIXME: This should add the HTTP headers to the top of the page before sending
+				reads[i].send(render(con, line_translations));
 			}
 
 			//remove from reads
@@ -312,9 +346,6 @@ void main() {
 			}
 		}
 	}
-
-	UserController controller = new UserController();
-	controller.index();
 
 	int[] a = [1, 2, 3, 4, 5];
 	// NOTE: to convert a string to a char* use std.string.toStringz(s1)
