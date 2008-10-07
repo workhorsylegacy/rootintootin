@@ -21,7 +21,7 @@ public string render(UserController controller, out int[int] line_translations) 
 	builder ~= "	</body>\n";
 	builder ~= "</html>\n";
 
-	// Set the line translations so we can match lines in the blah.html.d with lines in the blah.html.dll
+	// Set the line translations so we can match lines in the blah.html.ed with lines in the blah.html.dll
 	line_translations[20] = 10;
 	line_translations[22] = 12;
 	line_translations[24] = 14;
