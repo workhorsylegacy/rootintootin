@@ -14,7 +14,7 @@
 			<tr>
 				<td><%= user.name() %></td>
 				<td>
-					<%= 
+					<%=
 						user.hide_email_address()
 					%>
 				</td>

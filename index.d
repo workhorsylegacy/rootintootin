@@ -14,7 +14,12 @@ public string render(UserController controller, out int[int] line_translations) 
 	builder ~= "		<table border=\"1\">\n";
 				foreach(User user ; controller.get_array!(User[])("users")) {
 	builder ~= "			<tr>\n";
-	builder ~= "				<td>"; builder ~= user.name(); builder ~= "</td>\n";
+	builder ~= "				<td>" ~ user.name() ~ "</td>\n";
+	builder ~= "				<td>";
+	builder ~= "					";
+	builder ~= "					" ~ user.hide_email_address();
+	builder ~= "					";
+	builder ~= "				</td>";
 	builder ~= "			</tr>\n";
 				}
 	builder ~= "		</table>\n";
