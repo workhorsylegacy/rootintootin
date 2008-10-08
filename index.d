@@ -1,4 +1,7 @@
-public string render(UserController controller, out int[int] line_translations) { 
+
+import std.string;
+
+public string render() { 
 	// Generate the view as an array of strings
 	string[] builder;
 	builder ~= "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
@@ -12,22 +15,6 @@ public string render(UserController controller, out int[int] line_translations) 
 	<body>
 		<table border=\"1\">
 			"; 
-	 foreach(User user ; controller.get_array!(User[])("users")) { 
-	builder ~= "
-			<tr>
-				<td>"; 
-	builder ~=  user.name() ; 
-	builder ~= "</td>
-				<td>
-					"; 
-	builder ~= 
-						std.string.toString(user.hide_email_address())
-					; 
-	builder ~= "
-				</td>
-			</tr>
-			"; 
-	 } 
 	builder ~= "
 		</table>
 	</body>

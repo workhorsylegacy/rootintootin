@@ -1,4 +1,5 @@
 
+import pexpect
 
 # Get the template file as a string
 f = open('index.html.ed', 'r')
@@ -8,6 +9,7 @@ f.close()
 # Print the openining of the function
 output = []
 output.append(
+"import std.string;\n\n" +
 "public string render(UserController controller, out int[int] line_translations) { \n" +
 "	// Generate the view as an array of strings\n" +
 "	string[] builder;")
@@ -54,6 +56,12 @@ out_file = open("index.d", 'w')
 for fragment in output:
 	out_file.write(fragment)
 out_file.close()
+
+# Compile the view
+command = "gdc -c -fPIC index.d -o index.o"
+result = pexpect.run(command)
+print result
+
 
 
 
