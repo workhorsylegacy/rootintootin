@@ -1,20 +1,21 @@
 
 
-public class UserController {
+public class UserController : ControllerBase {
 	mixin ControllerBaseMixin!(UserController);
 
+	public User[] _users;
+	public User _user;
+
 	public void index() {
-		User[] users = User.find_all();
 		User user = new User();
 		user.name = "bobrick";
-		users ~= user;
 
-		set_array!(User[])("users", users);
-		set!(User)("user", user);
+		_users = User.find_all();
+		_users ~= user;
+	}
 
-
-		users = get_array!(User[])("users");
-		user = get!(User)("user");
+	public void New() {
+		_user = new User();
 	}
 }
 

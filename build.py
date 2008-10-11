@@ -1,7 +1,10 @@
 
+import os
 import pexpect
 
-def combine_code_files(routes, models):
+execfile("config/routes.py")
+
+def combine_code_files(routes):
 	# Open the output file
 	out_file = open('run.d', 'w')
 
@@ -18,8 +21,11 @@ def combine_code_files(routes, models):
 	);
 
 	# Write the models into the file
-	for model in models:
-		f = open('app/models/' + model + '.d', 'r')
+	for model in os.listdir('app/models/'):
+		if not model.endswith('.d'):
+			continue
+
+		f = open('app/models/' + model, 'r')
 		out_file.write("\n\n")
 		out_file.write(f.read())
 		out_file.write("\n\n")
@@ -36,36 +42,50 @@ def combine_code_files(routes, models):
 	# Write the views into the file
 	for controller, actions in routes.items():
 		for member, http_method in actions['member'].items():
+			if not os.path.exists('app/views/' + controller + '/' + member + '.d'):
+				continue
+
 			f = open('app/views/' + controller + '/' + member + '.d', 'r')
 			out_file.write("\n\n")
 			out_file.write(f.read())
 			out_file.write("\n\n")
 			f.close()
 
+	
+	# Write the run action function
+	out_file.write(
+	"public void run_action(Request request, void function(string) render_text) {\n" +
+	"	int[int] line_translations;\n" +
+	"	UserController controller = new UserController();\n")
+	
+	for controller, actions in routes.items():
+		for action in actions['member']:
+			if action == "new":
+				action = "New"
+			out_file.write(
+			"\n	if(request.action == \"" + action + "\") {\n" +
+			"		controller." + action + "();\n" +
+			"		render_text(" + action.capitalize() + "View.render(controller, line_translations));\n" +
+			"	}\n")
+
+	out_file.write("}\n")
 
 	# Write the main function
-	# FIXME: Have this routing generated from the routes.py file
 	out_file.write(
-	"public void routing(string action, Socket socket) {\n" +
-	"	int[int] line_translations;\n" +
-	"	UserController controller = new UserController();\n" +
-	"\n" +
-	"	if(action == \"index\") {\n" +
-	"		controller.index();\n" +
-	"		socket.send(IndexView.render(controller, line_translations));\n" +
-	"	}\n" +
-	"}\n" +
-	"\n" +
 	"\n\nint main() {\n" +
-	"	Server.start(&routing);\n" +
+	"	Server.start(&run_action);\n" +
 	"\n" +
 	"	return 0;\n" +
-	"}\n");
+	"}\n")
 
 
 def generate_views(routes):
 	for controller, actions in routes.items():
 		for member, http_method in actions['member'].items():
+			# If there is no template, then skip it
+			if not os.path.exists('app/views/' + controller + '/' + member + '.html.ed'):
+				continue
+
 			# Get the template file as a string
 			f = open('app/views/' + controller + '/' + member + '.html.ed', 'r')
 			body = f.read()
@@ -124,14 +144,8 @@ def generate_views(routes):
 			out_file.close()
 
 
-# Get all the controllers
-models = ['user']
-routes = {'user' : { 'member' : { 'index' : 'get'}
-					}
-		}
-
 generate_views(routes)
-combine_code_files(routes, models)
+combine_code_files(routes)
 
 # Compile the application into an executable
 command = "gdc -o run rail_cannon.d rail_cannon_server.d run.d"

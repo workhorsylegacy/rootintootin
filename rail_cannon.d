@@ -122,7 +122,12 @@ public template ModelBaseMixin(T, string table_name) {
 	}
 }
 
+public class ControllerBase {
+
+}
+
 public template ControllerBaseMixin(T) {
+	/*
 	Object[][string] _members;
 	Object[string] _member;
 
@@ -141,5 +146,6 @@ public template ControllerBaseMixin(T) {
 	T get_array(T)(string key) {
 		return cast(T) _members[key];
 	}
+	*/
 }
 

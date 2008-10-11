@@ -4,21 +4,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 	<head>
 		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-		<title>Index</title>
+		<title>New</title>
 	</head>
 	<body>
-		<table border="1">
-			<% foreach(User user ; controller._users) { %>
-			<tr>
-				<td><%= user.name() %></td>
-				<td>
-					<%=
-						std.string.toString(user.hide_email_address())
-					%>
-				</td>
-			</tr>
-			<% } %>
-		</table>
+		<form action="/user/create" method="post">
+			<input id="user_name" name="user_name" type="text" value="<%=controller._user.name()%>" />
+		</form>
 	</body>
 </html>
 

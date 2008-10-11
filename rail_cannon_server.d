@@ -7,8 +7,51 @@ import std.regexp;
 import rail_cannon;
 
 
+public class Request {
+	private string _method;
+	private string _uri;
+	private string _http_version;
+	private string _controller;
+	private string _action;
+	private string[string] _params;
+
+	public this(string method, string uri, string http_version, string controller, string action, string[string] params) {
+		_method = method;
+		_uri = uri;
+		_http_version = http_version;
+		_controller = controller;
+		if(action == "new") {
+			_action = "New";
+		} else {
+			_action = action;
+		}
+		_params = params;
+	}
+
+	public string method() { return _method; }
+	public string uri() { return _uri; }
+	public string http_version() { return _http_version; }
+	public string controller() { return _controller; }
+	public string action() { return _action; }
+	public string[string] params() { return _params; }
+}
+
 public class Server {
-	public static void start(void function(string action, Socket socket) routing) {
+	private static bool _has_rendered = false;
+	private static Request _request = null;
+	private static Socket _client_socket = null;
+
+	public static void render_text(string text) {
+		// If we have already rendered, show an error
+		if(_has_rendered) {
+			throw new Exception("This action has already rendered.");
+		}
+
+		// FIXME: This should add the HTTP headers to the top of the page before sending
+		_client_socket.send(text);
+	}
+
+	public static void start(void function(Request request, void function(string) render_text) run_action) {
 		/*
 		 respStatus.Add(200, "200 Ok");
 		 respStatus.Add(201, "201 Created");
@@ -109,15 +152,15 @@ public class Server {
 					string controller = route.length > 1 ? route[1] : null;
 					string action = route.length > 2 ? route[2] : "index";
 					string id = route.length > 3 ? route[3] : null;
+					params["id"] = id;
 
-					// FIXME: Just render the /user/index action for now.
-					routing("index", reads[i]);
-					//UserController con = new UserController();
-					//con.index();
+					// Assemble the request object
+					_has_rendered = false;
+					_client_socket = reads[i];
+					_request = new Request(method, uri, http_version, controller, action, params);
 
-					//int[int] line_translations;
-					//// FIXME: This should add the HTTP headers to the top of the page before sending
-					//reads[i].send(render(con, line_translations));
+					// Run the action
+					run_action(_request, &render_text);
 				}
 
 				//remove from reads
