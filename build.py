@@ -2,8 +2,6 @@
 import os
 import pexpect
 
-execfile("config/routes.py")
-
 def combine_code_files(routes):
 	# Open the output file
 	out_file = open('run.d', 'w')
@@ -34,6 +32,18 @@ def combine_code_files(routes):
 	# Write the controllers into the file
 	for controller, actions in routes.items():
 		f = open('app/controllers/' + controller + '_controller.d', 'r')
+		out_file.write("\n\n")
+		out_file.write(f.read())
+		out_file.write("\n\n")
+		f.close()
+
+	# Write the layouts into the file
+	for layout in os.listdir('app/views/layouts/'):
+		if not layout.endswith('.d'):
+			continue
+		layout = layout[0:-2]
+
+		f = open('app/views/layouts/' + layout + '.d', 'r')
 		out_file.write("\n\n")
 		out_file.write(f.read())
 		out_file.write("\n\n")
@@ -99,41 +109,11 @@ def generate_views(routes):
 			"	// Generate the view as an array of strings\n" +
 			"	string[] builder;")
 
-			while len(body) > 0:
-				# Get the location on the open and close brackets
-				open_index = body.find("<%")
-				close_index = body.find("%>")
-
-				# raise if open but no close
-				# raise if close before open
-
-				# If there were no brackets, just print the last text as a string
-				if open_index == -1 and close_index == -1:
-					output.append("\n	builder ~= \"" + body.replace("\"", "\\\"") + "\"; ")
-					break
-
-				# Get the text before, after, and in between the brackets
-				before = body[: open_index]
-				middle = body[open_index+2 : close_index]
-				after = body[close_index+2 :]
-
-				# If there was text before the opening, print it as a string
-				if len(before) > 0:
-					output.append("\n	builder ~= \"" + before.replace("\"", "\\\"") + "\"; ")
-
-				# Print the code between the brackets
-				if len(middle) > 0:
-					if middle[0] == "=":
-						output.append("\n	builder ~= " + middle[1:].replace("\"", "\\\"") + "; ")
-					else:
-						output.append("\n	" + middle)
-
-				# Set the remaining text as the body, so it can be processed next
-				body = after
+			process_template_body(body, output)
 
 			# Print the closing of the function
 			output.append(
-			"\n	return std.string.join(builder, \"\"); \n" +
+			"\n	return DefaultLayout.render(std.string.join(builder, \"\")); \n" +
 			"}\n" +
 			"}\n")
 
@@ -144,6 +124,78 @@ def generate_views(routes):
 			out_file.close()
 
 
+
+def generate_layouts():
+	for layout in os.listdir('app/views/layouts/'):
+		if not layout.endswith('.html.ed'):
+			continue
+		layout = layout[0:-8]
+
+		# Get the layout file as a string
+		f = open('app/views/layouts/' + layout + '.html.ed', 'r')
+		body = f.read()
+		f.close()
+
+		# Print the openining of the function
+		output = []
+		output.append(
+		"public class " + layout.capitalize() + "Layout { \n" +
+		"public static string render(string yield) { \n" +
+		"	// Generate the layout as an array of strings\n" +
+		"	string[] builder;")
+
+		process_template_body(body, output)
+
+		# Print the closing of the function
+		output.append(
+		"\n	return std.string.join(builder, \"\"); \n" +
+		"}\n" +
+		"}\n")
+
+		# Save the output as a D file
+		out_file = open('app/views/layouts/' + layout + '.d', 'w')
+		for fragment in output:
+			out_file.write(fragment)
+		out_file.close()
+
+def process_template_body(body, output):
+	while len(body) > 0:
+		# Get the location on the open and close brackets
+		open_index = body.find("<%")
+		close_index = body.find("%>")
+
+		# raise if open but no close
+		# raise if close before open
+
+		# If there were no brackets, just print the last text as a string
+		if open_index == -1 and close_index == -1:
+			output.append("\n	builder ~= \"" + body.replace("\"", "\\\"") + "\"; ")
+			break
+
+		# Get the text before, after, and in between the brackets
+		before = body[: open_index]
+		middle = body[open_index+2 : close_index]
+		after = body[close_index+2 :]
+
+		# If there was text before the opening, print it as a string
+		if len(before) > 0:
+			output.append("\n	builder ~= \"" + before.replace("\"", "\\\"") + "\"; ")
+
+		# Print the code between the brackets
+		if len(middle) > 0:
+			if middle[0] == "=":
+				output.append("\n	builder ~= " + middle[1:].replace("\"", "\\\"") + "; ")
+			else:
+				output.append("\n	" + middle)
+
+		# Set the remaining text as the body, so it can be processed next
+		body = after
+
+# Get the routes
+execfile("config/routes.py")
+
+# Do code generation
+generate_layouts()
 generate_views(routes)
 combine_code_files(routes)
 

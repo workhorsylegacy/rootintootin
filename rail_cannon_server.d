@@ -74,12 +74,15 @@ public class Server {
 
 		*/
 		const int MAX_CONNECTIONS = 100;
+		int port = 2345;
 		TcpSocket listener = new TcpSocket();
 		listener.blocking = false;
-		listener.bind(new InternetAddress(2345));
+		listener.bind(new InternetAddress(port));
 		listener.listen(MAX_CONNECTIONS);
 		SocketSet sset = new SocketSet(MAX_CONNECTIONS + 1);
 		Socket[] reads;
+
+		printf("Running on port %i.\n", port);
 
 		while(true) {
 			sset.reset();
