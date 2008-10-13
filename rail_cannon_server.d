@@ -47,8 +47,23 @@ public class Server {
 			throw new Exception("This action has already rendered.");
 		}
 
-		// FIXME: This should add the HTTP headers to the top of the page before sending
-		_client_socket.send(text);
+		// Add the HTTP headers
+		string[] reply = [
+		"HTTP/1.1 200 OK\r\n", 
+		"Date: Mon, 13 Oct 2008 04:05:25 GMT\r\n", 
+		"Server: Rail Cannon Server0.0\r\n", 
+		"Set-Cookie: _appname_session=BAh7BzoMY3NyZl9pZCIlOWQ0Njc5ODIyNWM5MWZhNGU4OTY4NjczNmEwMTlh%0ANjAiCmZsYXNoSUM6J0FjdGlvbkNvbnRyb2xsZXI6OkZsYXNoOjpGbGFzaEhh%0Ac2h7AAY6CkB1c2VkewA%3D--eb5d809fcaceee78af495aa7544242ba4415a072; path=/\r\n",
+		"Status: 200 OK\r\n",
+		"X-Runtime: 0.15560\r\n",
+		"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
+		"Cache-Control: private, max-age=0, must-revalidate\r\n",
+		"Content-Type: text/html; charset=utf-8\r\n",
+		"Content-Length: ", std.string.toString(text.length), "\r\n",
+		"Vary: User-Agent\r\n",
+		"\r\n",
+		text];
+
+		_client_socket.send(std.string.join(reply, ""));
 	}
 
 	public static void start(void function(Request request, void function(string) render_text) run_action) {
@@ -74,7 +89,7 @@ public class Server {
 
 		*/
 		const int MAX_CONNECTIONS = 100;
-		int port = 2345;
+		ushort port = 2345;
 		TcpSocket listener = new TcpSocket();
 		listener.blocking = false;
 		listener.bind(new InternetAddress(port));
@@ -117,28 +132,37 @@ public class Server {
 
 					// Get the header
 					string[] header = std.string.split(request[0]);
+					//"OPTIONS"                ; Section 9.2
+                    //"GET"                    ; Section 9.3
+                    //"HEAD"                   ; Section 9.4
+                    //"POST"                   ; Section 9.5
+                    //"PUT"                    ; Section 9.6
+                    //"DELETE"                 ; Section 9.7
+                    //"TRACE"                  ; Section 9.8
+                    //"CONNECT"                ; Section 9.9
 					string method = header[0];
 					string uri = header[1];
 					string http_version = header[2];
 
-					// Get the host
-					string host = null;
+					// Get all the fields
+					string[string] fields;
 					foreach(string line ; request) {
-						auto reg = std.regexp.search(line, ": ");
-						if(reg && reg.pre == "Host") {
-							host = reg.post;
-							break;
+						if(auto match = std.regexp.search(line, ": ")) {
+							fields[match.pre] = match.post;
 						}
-					}
-
-					// get the user agent
-					string user_agent = null;
-					foreach(string line ; request) {
-						auto reg = std.regexp.search(line, ": ");
-						if(reg && reg.pre == "User-Agent") {
-							user_agent = reg.post;
-							break;
+						/*
+						switch(reg.pre) {
+							case "Host"            : stuff["Host"]            = reg.post; break;
+							case "User-Agent"      : stuff["User-Agent"]      = reg.post; break;
+							case "Accept"          : stuff["Accept"]          = reg.post; break;
+							case "Accept-Language" : stuff["Accept-Language"] = reg.post; break;
+							case "Accept-Encoding" : stuff["Accept-Encoding"] = reg.post; break;
+							case "Accept-Charset"  : stuff["Accept-Charset"]  = reg.post; break;
+							case "Keep-Alive"      : stuff["Keep-Alive"]      = reg.post; break;
+							case "Connection"      : stuff["Connection"]      = reg.post; break;
+							case "Cookie"          : stuff["Cookie"]          = reg.post; break;
 						}
+						*/
 					}
 
 					// get the params
