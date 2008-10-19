@@ -5,6 +5,7 @@ public class UserController : ControllerBase {
 
 	public User[] _users;
 	public User _user;
+	public string _things;
 
 	public void index() {
 		User user = new User();
@@ -12,6 +13,10 @@ public class UserController : ControllerBase {
 
 		_users = User.find_all();
 		_users ~= user;
+
+		foreach(string name, string value ; _request.cookies) {
+			_things ~= "[" ~ name ~ "]=[" ~ value ~ "], <br />";
+		}
 	}
 
 	public void New() {

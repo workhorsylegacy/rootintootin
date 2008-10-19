@@ -11,3 +11,5 @@
 	<% } %>
 </table>
 
+<%= controller._things %>
+

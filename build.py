@@ -66,7 +66,7 @@ def combine_code_files(routes):
 	out_file.write(
 	"public void run_action(Request request, void function(string) render_text) {\n" +
 	"	int[int] line_translations;\n" +
-	"	UserController controller = new UserController();\n")
+	"	UserController controller = new UserController(request);\n")
 	
 	for controller, actions in routes.items():
 		for action in actions['member']:

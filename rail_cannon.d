@@ -27,6 +27,38 @@ import std.regexp;
 //import mysql_wrapper;
 
 
+public class Request {
+	private string _method;
+	private string _uri;
+	private string _http_version;
+	private string _controller;
+	private string _action;
+	private string[string] _params;
+	private string[string] _cookies;
+
+	public this(string method, string uri, string http_version, string controller, string action, string[string] params, string[string] cookies) {
+		_method = method;
+		_uri = uri;
+		_http_version = http_version;
+		_controller = controller;
+		if(action == "new") {
+			_action = "New";
+		} else {
+			_action = action;
+		}
+		_params = params;
+		_cookies = cookies;
+	}
+
+	public string method() { return _method; }
+	public string uri() { return _uri; }
+	public string http_version() { return _http_version; }
+	public string controller() { return _controller; }
+	public string action() { return _action; }
+	public string[string] params() { return _params; }
+	public string[string] cookies() { return _cookies; }
+}
+
 public class SqlError : Exception {
 	public this(string message) {
 		super(message);
@@ -127,6 +159,11 @@ public class ControllerBase {
 }
 
 public template ControllerBaseMixin(T) {
+	private Request _request = null;
+
+	public this(Request request) {
+		_request = request;
+	}
 	/*
 	Object[][string] _members;
 	Object[string] _member;

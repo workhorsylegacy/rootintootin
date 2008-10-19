@@ -8,44 +8,17 @@ import std.date;
 import rail_cannon;
 
 
-public class Request {
-	private string _method;
-	private string _uri;
-	private string _http_version;
-	private string _controller;
-	private string _action;
-	private string[string] _params;
-
-	public this(string method, string uri, string http_version, string controller, string action, string[string] params) {
-		_method = method;
-		_uri = uri;
-		_http_version = http_version;
-		_controller = controller;
-		if(action == "new") {
-			_action = "New";
-		} else {
-			_action = action;
-		}
-		_params = params;
-	}
-
-	public string method() { return _method; }
-	public string uri() { return _uri; }
-	public string http_version() { return _http_version; }
-	public string controller() { return _controller; }
-	public string action() { return _action; }
-	public string[string] params() { return _params; }
-}
-
 public class Server {
 	private static bool _has_rendered = false;
 	private static Request _request = null;
 	private static Socket _client_socket = null;
+	private static string[string] _sessions;
+	private static string[string] _cookies;
 
-	public static string[ushort] status_code;
+	private static string[ushort] status_code;
+	private static string[string] cookie_escape_map;
 
 	public static this() {
-		status_code[404] = "Not Found";
 		status_code[100] = "Continue";
 		status_code[101] = "Switching Protocols";
 		status_code[200] = "OK";
@@ -86,10 +59,34 @@ public class Server {
 		status_code[503] = "Service Unavailable";
 		status_code[504] = "Gateway Time-out";
 		status_code[505] = "HTTP Version not supported";
+
+		cookie_escape_map[";"] = "%3B";
+		cookie_escape_map[" "] = "+";
+		cookie_escape_map["\n"] = "%0A";
+		cookie_escape_map["\r"] = "%0D";
+		cookie_escape_map["\t"] = "%09";
+		cookie_escape_map["="] = "%3D";
+		cookie_escape_map["+"] = "%2B";
 	}
 
 	public static string get_verbose_status_code(ushort code) {
 		return std.string.toString(code) ~ " " ~ status_code[code];
+	}
+
+	public static string escape_cookie_value(string value) {
+		foreach(string before, string after ; cookie_escape_map) {
+			value = std.string.replace(value, before, after);
+		}
+
+		return value;
+	}
+
+	public static string unescape_cookie_value(string value) {
+		foreach(string before, string after ; cookie_escape_map) {
+			value = std.string.replace(value, after, before);
+		}
+
+		return value;
 	}
 
 	public static void render_text(string text) {
@@ -100,12 +97,21 @@ public class Server {
 
 		string status = get_verbose_status_code(200);
 
+		// FIXME: if there is no session add one to the cookies
+		string set_cookies = "";
+		//set_cookies ~= "Set-Cookie: " ~ "_appname_session=" ~ "BAh7BzoMY3NyZl9pZCIlOWQ0Njc5ODIyNWM5MWZhNGU4OTY4NjczNmEwMTlh%0ANjAiCmZsYXNoSUM6J0FjdGlvbkNvbnRyb2xsZXI6OkZsYXNoOjpGbGFzaEhh%0Ac2h7AAY6CkB1c2VkewA%3D--eb5d809fcaceee78af495aa7544242ba4415a072; path=/\r\n";
+
+		// Get all the new cookie values to send
+		foreach(string name, string value ; _cookies) {
+			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ escape_cookie_value(value) ~ "\r\n";
+		}
+
 		// Add the HTTP headers
 		string[] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
 		"Date: ", std.date.toUTCString(std.date.getUTCtime()), "\r\n", 
-		"Server: Rail Cannon Server0.0\r\n", 
-		"Set-Cookie: _appname_session=BAh7BzoMY3NyZl9pZCIlOWQ0Njc5ODIyNWM5MWZhNGU4OTY4NjczNmEwMTlh%0ANjAiCmZsYXNoSUM6J0FjdGlvbkNvbnRyb2xsZXI6OkZsYXNoOjpGbGFzaEhh%0Ac2h7AAY6CkB1c2VkewA%3D--eb5d809fcaceee78af495aa7544242ba4415a072; path=/\r\n",
+		"Server: Rail Cannon Server 0.0\r\n", 
+		set_cookies, 
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
@@ -197,6 +203,18 @@ public class Server {
 						*/
 					}
 
+					// get the cookies
+					if(("Cookie" in fields) != null) {
+						foreach(string cookie ; std.string.split(fields["Cookie"], "; ")) {
+							string[] pair = std.string.split(cookie, "=");
+							if(pair.length != 2) {
+								writefln("Malformed cookie: %s", cookie);
+							} else {
+								_cookies[pair[0]] = unescape_cookie_value(pair[1]);
+							}
+						}
+					}
+
 					// get the params
 					string[string] params;
 					if(std.regexp.search(uri, "[?]")) {
@@ -216,7 +234,7 @@ public class Server {
 					// Assemble the request object
 					_has_rendered = false;
 					_client_socket = reads[i];
-					_request = new Request(method, uri, http_version, controller, action, params);
+					_request = new Request(method, uri, http_version, controller, action, params, _cookies);
 
 					// Run the action
 					run_action(_request, &render_text);
