@@ -114,6 +114,7 @@ public class Server {
 		}
 
 		// Get all the new cookie values to send
+		// FIXME: This is sending all cookies. It should only send the ones that have changed
 		foreach(char[] name, char[] value ; _cookies) {
 			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ escape_cookie_value(value) ~ "\r\n";
 		}
@@ -153,18 +154,15 @@ public class Server {
 		Stdout.format("Running on port {}.\n", port).flush;
 
 		while(true) {
-//			Time start = Clock.now;
-//			Stdout("\n\n\n\n==============Starting Request=================\n");
-
+			// Get a  socket set to hold all the client sockets while they wait to be processed
 			sset.reset();
 			sset.add(listener);
 			foreach(Socket each; reads) {
 				sset.add(each);
 			}
 			Socket.select(sset, null, null);
-//			Stdout.formatln("Got socket: {}", (Clock.now-start).millis);
 
-
+			// Reply to clients
 			int read = 0;
 			for(int i=0; i<reads.length; i++) {
 				if(sset.isSet(reads[i]) == false) {
@@ -173,7 +171,6 @@ public class Server {
 
 				char[1024] buffer;
 				read = reads[i].receive(buffer);
-//				Stdout.formatln("Reading buffer: {}", (Clock.now-start).millis);
 
 				if(Socket.ERROR == read) {
 					Stdout("Connection error.\n").flush;
@@ -203,7 +200,6 @@ public class Server {
 					char[] method = header[0];
 					char[] uri = header[1];
 					char[] http_version = header[2];
-//					Stdout.formatln("Got header: {}", (Clock.now-start).millis);
 
 					// Get all the fields
 					char[][char[]] fields;
@@ -216,22 +212,20 @@ public class Server {
 							fields[pair[0]] = pair[1];
 						}
 					}
-//					Stdout.formatln("Got fields: {}", (Clock.now-start).millis);
 
-					// get the cookies
+					// Get the cookies
 					if(("Cookie" in fields) != null) {
 						foreach(char[] cookie ; tango.text.Util.split(fields["Cookie"], "; ")) {
 							char[][] pair = tango.text.Util.split(cookie, "=");
 							if(pair.length != 2) {
-//								Stdout.format("Malformed cookie: {}", cookie).flush;
+								Stdout.format("Malformed cookie: {}", cookie).flush;
 							} else {
 								_cookies[pair[0]] = unescape_cookie_value(pair[1]);
 							}
 						}
 					}
-//					Stdout.formatln("Got cookies: {}", (Clock.now-start).millis);
 
-					// get the params
+					// Get the params
 					char[][char[]] params;
 					if(tango.text.Util.contains(uri, '?')) {
 						foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
@@ -239,15 +233,13 @@ public class Server {
 							params[pair[0]] = pair[1];
 						}
 					}
-//					Stdout.formatln("Got cookies: {}", (Clock.now-start).millis);
 
-					// get the controller and action
+					// Get the controller and action
 					char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
 					char[] controller = route.length > 1 ? route[1] : null;
 					char[] action = route.length > 2 ? route[2] : "index";
 					char[] id = route.length > 3 ? route[3] : null;
 					params["id"] = id;
-//					Stdout.formatln("Got route: {}", (Clock.now-start).millis);
 
 					// Assemble the request object
 					_has_rendered = false;
@@ -256,59 +248,66 @@ public class Server {
 
 					// Run the action
 					run_action(_request, &render_text);
-//					Stdout.formatln("Got page rendered: {}", (Clock.now-start).millis);
 
 					// FIXME: this prints out all the values we care about
-//					Stdout.format("Total params: {}\n", params.length).flush;
+					/*
+					Stdout.format("Total params: {}\n", params.length).flush;
 					foreach(char[] name, char[] value ; params) {
-//						Stdout.format("\t{} => {}\n", name, value).flush;
+						Stdout.format("\t{} => {}\n", name, value).flush;
 					}
 
-//					Stdout.format("Total cookies: {}\n", _cookies.length).flush;
+					Stdout.format("Total cookies: {}\n", _cookies.length).flush;
 					foreach(char[] name, char[] value ; _cookies) {
-//						Stdout.format("\t{} => {}\n", name, value).flush;
+						Stdout.format("\t{} => {}\n", name, value).flush;
 					}
 
-//					Stdout("Route :\n").flush;
-//					Stdout.format("\tController Name: {}\n", controller).flush;
-//					Stdout.format("\tAction Name: {}\n", action).flush;
+					Stdout("Route :\n").flush;
+					Stdout.format("\tController Name: {}\n", controller).flush;
+					Stdout.format("\tAction Name: {}\n", action).flush;
+					*/
 				}
 
-				//remove from reads
+				// Remove this client from the socket set
 				reads[i].shutdown(SocketShutdown.BOTH);
+				reads[i].detach();
 				if(i != reads.length - 1)
 					reads[i] = reads[reads.length - 1];
 				reads = reads[0 .. reads.length - 1];
-				Stdout.format("\tTotal connections: {}\n", reads.length).flush;
 			}
 
+//			if(reads.length > 0) {
+//				Stdout.format("\tTotal connections: {}\n", reads.length).flush;
+//			}
 
-			//connection request
+			// Accept client requests
 			if(sset.isSet(listener)) {
 				Socket sn;
 				try {
 					if(reads.length < MAX_CONNECTIONS) {
 						sn = listener.accept();
 //						Stdout.format("Connection from {} established.\n", sn.remoteAddress()).flush;
-						assert(sn.isAlive);
-						assert(listener.isAlive);
+//						assert(sn.isAlive);
+//						assert(listener.isAlive);
 				
 						reads ~= sn;
-//						Stdout.format("\tTotal connections: {}\n", reads.length).flush;
 					} else {
 						sn = listener.accept();
 //						Stdout.format("Rejected connection from {}. Too many connections.\n", sn.remoteAddress()).flush;
-						assert(sn.isAlive);
-				
+//						assert(sn.isAlive);
+
+						sn.send("503: Service Unavailable - Too many requests in the queue.");
 						sn.shutdown(SocketShutdown.BOTH);
-						assert(!sn.isAlive);
-						assert(listener.isAlive);
+						sn.detach();
+//						assert(!sn.isAlive);
+//						assert(listener.isAlive);
 					}
 				} catch(Exception e) {
-//					Stdout.format("Error accepting: {}\n", e).flush;
+					Stdout.format("Error accepting: {}\n", e).flush;
 			
-					if(sn)
+					if(sn && sn.isAlive) {
 						sn.shutdown(SocketShutdown.BOTH);
+						sn.detach();
+					}
 				}
 			}
 		}
