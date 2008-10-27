@@ -1,9 +1,18 @@
 
 
-import std.stdio;
-import std.socket;
-import std.regexp;
-import std.date;
+
+import tango.text.convert.Integer;
+import tango.text.Util;
+import tango.io.Stdout;
+import tango.net.Socket;
+
+import tango.net.ServerSocket;
+import tango.net.SocketConduit;
+
+
+import tango.text.Regex;
+import tango.time.chrono.Gregorian;
+import tango.time.WallClock;
 
 import rail_cannon;
 
@@ -12,11 +21,11 @@ public class Server {
 	private static bool _has_rendered = false;
 	private static Request _request = null;
 	private static Socket _client_socket = null;
-	private static string[string] _sessions;
-	private static string[string] _cookies;
+	private static char[][char[]] _sessions;
+	private static char[][char[]] _cookies;
 
-	private static string[ushort] status_code;
-	private static string[string] cookie_escape_map;
+	private static char[][ushort] status_code;
+	private static char[][char[]] cookie_escape_map;
 
 	public static this() {
 		status_code[100] = "Continue";
@@ -69,47 +78,52 @@ public class Server {
 		cookie_escape_map["+"] = "%2B";
 	}
 
-	public static string get_verbose_status_code(ushort code) {
-		return std.string.toString(code) ~ " " ~ status_code[code];
+	public static char[] get_verbose_status_code(ushort code) {
+		return tango.text.convert.Integer.toString(code) ~ " " ~ status_code[code];
 	}
 
-	public static string escape_cookie_value(string value) {
-		foreach(string before, string after ; cookie_escape_map) {
-			value = std.string.replace(value, before, after);
+	public static char[] escape_cookie_value(char[] value) {
+		foreach(char[] before, char[] after ; cookie_escape_map) {
+			value = tango.text.Util.substitute(value, before, after);
 		}
 
 		return value;
 	}
 
-	public static string unescape_cookie_value(string value) {
-		foreach(string before, string after ; cookie_escape_map) {
-			value = std.string.replace(value, after, before);
+	public static char[] unescape_cookie_value(char[] value) {
+		foreach(char[] before, char[] after ; cookie_escape_map) {
+			value = tango.text.Util.substitute(value, after, before);
 		}
 
 		return value;
 	}
 
-	public static void render_text(string text) {
+	public static void render_text(char[] text) {
 		// If we have already rendered, show an error
 		if(_has_rendered) {
 			throw new Exception("This action has already rendered.");
 		}
 
-		string status = get_verbose_status_code(200);
+		char[] status = get_verbose_status_code(200);
 
-		// FIXME: if there is no session add one to the cookies
-		string set_cookies = "";
-		//set_cookies ~= "Set-Cookie: " ~ "_appname_session=" ~ "BAh7BzoMY3NyZl9pZCIlOWQ0Njc5ODIyNWM5MWZhNGU4OTY4NjczNmEwMTlh%0ANjAiCmZsYXNoSUM6J0FjdGlvbkNvbnRyb2xsZXI6OkZsYXNoOjpGbGFzaEhh%0Ac2h7AAY6CkB1c2VkewA%3D--eb5d809fcaceee78af495aa7544242ba4415a072; path=/\r\n";
+		// If there is no session add one to the cookies
+		char[] set_cookies = "";
+		if(("_appname_session" in _cookies) != null) {
+			_cookies["_appname_session"] = "BAh7BzoMY3NyZl9pZCIlOWQ0Njc5ODIyNWM5MWZhNGU4OTY4NjczNmEwMTlh%0ANjAiCmZsYXNoSUM6J0FjdGlvbkNvbnRyb2xsZXI6OkZsYXNoOjpGbGFzaEhh%0Ac2h7AAY6CkB1c2VkewA%3D--eb5d809fcaceee78af495aa7544242ba4415a072; path=/";
+		}
 
 		// Get all the new cookie values to send
-		foreach(string name, string value ; _cookies) {
+		foreach(char[] name, char[] value ; _cookies) {
 			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ escape_cookie_value(value) ~ "\r\n";
 		}
 
 		// Add the HTTP headers
-		string[] reply = [
+		auto now = WallClock.now;
+		auto time = now.time;
+		auto date = Gregorian.generic.toDate(now);
+		char[][] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
-		"Date: ", std.date.toUTCString(std.date.getUTCtime()), "\r\n", 
+		"Date: ", tango.text.convert.Integer.toString(date.day), tango.text.convert.Integer.toString(date.month), tango.text.convert.Integer.toString(date.year), "\r\n", 
 		"Server: Rail Cannon Server 0.0\r\n", 
 		set_cookies, 
 		"Status: ", status, "\r\n",
@@ -117,25 +131,25 @@ public class Server {
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
 		//"Cache-Control: private, max-age=0, must-revalidate\r\n",
 		"Content-Type: text/html; charset=utf-8\r\n",
-		"Content-Length: ", std.string.toString(text.length), "\r\n",
+		"Content-Length: ", tango.text.convert.Integer.toString(text.length), "\r\n",
 		//"Vary: User-Agent\r\n",
 		"\r\n",
 		text];
 
-		_client_socket.send(std.string.join(reply, ""));
+		_client_socket.send(tango.text.Util.join(reply, ""));
 	}
 
-	public static void start(void function(Request request, void function(string) render_text) run_action) {
+	public static void start(void function(Request request, void function(char[]) render_text) run_action) {
 		const int MAX_CONNECTIONS = 100;
 		ushort port = 2345;
-		TcpSocket listener = new TcpSocket();
+		Socket listener = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
 		listener.blocking = false;
 		listener.bind(new InternetAddress(port));
 		listener.listen(MAX_CONNECTIONS);
 		SocketSet sset = new SocketSet(MAX_CONNECTIONS + 1);
 		Socket[] reads;
 
-		printf("Running on port %i.\n", port);
+		Stdout.format("Running on port {}.\n", port).flush;
 
 		while(true) {
 			sset.reset();
@@ -155,21 +169,21 @@ public class Server {
 				read = reads[i].receive(buffer);
 
 				if(Socket.ERROR == read) {
-					printf("Connection error.\n");
+					Stdout("Connection error.\n").flush;
 				} else if(0 == read) {
 					try {
 						//if the connection closed due to an error, remoteAddress() could fail
-						printf("Connection from %.*s closed.\n", reads[i].remoteAddress().toString());
+						Stdout.format("Connection from {} closed.\n", reads[i].remoteAddress()).flush;
 					} catch {
 					}
 				} else {
-					printf("Received %d bytes from %.*s: \n\"%.*s\"\n", read, reads[i].remoteAddress().toString(), buffer[0 .. read]);
+					Stdout.format("Received from {}: \n\"{}\"\n", reads[i].remoteAddress(), buffer[0 .. read]).flush;
 
 					// Get the request
-					string[] request = std.string.splitlines(buffer[0 .. read]);
+					char[][] request = tango.text.Util.splitLines(buffer[0 .. read]);
 
 					// Get the header
-					string[] header = std.string.split(request[0]);
+					char[][] header = tango.text.Util.split(request[0], " ");
 					//"OPTIONS"                ; Section 9.2
                     //"GET"                    ; Section 9.3
                     //"HEAD"                   ; Section 9.4
@@ -178,37 +192,36 @@ public class Server {
                     //"DELETE"                 ; Section 9.7
                     //"TRACE"                  ; Section 9.8
                     //"CONNECT"                ; Section 9.9
-					string method = header[0];
-					string uri = header[1];
-					string http_version = header[2];
+					char[] method = header[0];
+					char[] uri = header[1];
+					char[] http_version = header[2];
 
 					// Get all the fields
-					string[string] fields;
-					foreach(string line ; request) {
-						if(auto match = std.regexp.search(line, ": ")) {
+					char[][char[]] fields;
+					foreach(char[] line ; request) {
+						if(auto match = Regex(line).search(": ")) {
 							fields[match.pre] = match.post;
 						}
-						/*
-						switch(reg.pre) {
-							case "Host"            : stuff["Host"]            = reg.post; break;
-							case "User-Agent"      : stuff["User-Agent"]      = reg.post; break;
-							case "Accept"          : stuff["Accept"]          = reg.post; break;
-							case "Accept-Language" : stuff["Accept-Language"] = reg.post; break;
-							case "Accept-Encoding" : stuff["Accept-Encoding"] = reg.post; break;
-							case "Accept-Charset"  : stuff["Accept-Charset"]  = reg.post; break;
-							case "Keep-Alive"      : stuff["Keep-Alive"]      = reg.post; break;
-							case "Connection"      : stuff["Connection"]      = reg.post; break;
-							case "Cookie"          : stuff["Cookie"]          = reg.post; break;
-						}
-						*/
+						
+					//	switch(reg.pre) {
+					//		case "Host"            : stuff["Host"]            = reg.post; break;
+					//		case "User-Agent"      : stuff["User-Agent"]      = reg.post; break;
+					//		case "Accept"          : stuff["Accept"]          = reg.post; break;
+					//		case "Accept-Language" : stuff["Accept-Language"] = reg.post; break;
+					//		case "Accept-Encoding" : stuff["Accept-Encoding"] = reg.post; break;
+					//		case "Accept-Charset"  : stuff["Accept-Charset"]  = reg.post; break;
+					//		case "Keep-Alive"      : stuff["Keep-Alive"]      = reg.post; break;
+					//		case "Connection"      : stuff["Connection"]      = reg.post; break;
+					//		case "Cookie"          : stuff["Cookie"]          = reg.post; break;
+					//	}
 					}
 
 					// get the cookies
 					if(("Cookie" in fields) != null) {
-						foreach(string cookie ; std.string.split(fields["Cookie"], "; ")) {
-							string[] pair = std.string.split(cookie, "=");
+						foreach(char[] cookie ; tango.text.Util.split(fields["Cookie"], "; ")) {
+							char[][] pair = tango.text.Util.split(cookie, "=");
 							if(pair.length != 2) {
-								writefln("Malformed cookie: %s", cookie);
+								Stdout.format("Malformed cookie: {}", cookie).flush;
 							} else {
 								_cookies[pair[0]] = unescape_cookie_value(pair[1]);
 							}
@@ -216,19 +229,19 @@ public class Server {
 					}
 
 					// get the params
-					string[string] params;
-					if(std.regexp.search(uri, "[?]")) {
-						foreach(string param ; std.string.split(std.string.split(uri, "?")[1], "&")) {
-							string[] pair = std.string.split(param, "=");
+					char[][char[]] params;
+					if(Regex(uri).search("[?]")) {
+						foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
+							char[][] pair = tango.text.Util.split(param, "=");
 							params[pair[0]] = pair[1];
 						}
 					}
 
 					// get the controller and action
-					string[] route = std.string.split(std.string.split(uri, "[?]")[0], "/");
-					string controller = route.length > 1 ? route[1] : null;
-					string action = route.length > 2 ? route[2] : "index";
-					string id = route.length > 3 ? route[3] : null;
+					char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "[?]")[0], "/");
+					char[] controller = route.length > 1 ? route[1] : null;
+					char[] action = route.length > 2 ? route[2] : "index";
+					char[] id = route.length > 3 ? route[3] : null;
 					params["id"] = id;
 
 					// Assemble the request object
@@ -241,11 +254,11 @@ public class Server {
 				}
 
 				//remove from reads
-				reads[i].close();
+				reads[i].shutdown(SocketShutdown.BOTH);
 				if(i != reads.length - 1)
 					reads[i] = reads[reads.length - 1];
 				reads = reads[0 .. reads.length - 1];
-				printf("\tTotal connections: %d\n", reads.length);
+				Stdout.format("\tTotal connections: {}\n", reads.length).flush;
 			}
 
 
@@ -255,26 +268,26 @@ public class Server {
 				try {
 					if(reads.length < MAX_CONNECTIONS) {
 						sn = listener.accept();
-						printf("Connection from %.*s established.\n", sn.remoteAddress().toString());
+						Stdout.format("Connection from {} established.\n", sn.remoteAddress()).flush;
 						assert(sn.isAlive);
 						assert(listener.isAlive);
 				
 						reads ~= sn;
-						printf("\tTotal connections: %d\n", reads.length);
+						Stdout.format("\tTotal connections: {}\n", reads.length).flush;
 					} else {
 						sn = listener.accept();
-						printf("Rejected connection from %.*s; too many connections.\n", sn.remoteAddress().toString());
+						Stdout.format("Rejected connection from {}. Too many connections.\n", sn.remoteAddress()).flush;
 						assert(sn.isAlive);
 				
-						sn.close();
+						sn.shutdown(SocketShutdown.BOTH);
 						assert(!sn.isAlive);
 						assert(listener.isAlive);
 					}
 				} catch(Exception e) {
-					printf("Error accepting: %.*s\n", e.toString());
+					Stdout.format("Error accepting: {}\n", e).flush;
 			
 					if(sn)
-						sn.close();
+						sn.shutdown(SocketShutdown.BOTH);
 				}
 			}
 		}

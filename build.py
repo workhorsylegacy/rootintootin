@@ -2,6 +2,7 @@
 import os
 import pexpect
 
+
 def combine_code_files(routes):
 	# Open the output file
 	out_file = open('run.d', 'w')
@@ -9,10 +10,13 @@ def combine_code_files(routes):
 	# Write the imports
 	out_file.write(
 		"\n" +
-		"import std.string;\n" +
-		"import std.stdio;\n" +
-		"import std.socket;\n" +
-		"import std.regexp;\n" +
+		"import tango.text.convert.Integer;\n" +
+		"import tango.text.Util;\n" +
+		"import tango.io.Stdout;\n" +
+		"import tango.text.Regex;\n" +
+		"import tango.time.chrono.Gregorian;\n" +
+		"import tango.time.WallClock;\n" +
+
 		"\n" +
 		"import rail_cannon;\n" +
 		"import rail_cannon_server;\n\n"
@@ -64,7 +68,7 @@ def combine_code_files(routes):
 	
 	# Write the run action function
 	out_file.write(
-	"public void run_action(Request request, void function(string) render_text) {\n" +
+	"public void run_action(Request request, void function(char[]) render_text) {\n" +
 	"	int[int] line_translations;\n" +
 	"	UserController controller = new UserController(request);\n")
 	
@@ -105,15 +109,15 @@ def generate_views(routes):
 			output = []
 			output.append(
 			"public class " + member.capitalize() + "View { \n" +
-			"public static string render(" + controller.capitalize() + "Controller controller, out int[int] line_translations) { \n" +
+			"public static char[] render(" + controller.capitalize() + "Controller controller, out int[int] line_translations) { \n" +
 			"	// Generate the view as an array of strings\n" +
-			"	string[] builder;")
+			"	char[][] builder;")
 
 			process_template_body(body, output)
 
 			# Print the closing of the function
 			output.append(
-			"\n	return DefaultLayout.render(std.string.join(builder, \"\")); \n" +
+			"\n	return DefaultLayout.render(tango.text.Util.join(builder, \"\")); \n" +
 			"}\n" +
 			"}\n")
 
@@ -140,15 +144,15 @@ def generate_layouts():
 		output = []
 		output.append(
 		"public class " + layout.capitalize() + "Layout { \n" +
-		"public static string render(string yield) { \n" +
+		"public static char[] render(char[] yield) { \n" +
 		"	// Generate the layout as an array of strings\n" +
-		"	string[] builder;")
+		"	char[][] builder;")
 
 		process_template_body(body, output)
 
 		# Print the closing of the function
 		output.append(
-		"\n	return std.string.join(builder, \"\"); \n" +
+		"\n	return tango.text.Util.join(builder, \"\"); \n" +
 		"}\n" +
 		"}\n")
 
@@ -184,7 +188,7 @@ def process_template_body(body, output):
 		# Print the code between the brackets
 		if len(middle) > 0:
 			if middle[0] == "=":
-				output.append("\n	builder ~= " + middle[1:].replace("\"", "\\\"") + "; ")
+				output.append("\n	builder ~= " + middle[1:] + ";")
 			else:
 				output.append("\n	" + middle)
 
@@ -200,7 +204,7 @@ generate_views(routes)
 combine_code_files(routes)
 
 # Compile the application into an executable
-command = "gdc -o run rail_cannon.d rail_cannon_server.d run.d"
+command = "gdc -fversion=Posix -o run rail_cannon.d rail_cannon_server.d run.d /usr/lib/tango-gdc/libgtango.a"
 result = pexpect.run(command)
 print result
 

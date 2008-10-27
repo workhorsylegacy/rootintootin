@@ -20,23 +20,28 @@
 
 */
 
-import std.stdio;
-import std.socket;
-import std.regexp;
+//import tango.io.digest.Digest;
+import tango.text.convert.Integer;
+import tango.text.Util;
+import tango.io.Stdout;
+import tango.text.Regex;
+import tango.time.chrono.Gregorian;
+import tango.time.WallClock;
+
 //import mysql;
 //import mysql_wrapper;
 
 
 public class Request {
-	private string _method;
-	private string _uri;
-	private string _http_version;
-	private string _controller;
-	private string _action;
-	private string[string] _params;
-	private string[string] _cookies;
+	private char[] _method;
+	private char[] _uri;
+	private char[] _http_version;
+	private char[] _controller;
+	private char[] _action;
+	private char[][char[]] _params;
+	private char[][char[]] _cookies;
 
-	public this(string method, string uri, string http_version, string controller, string action, string[string] params, string[string] cookies) {
+	public this(char[] method, char[] uri, char[] http_version, char[] controller, char[] action, char[][char[]] params, char[][char[]] cookies) {
 		_method = method;
 		_uri = uri;
 		_http_version = http_version;
@@ -50,17 +55,17 @@ public class Request {
 		_cookies = cookies;
 	}
 
-	public string method() { return _method; }
-	public string uri() { return _uri; }
-	public string http_version() { return _http_version; }
-	public string controller() { return _controller; }
-	public string action() { return _action; }
-	public string[string] params() { return _params; }
-	public string[string] cookies() { return _cookies; }
+	public char[] method() { return _method; }
+	public char[] uri() { return _uri; }
+	public char[] http_version() { return _http_version; }
+	public char[] controller() { return _controller; }
+	public char[] action() { return _action; }
+	public char[][char[]] params() { return _params; }
+	public char[][char[]] cookies() { return _cookies; }
 }
 
 public class SqlError : Exception {
-	public this(string message) {
+	public this(char[] message) {
 		super(message);
 	}
 } 
@@ -69,7 +74,7 @@ public class ModelBase {
 	//private static sqlite3* _db = null;
 	private static ModelBase _new_model = null; // FIXME: This is just needed because we need a way to return info from the callbacks. Thread unsafe fail.
 
-	public static void connect_to_database(string name) {
+	public static void connect_to_database(char[] name) {
 	//	int rc = sqlite3_open("thing.db", &_db);
 	//	if (rc != SQLITE_OK) {
 	//		throw new SqlError("Can't open database: %d, %s\n", rc, _db.errmsg());
@@ -79,10 +84,10 @@ public class ModelBase {
 	/*
 	public static ModelBase find_by_id(int id) {
 		// Get the sql for that row
-		string query = "select * from %s where id=%d;".printf("users", id);
+		char[] query = "select * from %s where id=%d;".printf("users", id);
 		int rc = _db.exec(query, (Sqlite.Callback)find_one_callback, null);
 		if (rc != Sqlite.OK) { 
-			string message = "SQL error: %d, %s\n".printf(rc, _db.errmsg());
+			char[] message = "SQL error: %d, %s\n".printf(rc, _db.errmsg());
 			throw new ModelErrors.SqlError(message);
 		}
 
@@ -97,13 +102,13 @@ public class ModelBase {
 	//[NoArrayLength ()]
 	private static int find_one_callback(void* data, 
 								int n_columns, 
-								string[] values,
-								string[] column_names) {
+								char[][] values,
+								char[][] column_names) {
 
 		// Copy the row columns into the new model
 		/*
 		_new_model = new ModelBase();
-		_new_model._fields = new HashTable<string, string>(str_hash, str_equal);
+		_new_model._fields = new HashTable<char[], char[]>(str_hash, str_equal);
 		for (int i = 0; i < n_columns; i++) {
 			_new_model._fields.insert(column_names[i], values[i]);
 		}
@@ -121,9 +126,9 @@ public class ModelBase {
 
 public class Field(T) {
 	private T _value;
-	private string _name;
+	private char[] _name;
 
-	public this(string name) {
+	public this(char[] name) {
 		_name = name;
 	}
 
@@ -136,11 +141,11 @@ public class Field(T) {
 	}
 }
 
-public template ModelBaseMixin(T, string table_name) {
-	static string _table_name = table_name;
+public template ModelBaseMixin(T, char[] table_name) {
+	static char[] _table_name = table_name;
 
 	static int find_by_id(int id) {
-		string query = "select * from " ~ typeof(T)._table_name ~ " where id=" ~ std.string.toString(id);
+		char[] query = "select * from " ~ typeof(T)._table_name ~ " where id=" ~ tango.text.convert.Integer.toString(id);
 		return 7;
 	}
 
@@ -165,22 +170,22 @@ public template ControllerBaseMixin(T) {
 		_request = request;
 	}
 	/*
-	Object[][string] _members;
-	Object[string] _member;
+	Object[][char[]] _members;
+	Object[char[]] _member;
 
-	void set(T)(string key, T thing) {
+	void set(T)(char[] key, T thing) {
 		_member[key] = cast(Object) thing;
 	}
 
-	void set_array(T)(string key, T thing) {
+	void set_array(T)(char[] key, T thing) {
 		_members[key] = cast(Object[]) thing;
 	}
 
-	T get(T)(string key) {
+	T get(T)(char[] key) {
 		return cast(T) _member[key];
 	}
 
-	T get_array(T)(string key) {
+	T get_array(T)(char[] key) {
 		return cast(T) _members[key];
 	}
 	*/
