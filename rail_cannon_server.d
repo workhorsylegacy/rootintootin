@@ -13,6 +13,7 @@ import tango.net.SocketConduit;
 import tango.text.Regex;
 import tango.time.chrono.Gregorian;
 import tango.time.WallClock;
+import tango.time.Clock;
 
 import rail_cannon;
 
@@ -152,12 +153,17 @@ public class Server {
 		Stdout.format("Running on port {}.\n", port).flush;
 
 		while(true) {
+//			Time start = Clock.now;
+//			Stdout("\n\n\n\n==============Starting Request=================\n");
+
 			sset.reset();
 			sset.add(listener);
 			foreach(Socket each; reads) {
 				sset.add(each);
 			}
 			Socket.select(sset, null, null);
+//			Stdout.formatln("Got socket: {}", (Clock.now-start).millis);
+
 
 			int read = 0;
 			for(int i=0; i<reads.length; i++) {
@@ -167,17 +173,19 @@ public class Server {
 
 				char[1024] buffer;
 				read = reads[i].receive(buffer);
+//				Stdout.formatln("Reading buffer: {}", (Clock.now-start).millis);
 
 				if(Socket.ERROR == read) {
 					Stdout("Connection error.\n").flush;
 				} else if(0 == read) {
 					try {
 						//if the connection closed due to an error, remoteAddress() could fail
-						Stdout.format("Connection from {} closed.\n", reads[i].remoteAddress()).flush;
+						Stdout("Connection from {} closed.\n", reads[i].remoteAddress());
 					} catch {
+						Stdout("Connection from {} closed.\n");
 					}
 				} else {
-					Stdout.format("Received from {}: \n\"{}\"\n", reads[i].remoteAddress(), buffer[0 .. read]).flush;
+//					Stdout.format("Received from {}: \n\"{}\"\n", reads[i].remoteAddress(), buffer[0 .. read]).flush;
 
 					// Get the request
 					char[][] request = tango.text.Util.splitLines(buffer[0 .. read]);
@@ -195,38 +203,33 @@ public class Server {
 					char[] method = header[0];
 					char[] uri = header[1];
 					char[] http_version = header[2];
+//					Stdout.formatln("Got header: {}", (Clock.now-start).millis);
 
 					// Get all the fields
 					char[][char[]] fields;
 					foreach(char[] line ; request) {
-						if(auto match = Regex(line).search(": ")) {
-							fields[match.pre] = match.post;
+						// Break if we are at the end of the fields
+						if(line.length == 0) break;
+
+						char[][] pair = tango.text.Util.split(line, ": ");
+						if(pair.length == 2) {
+							fields[pair[0]] = pair[1];
 						}
-						
-					//	switch(reg.pre) {
-					//		case "Host"            : stuff["Host"]            = reg.post; break;
-					//		case "User-Agent"      : stuff["User-Agent"]      = reg.post; break;
-					//		case "Accept"          : stuff["Accept"]          = reg.post; break;
-					//		case "Accept-Language" : stuff["Accept-Language"] = reg.post; break;
-					//		case "Accept-Encoding" : stuff["Accept-Encoding"] = reg.post; break;
-					//		case "Accept-Charset"  : stuff["Accept-Charset"]  = reg.post; break;
-					//		case "Keep-Alive"      : stuff["Keep-Alive"]      = reg.post; break;
-					//		case "Connection"      : stuff["Connection"]      = reg.post; break;
-					//		case "Cookie"          : stuff["Cookie"]          = reg.post; break;
-					//	}
 					}
+//					Stdout.formatln("Got fields: {}", (Clock.now-start).millis);
 
 					// get the cookies
 					if(("Cookie" in fields) != null) {
 						foreach(char[] cookie ; tango.text.Util.split(fields["Cookie"], "; ")) {
 							char[][] pair = tango.text.Util.split(cookie, "=");
 							if(pair.length != 2) {
-								Stdout.format("Malformed cookie: {}", cookie).flush;
+//								Stdout.format("Malformed cookie: {}", cookie).flush;
 							} else {
 								_cookies[pair[0]] = unescape_cookie_value(pair[1]);
 							}
 						}
 					}
+//					Stdout.formatln("Got cookies: {}", (Clock.now-start).millis);
 
 					// get the params
 					char[][char[]] params;
@@ -236,6 +239,7 @@ public class Server {
 							params[pair[0]] = pair[1];
 						}
 					}
+//					Stdout.formatln("Got cookies: {}", (Clock.now-start).millis);
 
 					// get the controller and action
 					char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
@@ -243,6 +247,7 @@ public class Server {
 					char[] action = route.length > 2 ? route[2] : "index";
 					char[] id = route.length > 3 ? route[3] : null;
 					params["id"] = id;
+//					Stdout.formatln("Got route: {}", (Clock.now-start).millis);
 
 					// Assemble the request object
 					_has_rendered = false;
@@ -251,21 +256,22 @@ public class Server {
 
 					// Run the action
 					run_action(_request, &render_text);
+//					Stdout.formatln("Got page rendered: {}", (Clock.now-start).millis);
 
 					// FIXME: this prints out all the values we care about
-					Stdout.format("Total params: {}\n", params.length).flush;
+//					Stdout.format("Total params: {}\n", params.length).flush;
 					foreach(char[] name, char[] value ; params) {
-						Stdout.format("\t{} => {}\n", name, value).flush;
+//						Stdout.format("\t{} => {}\n", name, value).flush;
 					}
 
-					Stdout.format("Total cookies: {}\n", _cookies.length).flush;
+//					Stdout.format("Total cookies: {}\n", _cookies.length).flush;
 					foreach(char[] name, char[] value ; _cookies) {
-						Stdout.format("\t{} => {}\n", name, value).flush;
+//						Stdout.format("\t{} => {}\n", name, value).flush;
 					}
 
-					Stdout("Route :\n").flush;
-					Stdout.format("\tController Name: {}\n", controller).flush;
-					Stdout.format("\tAction Name: {}\n", action).flush;
+//					Stdout("Route :\n").flush;
+//					Stdout.format("\tController Name: {}\n", controller).flush;
+//					Stdout.format("\tAction Name: {}\n", action).flush;
 				}
 
 				//remove from reads
@@ -283,15 +289,15 @@ public class Server {
 				try {
 					if(reads.length < MAX_CONNECTIONS) {
 						sn = listener.accept();
-						Stdout.format("Connection from {} established.\n", sn.remoteAddress()).flush;
+//						Stdout.format("Connection from {} established.\n", sn.remoteAddress()).flush;
 						assert(sn.isAlive);
 						assert(listener.isAlive);
 				
 						reads ~= sn;
-						Stdout.format("\tTotal connections: {}\n", reads.length).flush;
+//						Stdout.format("\tTotal connections: {}\n", reads.length).flush;
 					} else {
 						sn = listener.accept();
-						Stdout.format("Rejected connection from {}. Too many connections.\n", sn.remoteAddress()).flush;
+//						Stdout.format("Rejected connection from {}. Too many connections.\n", sn.remoteAddress()).flush;
 						assert(sn.isAlive);
 				
 						sn.shutdown(SocketShutdown.BOTH);
@@ -299,7 +305,7 @@ public class Server {
 						assert(listener.isAlive);
 					}
 				} catch(Exception e) {
-					Stdout.format("Error accepting: {}\n", e).flush;
+//					Stdout.format("Error accepting: {}\n", e).flush;
 			
 					if(sn)
 						sn.shutdown(SocketShutdown.BOTH);
