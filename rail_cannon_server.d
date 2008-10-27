@@ -230,7 +230,7 @@ public class Server {
 
 					// get the params
 					char[][char[]] params;
-					if(Regex(uri).search("[?]")) {
+					if(tango.text.Util.contains(uri, '?')) {
 						foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
 							char[][] pair = tango.text.Util.split(param, "=");
 							params[pair[0]] = pair[1];
@@ -238,7 +238,7 @@ public class Server {
 					}
 
 					// get the controller and action
-					char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "[?]")[0], "/");
+					char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
 					char[] controller = route.length > 1 ? route[1] : null;
 					char[] action = route.length > 2 ? route[2] : "index";
 					char[] id = route.length > 3 ? route[3] : null;
@@ -251,6 +251,21 @@ public class Server {
 
 					// Run the action
 					run_action(_request, &render_text);
+
+					// FIXME: this prints out all the values we care about
+					Stdout.format("Total params: {}\n", params.length).flush;
+					foreach(char[] name, char[] value ; params) {
+						Stdout.format("\t{} => {}\n", name, value).flush;
+					}
+
+					Stdout.format("Total cookies: {}\n", _cookies.length).flush;
+					foreach(char[] name, char[] value ; _cookies) {
+						Stdout.format("\t{} => {}\n", name, value).flush;
+					}
+
+					Stdout("Route :\n").flush;
+					Stdout.format("\tController Name: {}\n", controller).flush;
+					Stdout.format("\tAction Name: {}\n", action).flush;
 				}
 
 				//remove from reads
