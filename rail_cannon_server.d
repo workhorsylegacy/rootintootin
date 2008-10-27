@@ -144,45 +144,46 @@ public class Server {
 	public static void start(void function(Request request, void function(char[]) render_text) run_action) {
 		const int MAX_CONNECTIONS = 100;
 		ushort port = 2345;
-		Socket listener = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-		listener.blocking = false;
-		listener.bind(new InternetAddress(port));
-		listener.listen(MAX_CONNECTIONS);
-		SocketSet sset = new SocketSet(MAX_CONNECTIONS + 1);
-		Socket[] reads;
+		Socket server = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+		server.blocking = false;
+		server.bind(new InternetAddress(port));
+		server.listen(MAX_CONNECTIONS);
+		// FIXME: Isn't this socket_set doing the same thing as the client_sockets array? Is it needed?
+		SocketSet socket_set = new SocketSet(MAX_CONNECTIONS + 1);
+		Socket[] client_sockets;
 
 		Stdout.format("Running on port {}.\n", port).flush;
 
 		while(true) {
 			// Get a  socket set to hold all the client sockets while they wait to be processed
-			sset.reset();
-			sset.add(listener);
-			foreach(Socket each; reads) {
-				sset.add(each);
+			socket_set.reset();
+			socket_set.add(server);
+			foreach(Socket each; client_sockets) {
+				socket_set.add(each);
 			}
-			Socket.select(sset, null, null);
+			Socket.select(socket_set, null, null);
 
 			// Reply to clients
 			int read = 0;
-			for(int i=0; i<reads.length; i++) {
-				if(sset.isSet(reads[i]) == false) {
+			for(int i=0; i<client_sockets.length; i++) {
+				if(socket_set.isSet(client_sockets[i]) == false) {
 					continue;
 				}
 
 				char[1024] buffer;
-				read = reads[i].receive(buffer);
+				read = client_sockets[i].receive(buffer);
 
 				if(Socket.ERROR == read) {
 					Stdout("Connection error.\n").flush;
 				} else if(0 == read) {
 					try {
 						//if the connection closed due to an error, remoteAddress() could fail
-						Stdout("Connection from {} closed.\n", reads[i].remoteAddress());
+						Stdout("Connection from {} closed.\n", client_sockets[i].remoteAddress());
 					} catch {
 						Stdout("Connection from {} closed.\n");
 					}
 				} else {
-//					Stdout.format("Received from {}: \n\"{}\"\n", reads[i].remoteAddress(), buffer[0 .. read]).flush;
+//					Stdout.format("Received from {}: \n\"{}\"\n", client_sockets[i].remoteAddress(), buffer[0 .. read]).flush;
 
 					// Get the request
 					char[][] request = tango.text.Util.splitLines(buffer[0 .. read]);
@@ -239,11 +240,11 @@ public class Server {
 					char[] controller = route.length > 1 ? route[1] : null;
 					char[] action = route.length > 2 ? route[2] : "index";
 					char[] id = route.length > 3 ? route[3] : null;
-					params["id"] = id;
+					if(id != null) params["id"] = id;
 
 					// Assemble the request object
 					_has_rendered = false;
-					_client_socket = reads[i];
+					_client_socket = client_sockets[i];
 					_request = new Request(method, uri, http_version, controller, action, params, _cookies);
 
 					// Run the action
@@ -268,45 +269,45 @@ public class Server {
 				}
 
 				// Remove this client from the socket set
-				reads[i].shutdown(SocketShutdown.BOTH);
-				reads[i].detach();
-				if(i != reads.length - 1)
-					reads[i] = reads[reads.length - 1];
-				reads = reads[0 .. reads.length - 1];
+				client_sockets[i].shutdown(SocketShutdown.BOTH);
+				client_sockets[i].detach();
+				if(i != client_sockets.length - 1)
+					client_sockets[i] = client_sockets[client_sockets.length - 1];
+				client_sockets = client_sockets[0 .. client_sockets.length - 1];
 			}
 
-//			if(reads.length > 0) {
-//				Stdout.format("\tTotal connections: {}\n", reads.length).flush;
+//			if(client_sockets.length > 0) {
+//				Stdout.format("\tTotal connections: {}\n", client_sockets.length).flush;
 //			}
 
 			// Accept client requests
-			if(sset.isSet(listener)) {
-				Socket sn;
+			if(socket_set.isSet(server)) {
+				Socket pending_client;
 				try {
-					if(reads.length < MAX_CONNECTIONS) {
-						sn = listener.accept();
-//						Stdout.format("Connection from {} established.\n", sn.remoteAddress()).flush;
-//						assert(sn.isAlive);
-//						assert(listener.isAlive);
+					if(client_sockets.length < MAX_CONNECTIONS) {
+						pending_client = server.accept();
+//						Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
+//						assert(pending_client.isAlive);
+//						assert(server.isAlive);
 				
-						reads ~= sn;
+						client_sockets ~= pending_client;
 					} else {
-						sn = listener.accept();
-//						Stdout.format("Rejected connection from {}. Too many connections.\n", sn.remoteAddress()).flush;
-//						assert(sn.isAlive);
+						pending_client = server.accept();
+//						Stdout.format("Rejected connection from {}. Too many connections.\n", pending_client.remoteAddress()).flush;
+//						assert(pending_client.isAlive);
 
-						sn.send("503: Service Unavailable - Too many requests in the queue.");
-						sn.shutdown(SocketShutdown.BOTH);
-						sn.detach();
-//						assert(!sn.isAlive);
-//						assert(listener.isAlive);
+						pending_client.send("503: Service Unavailable - Too many requests in the queue.");
+						pending_client.shutdown(SocketShutdown.BOTH);
+						pending_client.detach();
+//						assert(!pending_client.isAlive);
+//						assert(server.isAlive);
 					}
 				} catch(Exception e) {
 					Stdout.format("Error accepting: {}\n", e).flush;
 			
-					if(sn && sn.isAlive) {
-						sn.shutdown(SocketShutdown.BOTH);
-						sn.detach();
+					if(pending_client && pending_client.isAlive) {
+						pending_client.shutdown(SocketShutdown.BOTH);
+						pending_client.detach();
 					}
 				}
 			}
