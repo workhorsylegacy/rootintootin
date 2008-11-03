@@ -14,7 +14,7 @@ import tango.time.chrono.Gregorian;
 import tango.time.WallClock;
 import tango.time.Clock;
 
-import rail_cannon;
+import native_rest_cannon;
 
 
 public class Server {

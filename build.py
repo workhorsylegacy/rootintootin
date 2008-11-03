@@ -18,8 +18,8 @@ def combine_code_files(routes):
 		"import tango.time.WallClock;\n" +
 
 		"\n" +
-		"import rail_cannon;\n" +
-		"import rail_cannon_server;\n\n"
+		"import native_rest_cannon;\n" +
+		"import native_rest_cannon_server;\n\n"
 	);
 
 	# Write the models into the file
@@ -204,7 +204,7 @@ generate_views(routes)
 combine_code_files(routes)
 
 # Compile the application into an executable
-command = "gdc -fversion=Posix -o run rail_cannon.d rail_cannon_server.d run.d /usr/lib/tango-gdc/libgtango.a"
+command = "gdc -fversion=Posix -o run native_rest_cannon.d native_rest_cannon_server.d run.d /usr/lib/tango-gdc/libgtango.a"
 result = pexpect.run(command)
 print result
 
