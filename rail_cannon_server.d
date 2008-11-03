@@ -9,7 +9,6 @@ import tango.net.Socket;
 import tango.net.ServerSocket;
 import tango.net.SocketConduit;
 
-
 import tango.text.Regex;
 import tango.time.chrono.Gregorian;
 import tango.time.WallClock;
@@ -178,9 +177,9 @@ public class Server {
 				} else if(0 == read) {
 					try {
 						//if the connection closed due to an error, remoteAddress() could fail
-						Stdout("Connection from {} closed.\n", client_sockets[i].remoteAddress());
+						Stdout.format("Connection from {} closed.\n", client_sockets[i].remoteAddress());
 					} catch {
-						Stdout("Connection from {} closed.\n");
+						Stdout("Connection from unknown closed.\n");
 					}
 				} else {
 //					Stdout.format("Received from {}: \n\"{}\"\n", client_sockets[i].remoteAddress(), buffer[0 .. read]).flush;
