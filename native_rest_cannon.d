@@ -191,3 +191,48 @@ public template ControllerBaseMixin(T) {
 	*/
 }
 
+
+
+
+/*
+//	NOTE: LOOK AT THIS OTHER WAY OF DOING IT
+//	Here is anothe way to do it. 
+//	Notice how they can iterate over the fields with tupleof. 
+//	We can use that when we save the values back into the db.
+
+
+class IntField : IField {
+    int value;
+    void opAssign(int v) {
+        this.value = v;
+    }
+    int opCall() {
+        return this.value;
+    }
+    char[] toString() {
+        return .toString(this.value);
+    }
+}
+
+interface IModel {
+}
+
+class Model(T) : IModel {
+    IField[] fields;
+    this() {
+        T self = cast(T)this;
+        foreach (i, f; self.tupleof) {
+            static if (is(typeof(f) : IField)) {
+                self.tupleof[i] = new typeof(f);
+                this.fields ~= self.tupleof[i];
+            }
+        }
+    }
+}
+
+class MyModel : Model!(MyModel) {
+    IntField x, y, z;
+    this() { super(); }
+} 
+
+*/
