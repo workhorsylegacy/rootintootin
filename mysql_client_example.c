@@ -20,38 +20,56 @@ void thing_connect(char* server, char* user_name, char* password, char* database
 					0, NULL, 0);
 }
 
-char** thing_query(char* query_sql) {
-	char** retval;
+// Runs the query and restuns it as a 3D array of characters
+char*** thing_query(char* query_sql) {
+	char*** retval;
 
+	// Run the query and get the result
 	mysql_real_query(&mysql, query_sql, (unsigned int)strlen(query_sql));
 	res = mysql_store_result(&mysql);
 
+	// Allocated enough memory to hold the pointers for each row into the return value
 	int row_count = mysql_num_rows(res);
-	retval = (char **) calloc (row_count, sizeof (char *));
+	retval = (char ***) calloc(row_count, sizeof (char **));
 
-	unsigned int n = 0;
+	// Iterate through each row
+	unsigned int row_cur = 0;
 	while(row = mysql_fetch_row(res)) {
-		//printf("%s %sn", row[0], row[1]);
-		unsigned int column_count = mysql_num_fields(res);
-		retval[n] = "poop";
-		printf("blah: %d\n", n);
-		//unsigned long* column_lengths = mysql_fetch_lengths(res);
-		n++;
+		// Allocated enough memory to hold the pointers for each column into the return value
+		unsigned int col_count = mysql_num_fields(res);
+		retval[row_cur] = (char **) calloc(col_count, sizeof (char *));
+
+		// Copy each row into the return calue
+		int i = 0;
+		for(i=0; i<col_count; i++) {
+			retval[row_cur][i] = (char *) calloc(strlen(row[i])+1, sizeof(char));
+			strcpy(retval[row_cur][i], row[i]);
+			printf("row: %s\n", row[i]);
+		}
+
+		row_cur++;
 	}
 
+	// Free the resources for the result
 	mysql_free_result(res);
 
+	// Return the result
 	return retval;
 }
 
 int main() {
 	thing_connect("localhost", "root", "letmein", "me_love_movies_development");
 
-	char* query_sql = "select id, name from titles limit 30;";
+	char* query_sql = "select id, name from titles order by id limit 30;";
 
-	int n = 1;
+	int n = 10000;
 	while(n > 0) {
-		thing_query(query_sql);
+		char*** result = thing_query(query_sql);
+		
+		// Free all the memory for the strings
+		// FIXME: This needs to free the all the child strings too
+		free(result);
+
 		n--;
 	}
 
