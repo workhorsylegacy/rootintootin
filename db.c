@@ -62,15 +62,17 @@ char*** db_query(char* query, int* row_len, int* col_len) {
 	return retval;
 }
 
-// FIXME: This does not seem to free all of the resources
 void free_db_query(char*** result, int row_len, int col_len) {
 	int i, j;
 	for(i=0; i < row_len; i++) {
 		for(j=0; j < col_len; j++) {
+			// Free the memory for each field
 			free(result[i][j]);
 		}
+		// Free the memory for each row
 		free(result[i]);
 	}
+	// Free the memory for the result
 	free(result);
 }
 
