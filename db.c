@@ -1,6 +1,9 @@
 
 
-// clear; gcc mysql_client_example.c -o mysql_client_example -lz -lmysqlclient -L /usr/lib/mysql/
+/*
+gcc -c db.c -o db.o
+ar rcs db.a db.o
+*/
 
 #include <mysql/mysql.h>
 #include <stdio.h>
@@ -35,7 +38,7 @@ char*** db_query(char* query, int* row_len, int* col_len) {
 
 	// Iterate through each row
 	unsigned int row_cur = 0;
-	while(row = mysql_fetch_row(res)) {
+	while((row = mysql_fetch_row(res))) {
 		// Allocate enough memory to hold the pointers for each column in the return value
 		col_count = mysql_num_fields(res);
 		retval[row_cur] = (char **) calloc(col_count, sizeof (char *));
@@ -66,34 +69,9 @@ void free_db_query(char*** result, int row_len, int col_len) {
 		for(j=0; j < col_len; j++) {
 			free(result[i][j]);
 		}
-		result[i];
+		free(result[i]);
 	}
 	free(result);
-}
-
-int main() {
-	db_connect("localhost", "root", "letmein", "me_love_movies_development");
-
-	char* query = "select id, name from titles order by id limit 30;";
-
-	int n = 1;
-	while(n > 0) {
-		int row_len, col_len;
-		char*** result = db_query(query, &row_len, &col_len);
-
-		int i, j;
-		for(i=0; i<row_len; i++) {
-			for(j=0; j<col_len; j++) {
-				printf("%s\n", result[i][j]);
-			}
-		}
-		
-		free_db_query(result, row_len, col_len);
-
-		n--;
-	}
-
-	return 0; 
 }
 
 

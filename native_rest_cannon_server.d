@@ -3,9 +3,10 @@
 
 import tango.text.convert.Integer;
 import tango.text.Util;
+import tango.stdc.stringz;
+
 import tango.io.Stdout;
 import tango.net.Socket;
-
 import tango.net.ServerSocket;
 import tango.net.SocketConduit;
 
@@ -15,6 +16,7 @@ import tango.time.WallClock;
 import tango.time.Clock;
 
 import native_rest_cannon;
+import db;
 
 
 public class Server {
@@ -141,6 +143,23 @@ public class Server {
 	}
 
 	public static void start(void function(Request request, void function(char[]) render_text) run_action) {
+		// FIXME: This is just a test to see if database connectivity works
+		d_db_connect("localhost", "root", "letmein", "me_love_movies_development");
+
+		char[] query = "select id, name from titles order by id;";
+		int row_len, col_len;
+		char*** result = d_db_query(query, row_len, col_len);
+
+		int ni, nj;
+		for(ni=0; ni<row_len; ni++) {
+			for(nj=0; nj<col_len; nj++) {
+				Stdout.format("{}\n", fromStringz(result[ni][nj]));
+			}
+		}
+
+		d_free_db_query(result, row_len, col_len);
+
+
 		const int MAX_CONNECTIONS = 100;
 		ushort port = 2345;
 		Socket server = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);

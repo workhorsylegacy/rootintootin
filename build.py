@@ -204,7 +204,9 @@ generate_views(routes)
 combine_code_files(routes)
 
 # Compile the application into an executable
-command = "gdc -fversion=Posix -o run native_rest_cannon.d native_rest_cannon_server.d run.d /usr/lib/tango-gdc/libgtango.a"
+print pexpect.run("gcc -c db.c -o db.o")
+print pexpect.run("ar rcs db.a db.o")
+command = "gdc -fversion=Posix -o run native_rest_cannon.d native_rest_cannon_server.d run.d db.d /usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
 result = pexpect.run(command)
 print result
 
