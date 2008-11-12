@@ -7,7 +7,9 @@
 		<title>Rail Cannon</title>
 	</head>
 	<body>
+		<h1>content start</h1>
 		<%= yield %>
+		<h1>content end</h1>
 	</body>
 </html>
 

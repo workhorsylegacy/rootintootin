@@ -1,7 +1,7 @@
 
 
 public class User : ModelBase {
-	mixin ModelBaseMixin!(User, "user");
+	mixin ModelBaseMixin!(User, "users");
 
 	public Field!(char[]) name = null;
 	public Field!(bool) hide_email_address = null;

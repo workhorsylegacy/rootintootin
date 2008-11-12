@@ -46,6 +46,13 @@ char*** db_query(char* query, int* row_len, int* col_len) {
 		// Copy each field into the column of the return value
 		int i = 0;
 		for(i=0; i<col_count; i++) {
+			// If the field is null, just make the value null too
+			if(row[i] == NULL) {
+				retval[row_cur][i] = NULL;
+				break;
+			}
+
+			// Otherwise copy the field as a string
 			retval[row_cur][i] = (char *) calloc(strlen(row[i])+1, sizeof(char));
 			strcpy(retval[row_cur][i], row[i]);
 		}

@@ -3,9 +3,9 @@
 	<tr>
 		<td><%= user.name() %></td>
 		<td>
-			<%=
-				user.hide_email_address() ? "true" : "false";
-			%>
+			<% foreach(char[] key, char[] value ; user._raw_fields) { %>
+				<%=key%>, <%=value%><br />
+			<% } %>
 		</td>
 	</tr>
 	<% } %>

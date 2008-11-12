@@ -21,10 +21,14 @@
 */
 
 //import tango.io.digest.Digest;
+
 import tango.text.convert.Integer;
 import tango.text.Util;
-import tango.io.Stdout;
+import tango.stdc.stringz;
 import tango.text.Regex;
+
+import tango.io.Stdout;
+
 import tango.time.chrono.Gregorian;
 import tango.time.WallClock;
 
@@ -68,60 +72,6 @@ public class SqlError : Exception {
 	}
 } 
 
-public class ModelBase {
-	//private static sqlite3* _db = null;
-	private static ModelBase _new_model = null; // FIXME: This is just needed because we need a way to return info from the callbacks. Thread unsafe fail.
-
-	public static void connect_to_database(char[] name) {
-	//	int rc = sqlite3_open("thing.db", &_db);
-	//	if (rc != SQLITE_OK) {
-	//		throw new SqlError("Can't open database: %d, %s\n", rc, _db.errmsg());
-	//	}
-	}
-
-	/*
-	public static ModelBase find_by_id(int id) {
-		// Get the sql for that row
-		char[] query = "select * from %s where id=%d;".printf("users", id);
-		int rc = _db.exec(query, (Sqlite.Callback)find_one_callback, null);
-		if (rc != Sqlite.OK) { 
-			char[] message = "SQL error: %d, %s\n".printf(rc, _db.errmsg());
-			throw new ModelErrors.SqlError(message);
-		}
-
-		
-		ModelBase model = _new_model;
-		_new_model = null;
-
-		return model;
-	}
-	*/
-
-	//[NoArrayLength ()]
-	private static int find_one_callback(void* data, 
-								int n_columns, 
-								char[][] values,
-								char[][] column_names) {
-
-		// Copy the row columns into the new model
-		/*
-		_new_model = new ModelBase();
-		_new_model._fields = new HashTable<char[], char[]>(str_hash, str_equal);
-		for (int i = 0; i < n_columns; i++) {
-			_new_model._fields.insert(column_names[i], values[i]);
-		}
-		*/
-
-		for(int i=0; i<n_columns; i++) {
-			//SetFieldDelegate setter = _new_model._set_field_map.lookup(column_names[i]);
-			//if(setter != null)
-			//	setter(values[i]);
-		}
-
-		return 0;
-	}
-}
-
 public class Field(T) {
 	private T _value;
 	private char[] _name;
@@ -139,6 +89,10 @@ public class Field(T) {
 	}
 }
 
+public class ModelBase {
+	public char[][char[]] _raw_fields;
+}
+
 public template ModelBaseMixin(T, char[] table_name) {
 	static char[] _table_name = table_name;
 
@@ -148,8 +102,23 @@ public template ModelBaseMixin(T, char[] table_name) {
 	}
 
 	static T[] find_all() {
-		T[] ts = [];
-		return ts;
+		T[] all = [];
+
+		char[] query = "select * from users order by id;";
+		int row_len, col_len;
+		char*** result = db.d_db_query(query, row_len, col_len);
+
+		for(int i=0; i<row_len; i++) {
+			T model = new T();
+			for(int j=0; j<col_len; j++) {
+				model._raw_fields[tango.text.convert.Integer.toString(j)] = tango.stdc.stringz.fromStringz(result[i][j]);
+			}
+			all ~= model;
+		}
+
+		db.d_free_db_query(result, row_len, col_len);
+
+		return all;
 	}
 
 	static T find_first() {
