@@ -1,9 +1,10 @@
 
 import os
 import pexpect
+import MySQLdb
 
 
-def combine_code_files(routes):
+def combine_code_files(routes, table_map):
 	# Open the output file
 	out_file = open('run.d', 'w')
 
@@ -27,9 +28,12 @@ def combine_code_files(routes):
 		if not model.endswith('.d'):
 			continue
 
+		model_name = str.split(model, '.')[0]
+		model_map = table_map[model_name + 's']
+
 		f = open('app/models/' + model, 'r')
 		out_file.write("\n\n")
-		out_file.write(f.read())
+		out_file.write(substitute_model_properties(f.read(), model_name, model_map))
 		out_file.write("\n\n")
 		f.close()
 
@@ -92,6 +96,92 @@ def combine_code_files(routes):
 	"	return 0;\n" +
 	"}\n")
 
+
+def sql_type_to_d_type(sql_type):
+	type_map = { 'tinyint(1)' : 'bool',
+				 'varchar(255)' : 'char[]',
+				 'datetime' : 'char[]',
+				 'int(11)' : 'int',
+				 'text' : 'char[]' }
+
+	return type_map[sql_type]
+
+def substitute_model_properties(file_content, model_name, model_map):
+	# Add a list of all field names
+	properties = "private static char[][] _field_names = ["
+	for field, values in model_map.items():
+		properties += "\"" + field + "\", ";
+	properties += "];\n\n";
+
+	# Add all the fields
+	for field, values in model_map.items():
+		properties += "	private " + sql_type_to_d_type(values['type']) + " _" + field + ";\n"
+
+	# Add the field properties
+	for field, values in model_map.items():
+		# Add getter
+		properties += \
+						"	// " + values['type'] + "\n" + \
+						"	public " + sql_type_to_d_type(values['type']) + " " + field + "() {\n" + \
+						"		return _" + field + ";\n" + \
+						"	}\n"
+		# Add setter, but not for id
+		if field != 'id':
+			properties += \
+						"	public void " + field + "(" + sql_type_to_d_type(values['type']) + " value) {\n" + \
+						"		_" + field + " = value;\n" + \
+						"	}\n"
+
+	# Add the set_field_by_name method
+	properties += \
+				"public void set_field_by_name(char[] field_name, char[] value) {\n" + \
+				"	switch(field_name) {\n"
+
+	for field, values in model_map.items():
+		properties += \
+				"		case \"" + field + "\":\n" + \
+				"			_" + field + " = value;\n" + \
+				"			break;\n"
+
+	properties += \
+				"	}\n" + \
+				"}"
+
+	return file_content.replace("// properties", properties)
+
+
+def generate_models():
+	# Connect to the database
+	# FIXME: This should be gotten from the config file
+	db = MySQLdb.connect(host="localhost", user="root", passwd="letmein", db="me_love_movies_development")
+
+	# Get all the tables
+	table_map = {}
+	cursor = db.cursor()
+	cursor.execute("show tables;")
+	result = cursor.fetchall()
+	for row in result:
+		table_map[row[0]] = {}
+	cursor.close()
+
+	# Get the fields for each table
+	for table in table_map:
+		cursor = db.cursor()
+		cursor.execute('desc ' + table + ';')
+		result = cursor.fetchall()
+
+		for row in result:
+			field = row[0]
+			table_map[table][field] = {}
+			table_map[table][field]['type'] = row[1]
+			table_map[table][field]['null'] = row[2]
+			table_map[table][field]['key'] = row[3]
+			table_map[table][field]['default'] = row[4]
+			table_map[table][field]['extra'] = row[5]
+
+		cursor.close()
+
+	return table_map
 
 def generate_views(routes):
 	for controller, actions in routes.items():
@@ -201,7 +291,8 @@ execfile("config/routes.py")
 # Do code generation
 generate_layouts()
 generate_views(routes)
-combine_code_files(routes)
+table_map = generate_models()
+combine_code_files(routes, table_map)
 
 # Compile the application into an executable
 print pexpect.run("gcc -c db.c -o db.o")

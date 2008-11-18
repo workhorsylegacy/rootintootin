@@ -1,11 +1,13 @@
 <table border="1">
 	<% foreach(User user ; controller._users) { %>
 	<tr>
-		<td><%= user.name() %></td>
 		<td>
-			<% foreach(char[] key, char[] value ; user._raw_fields) { %>
-				<%=key%>, <%=value%><br />
-			<% } %>
+			<ul>
+				<li><%=user.name%></li>
+				<li><%=user.user_name%></li>
+				<li><%=user.disabled ? "True" : "False" %></li>
+				<li><%=user.email%></li>
+			</ul>
 		</td>
 	</tr>
 	<% } %>

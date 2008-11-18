@@ -90,7 +90,7 @@ public class Field(T) {
 }
 
 public class ModelBase {
-	public char[][char[]] _raw_fields;
+
 }
 
 public template ModelBaseMixin(T, char[] table_name) {
@@ -101,17 +101,22 @@ public template ModelBaseMixin(T, char[] table_name) {
 		return 7;
 	}
 
+	static char[] field_names_as_comma_string() {
+		return tango.text.Util.join(_field_names, ", ");
+	}
+
 	static T[] find_all() {
 		T[] all = [];
 
-		char[] query = "select * from users order by id;";
+		char[] query = "select " ~ field_names_as_comma_string ~ " from users order by id;";
 		int row_len, col_len;
 		char*** result = db.d_db_query(query, row_len, col_len);
 
+		T model = null;
 		for(int i=0; i<row_len; i++) {
-			T model = new T();
+			model = new T();
 			for(int j=0; j<col_len; j++) {
-				model._raw_fields[tango.text.convert.Integer.toString(j)] = tango.stdc.stringz.fromStringz(result[i][j]);
+				model.set_field_by_name(_field_names[j], tango.stdc.stringz.fromStringz(result[i][j]));
 			}
 			all ~= model;
 		}
