@@ -49,12 +49,11 @@ char*** db_query(char* query, int* row_len, int* col_len) {
 			// If the field is null, just make the value null too
 			if(row[i] == NULL) {
 				retval[row_cur][i] = NULL;
-				break;
+			} else {
+				// Otherwise copy the field as a string
+				retval[row_cur][i] = (char *) calloc(strlen(row[i])+1, sizeof(char));
+				strcpy(retval[row_cur][i], row[i]);
 			}
-
-			// Otherwise copy the field as a string
-			retval[row_cur][i] = (char *) calloc(strlen(row[i])+1, sizeof(char));
-			strcpy(retval[row_cur][i], row[i]);
 		}
 
 		row_cur++;

@@ -106,6 +106,16 @@ def sql_type_to_d_type(sql_type):
 
 	return type_map[sql_type]
 
+def convert_string_to_d_type(d_type, d_string_variable_name):
+	cast_map = { 'int' : 'tango.text.convert.Integer.toInt(#)',
+				'long' : 'tango.text.convert.Integer.toLong(#)',
+				'float' : 'tango.text.convert.Float.toFloat(#)',
+				'bool' : '(# == "true" ? true : false)',
+				'char' : '#',
+				'char[]' : 'tango.text.Util.repeat(#, 1)' }
+
+	return cast_map[d_type].replace('#', d_string_variable_name)
+
 def substitute_model_properties(file_content, model_name, model_map):
 	# Add a list of all field names
 	properties = "private static char[][] _field_names = ["
@@ -138,9 +148,10 @@ def substitute_model_properties(file_content, model_name, model_map):
 				"	switch(field_name) {\n"
 
 	for field, values in model_map.items():
+		value_with_cast = convert_string_to_d_type(sql_type_to_d_type(values['type']), 'value')
 		properties += \
 				"		case \"" + field + "\":\n" + \
-				"			_" + field + " = value;\n" + \
+				"			_" + field + " = " + value_with_cast + ";\n" + \
 				"			break;\n"
 
 	properties += \
