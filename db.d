@@ -15,6 +15,8 @@ void d_free_db_query(char*** result, int row_len, int col_len) {
 	free_db_query(result, row_len, col_len);
 }
 
+private:
+
 extern (C):
 
 void db_connect(char* server, char* user_name, char* password, char* database);
