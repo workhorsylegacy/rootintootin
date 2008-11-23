@@ -1,7 +1,7 @@
 
 
 public class User : ModelBase {
-	mixin ModelBaseMixin!(User, "users");
+	mixin ModelBaseMixin!(User, "user");
 
 	// properties
 
