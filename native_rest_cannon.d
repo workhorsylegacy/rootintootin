@@ -1,24 +1,5 @@
 
-/*
-	Create database with:
-	sqlite3 thing.db
-	create table users(id integer primary key, name varchar(255), password varchar(255));
-	insert into users(name, password) values('matt', 'ass');
-	ctrl + D #to edit
 
-	to compile:
-	gdc -o rail_cannon rail_cannon.d
-	gdc -o rail_cannon_server rail_cannon_server.d
-
-	gdc -c -fPIC rail_cannon.d -o rail_cannon.o
-	gdc -c -fPIC rail_cannon_server.d -o rail_cannon_server.o
-	gdc -c -fPIC index.d -o index.o
-	./rail_cannon
-
-	to benchmark:
-	ab -c 100 -n 10000 http://127.0.0.1:2345/
-
-*/
 
 //import tango.io.digest.Digest;
 

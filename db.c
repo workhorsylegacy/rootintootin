@@ -1,9 +1,5 @@
 
 
-/*
-gcc -c db.c -o db.o
-ar rcs db.a db.o
-*/
 
 #include <mysql/mysql.h>
 #include <stdio.h>
