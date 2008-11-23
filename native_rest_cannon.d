@@ -51,23 +51,6 @@ public class SqlError : Exception {
 	public this(char[] message) {
 		super(message);
 	}
-} 
-
-public class Field(T) {
-	private T _value;
-	private char[] _name;
-
-	public this(char[] name) {
-		_name = name;
-	}
-
-	public void opAssign(T value) {
-		_value = value;
-	}
-
-	public T opCall() {
-		return _value;
-	}
 }
 
 public class ModelBase {
@@ -122,70 +105,5 @@ public template ControllerBaseMixin(T) {
 	public this(Request request) {
 		_request = request;
 	}
-	/*
-	Object[][char[]] _members;
-	Object[char[]] _member;
-
-	void set(T)(char[] key, T thing) {
-		_member[key] = cast(Object) thing;
-	}
-
-	void set_array(T)(char[] key, T thing) {
-		_members[key] = cast(Object[]) thing;
-	}
-
-	T get(T)(char[] key) {
-		return cast(T) _member[key];
-	}
-
-	T get_array(T)(char[] key) {
-		return cast(T) _members[key];
-	}
-	*/
 }
 
-
-
-
-/*
-//	NOTE: LOOK AT THIS OTHER WAY OF DOING IT
-//	Here is anothe way to do it. 
-//	Notice how they can iterate over the fields with tupleof. 
-//	We can use that when we save the values back into the db.
-
-
-class IntField : IField {
-    int value;
-    void opAssign(int v) {
-        this.value = v;
-    }
-    int opCall() {
-        return this.value;
-    }
-    char[] toString() {
-        return .toString(this.value);
-    }
-}
-
-interface IModel {
-}
-
-class Model(T) : IModel {
-    IField[] fields;
-    this() {
-        T self = cast(T)this;
-        foreach (i, f; self.tupleof) {
-            static if (is(typeof(f) : IField)) {
-                self.tupleof[i] = new typeof(f);
-                this.fields ~= self.tupleof[i];
-            }
-        }
-    }
-}
-
-class MyModel : Model!(MyModel) {
-    IntField x, y, z;
-    this() { super(); }
-} 
-
-*/
