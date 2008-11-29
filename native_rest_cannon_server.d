@@ -1,6 +1,10 @@
 
 
 
+import tango.io.digest.Digest;
+import tango.io.digest.Sha0;
+import tango.io.encode.Base64;
+
 import tango.text.convert.Integer;
 import tango.text.Util;
 import tango.stdc.stringz;
@@ -23,6 +27,7 @@ public class Server {
 	private static bool _has_rendered = false;
 	private static Request _request = null;
 	private static Socket _client_socket = null;
+	private static int _session_id = 0;
 	private static char[][char[]] _sessions;
 	private static char[][char[]] _cookies;
 
@@ -100,6 +105,15 @@ public class Server {
 		return value;
 	}
 
+	public static char[] hash_and_base64(char[] value) {
+		Sha0 sha_encoder = new Sha0();
+		sha_encoder.update(value);
+		ubyte[] encoded = sha_encoder.binaryDigest();
+
+		char[] encodebuf = new char[tango.io.encode.Base64.allocateEncodeSize(cast(ubyte[])encoded)];
+		return tango.io.encode.Base64.encode(cast(ubyte[])encoded, encodebuf);
+	}
+
 	public static void render_text(char[] text) {
 		// If we have already rendered, show an error
 		if(_has_rendered) {
@@ -109,9 +123,16 @@ public class Server {
 		char[] status = get_verbose_status_code(200);
 
 		// If there is no session add one to the cookies
+		// FIXME: Session ids are not yet salted, so they can easily be looked up in a rainbow table or googled
 		char[] set_cookies = "";
-		if(("_appname_session" in _cookies) != null) {
-			_cookies["_appname_session"] = "BAh7BzoMY3NyZl9pZCIlOWQ0Njc5ODIyNWM5MWZhNGU4OTY4NjczNmEwMTlh%0ANjAiCmZsYXNoSUM6J0FjdGlvbkNvbnRyb2xsZXI6OkZsYXNoOjpGbGFzaEhh%0Ac2h7AAY6CkB1c2VkewA%3D--eb5d809fcaceee78af495aa7544242ba4415a072; path=/";
+		if(("_appname_session" in _cookies) == null || (_cookies["_appname_session"] in _sessions) == null) {
+			char[] hashed_session_id = hash_and_base64(tango.text.convert.Integer.toString(_session_id));
+			_cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
+			_sessions[hashed_session_id] = [];
+			Stdout.format("\nCreated session number '{}' '{}'\n", _session_id, hashed_session_id).flush;
+			_session_id++;
+		} else {
+			Stdout.format("Using existing session '{}'\n", _cookies["_appname_session"]).flush;
 		}
 
 		// Get all the new cookie values to send
@@ -183,9 +204,9 @@ public class Server {
 				} else if(0 == read) {
 					try {
 						//if the connection closed due to an error, remoteAddress() could fail
-						Stdout.format("Connection from {} closed.\n", client_sockets[i].remoteAddress());
+						Stdout.format("Connection from {} closed.\n", client_sockets[i].remoteAddress()).flush;
 					} catch {
-						Stdout("Connection from unknown closed.\n");
+						Stdout("Connection from unknown closed.\n").flush;
 					}
 				} else {
 //					Stdout.format("Received from {}: \n\"{}\"\n", client_sockets[i].remoteAddress(), buffer[0 .. read]).flush;
@@ -228,6 +249,14 @@ public class Server {
 							} else {
 								_cookies[pair[0]] = unescape_cookie_value(pair[1]);
 							}
+						}
+					}
+
+					// Make sure the session id is one we created
+					if(("_appname_session" in _cookies) != null) {
+						char[] hashed_session_id = _cookies["_appname_session"];
+						if((hashed_session_id in _sessions) == null) {
+							Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
 						}
 					}
 

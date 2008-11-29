@@ -1,8 +1,6 @@
 
 
 
-//import tango.io.digest.Digest;
-
 import tango.text.convert.Integer;
 import tango.text.Util;
 import tango.stdc.stringz;
@@ -102,7 +100,6 @@ public template ModelBaseMixin(T, char[] model_name) {
 		if(conditions != null) query ~= " where " ~ conditions;
 		if(order != null) query ~= " order by " ~ order;
 		query ~= ";";
-		Stdout(query).flush;
 
 		int row_len, col_len;
 		char*** result = db.d_db_query(query, row_len, col_len);
