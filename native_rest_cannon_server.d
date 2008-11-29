@@ -153,7 +153,7 @@ public class Server {
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
-		//"Cache-Control: private, max-age=0, must-revalidate\r\n",
+		"Cache-Control: private, max-age=0\r\n",
 		"Content-Type: text/html; charset=utf-8\r\n",
 		"Content-Length: ", tango.text.convert.Integer.toString(text.length), "\r\n",
 		//"Vary: User-Agent\r\n",
