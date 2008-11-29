@@ -148,7 +148,7 @@ public class Server {
 		char[][] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
 		"Date: ", tango.text.convert.Integer.toString(date.day), tango.text.convert.Integer.toString(date.month), tango.text.convert.Integer.toString(date.year), "\r\n", 
-		"Server: Rail Cannon Server 0.0\r\n", 
+		"Server: Native_Rest_Cannon_0.1\r\n", 
 		set_cookies, 
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",
