@@ -23,6 +23,18 @@ def combine_code_files(routes, table_map):
 		"import native_rest_cannon_server;\n\n"
 	);
 
+	# Write the generated model base classes into the file
+	for model in os.listdir('app/models/'):
+		if not model.endswith('.d'):
+			continue
+
+		model_name = str.split(model, '.')[0]
+		model_map = table_map[model_name + 's']
+
+		out_file.write("\n\n")
+		out_file.write(model_generated_properties_class(model_name, model_map))
+		out_file.write("\n\n")
+
 	# Write the models into the file
 	for model in os.listdir('app/models/'):
 		if not model.endswith('.d'):
@@ -33,7 +45,7 @@ def combine_code_files(routes, table_map):
 
 		f = open('app/models/' + model, 'r')
 		out_file.write("\n\n")
-		out_file.write(substitute_model_properties(f.read(), model_name, model_map))
+		out_file.write(f.read())
 		out_file.write("\n\n")
 		f.close()
 
@@ -116,9 +128,12 @@ def convert_string_to_d_type(d_type, d_string_variable_name):
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
-def substitute_model_properties(file_content, model_name, model_map):
+def model_generated_properties_class(model_name, model_map):
+	# Add class opening
+	properties = "public class " + model_name.capitalize() + "ModelGeneratedProperties : ModelBase {\n"
+
 	# Add a list of all field names
-	properties = "private static char[][] _field_names = ["
+	properties += "private static char[][] _field_names = ["
 	for field, values in model_map.items():
 		properties += "\"" + field + "\", ";
 	properties += "];\n\n";
@@ -156,9 +171,12 @@ def substitute_model_properties(file_content, model_name, model_map):
 
 	properties += \
 				"	}\n" + \
-				"}"
+				"}\n"
 
-	return file_content.replace("// properties", properties)
+	# Add class closing
+	properties += "}"
+
+	return properties
 
 
 def generate_models():
