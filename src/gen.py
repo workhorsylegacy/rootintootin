@@ -4,9 +4,20 @@ import os, sys
 import pexpect
 import MySQLdb
 
-first = sys.argv[1]
-second = sys.argv[2]
-third = sys.argv[3]
+def migration_type_to_sql_type(migration_type):
+	type_map = {'binary' : 'blob',
+				'boolean' : 'tinyint(1)',
+				'date' : 'date',
+				'datetime' : 'datetime',
+				'decimal' : 'datetime',
+				'float' : 'float',
+				'integer' : 'int(11)',
+				'string' : 'varchar(255)',
+				'text' : 'text',
+				'time' : 'time',
+				'timestamp' : 'datetime' }
+
+	return type_map[migration_type]
 
 execfile('config/database.py')
 db = MySQLdb.connect(
@@ -15,41 +26,46 @@ db = MySQLdb.connect(
 			passwd=database_configuration['password'])
 
 # create database
-if first == "create" and second == "database":
+if len(sys.argv)==3 and sys.argv[1] == "create" and sys.argv[2] == "database":
 	cursor = db.cursor()
 	db_name = database_configuration['name']
 	try:
 		cursor.execute("create database " + db_name)
+		print "Created the database " + database_configuration['name'] + "."
 	except MySQLdb.ProgrammingError:
-		print "Database '" + third + "' already exists."
+		print "Database '" + database_configuration['name'] + "' already exists."
 	cursor.close()
 
 # drop database
-if first == "drop" and second == "database":
+if len(sys.argv)==3 and sys.argv[1] == "drop" and sys.argv[2] == "database":
 	cursor = db.cursor()
 	db_name = database_configuration['name']
 	try:
 		cursor.execute("drop database " + db_name)
-	except MySQLdb.ProgrammingError:
-		print "Database '" + third + "' does not exists."
+		print "Dropped the database " + database_configuration['name'] + "."
+	except MySQLdb.OperationalError:
+		print "Database '" + database_configuration['name'] + "' does not exists."
 	cursor.close()
 
 # create migration [name] [field:type] ...
-if first == "create" and second == "migration":
+if len(sys.argv)>=4 and sys.argv[1] == "create" and sys.argv[2] == "migration":
 	db_name = database_configuration['name']
-	query = "create table `" + db_name + "`.`" + third + "` (id int, "
+	query = "create table `" + db_name + "`.`" + sys.argv[3] + "` (id int, "
 	for field in sys.argv[4:]:
 		field_name, field_type = field.split(':')
-		query += "`" + field_name + "` " + field_type + ", "
+		query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
 	query = str.rstrip(query, ', ')
 	query += ") ENGINE=innoDB;"
-
 	cursor = db.cursor()
-	cursor.execute(query)
+
+	try:
+		cursor.execute(query)
+	except MySQLdb.OperationalError:
+		print "Table '" + sys.argv[3] + "' already exists."
 	cursor.close()
 
 # create controller [name]
-if first == "" and second == "controller":
+if len(sys.argv)==4 and sys.argv[1] == "" and sys.argv[2] == "controller":
 	pass
 
 # migrate
