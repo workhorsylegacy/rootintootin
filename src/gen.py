@@ -19,6 +19,23 @@ def migration_type_to_sql_type(migration_type):
 
 	return type_map[migration_type]
 
+def create_table(table_name, field_map):
+	db_name = database_configuration['name']
+	query = "create table `" + db_name + "`.`" + table_name + "` (id int, "
+	for field_name, field_type in field_map.items():
+		query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
+	query = str.rstrip(query, ', ')
+	query += ") ENGINE=innoDB;"
+	cursor = db.cursor()
+
+	try:
+		cursor.execute(query)
+		print "Created the table '" + table_name + "'."
+	except MySQLdb.OperationalError:
+		print "Table '" + table_name + "' already exists."
+	cursor.close()
+
+
 execfile('config/database.py')
 db = MySQLdb.connect(
 			host=database_configuration['host'], 
@@ -47,6 +64,7 @@ if len(sys.argv)==3 and sys.argv[1] == "drop" and sys.argv[2] == "database":
 		print "Database '" + database_configuration['name'] + "' does not exists."
 	cursor.close()
 
+# FIXME: This should not create the table, but the migration file instead
 # create migration [name] [field:type] ...
 if len(sys.argv)>=4 and sys.argv[1] == "create" and sys.argv[2] == "migration":
 	db_name = database_configuration['name']
@@ -65,8 +83,20 @@ if len(sys.argv)>=4 and sys.argv[1] == "create" and sys.argv[2] == "migration":
 	cursor.close()
 
 # create controller [name]
-if len(sys.argv)==4 and sys.argv[1] == "" and sys.argv[2] == "controller":
-	pass
+if len(sys.argv)==4 and sys.argv[1] == "create" and sys.argv[2] == "controller":
+	print "Not implemented."
 
 # migrate
+if len(sys.argv)==2 and sys.argv[1] == "migrate":
+	for migration_file in os.listdir('db/migrate/'):
+		if not migration_file.endswith('.py'):
+			continue
+
+		execfile('db/migrate/' + migration_file)
+		migration_instance = globals()['CreateUsers']()
+		migration_instance.up()
+
+
+
+
 
