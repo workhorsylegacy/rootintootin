@@ -295,11 +295,12 @@ public class Server {
 					foreach(char[] name, char[] value ; _cookies) {
 						Stdout.format("\t{} => {}\n", name, value).flush;
 					}
-
+					*/
 					Stdout("Route :\n").flush;
 					Stdout.format("\tController Name: {}\n", controller).flush;
 					Stdout.format("\tAction Name: {}\n", action).flush;
-					*/
+					Stdout.format("\tID: {}\n", id).flush;
+					//*/
 				}
 
 				// Remove this client from the socket set
