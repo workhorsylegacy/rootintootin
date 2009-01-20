@@ -10,7 +10,13 @@ os.chdir(os.sys.path[0])
 #import Inflector
 
 def pluralize(value):
-	return value + 's'
+	if value.endswith('s'):
+		return value
+	else:
+		return value + 's'
+
+def camelize(word):
+	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
 
 def migration_type_to_sql_type(migration_type):
 	type_map = {'binary' : 'blob',
@@ -149,15 +155,23 @@ if len(sys.argv)==4 and sys.argv[1] == "create" and sys.argv[2] == "controller":
 
 # migrate
 if len(sys.argv)==2 and sys.argv[1] == "migrate":
+	# Get the last schema version
+	last_version = get_schema_version()
+
 	for migration_file in os.listdir('db/migrate/'):
 		# Skip the non python files
 		if not migration_file.endswith('.py'):
 			continue
 
-		# Run the migration
+		# Skip previous migrations
 		version = int(migration_file[0:4])
+		if version <= last_version:
+			continue
+
+		# Run the migration
+		class_name = camelize(migration_file[5:-3])
 		execfile('db/migrate/' + migration_file)
-		migration_instance = globals()['CreateUsers']()
+		migration_instance = globals()[class_name]()
 		migration_instance.up()
 		add_schema_version(version)
 
