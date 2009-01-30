@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import os
 import pexpect
@@ -324,10 +325,11 @@ table_map = generate_models()
 combine_code_files(routes, table_map)
 
 # Compile the application into an executable
-print pexpect.run("gcc -c db.c -o db.o")
-print pexpect.run("ar rcs db.a db.o")
+result = ""
+result += pexpect.run("gcc -c db.c -o db.o")
+result += pexpect.run("ar rcs db.a db.o")
 command = "gdc -fversion=Posix -o run native_rest_cannon.d native_rest_cannon_server.d run.d db.d /usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
-result = pexpect.run(command)
+result += pexpect.run(command)
 print result
 
 
