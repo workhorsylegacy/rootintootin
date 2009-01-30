@@ -34,6 +34,7 @@ def migration_type_to_sql_type(migration_type):
 	return type_map[migration_type]
 
 def create_table(table_name, field_map):
+	# Create the query that will create the table
 	db_name = database_configuration['name']
 	query = "create table `" + db_name + "`.`" + table_name + "` ("
 	query += "id int not null auto_increment primary key, "
@@ -43,23 +44,26 @@ def create_table(table_name, field_map):
 	query += ") ENGINE=innoDB;"
 	cursor = db.cursor()
 
+	# Try running the query
 	try:
 		cursor.execute(query)
 		print "Created the table '" + table_name + "'."
 	except MySQLdb.OperationalError:
-		print "Table '" + table_name + "' already exists."
+		raise Exception("Table '" + table_name + "' already exists.")
 	cursor.close()
 
 def drop_table(table_name):
+	# Create the query that will drop the table
 	db_name = database_configuration['name']
 	query = "drop table `" + db_name + "`.`" + table_name + "`;"
 	cursor = db.cursor()
 
+	# Try running the query
 	try:
 		cursor.execute(query)
 		print "Dropped the table '" + table_name + "'."
 	except MySQLdb.OperationalError:
-		print "Table '" + table_name + "' not dropped."
+		raise Exception("Table '" + table_name + "' not dropped.")
 	cursor.close()
 
 def get_schema_version():
@@ -83,6 +87,45 @@ def add_schema_version(version):
 
 	db.query(query)
 	db.commit()
+
+def migrate():
+	# Get the last schema version
+	last_version = get_schema_version()
+
+	migration_files = os.listdir('db/migrate/')
+	migration_files.sort()
+
+	# Check to see if there are no files to migrate
+	if len(migration_files) == 0:
+		print "There are no migration files."
+		return
+
+	# Check to see if we don't need to migrate
+	if last_version == int(migration_files[-1][0:4]):
+		print "Already migrated to latest version: " + str(last_version) + "."
+		return
+
+	for migration_file in migration_files:
+		# Skip the non python files
+		if not migration_file.endswith('.py'):
+			continue
+
+		# Skip previous migrations
+		version = int(migration_file[0:4])
+		if version <= last_version:
+			continue
+
+		# Run the migration
+		class_name = camelize(migration_file[5:-3])
+		execfile('db/migrate/' + migration_file)
+		migration_instance = locals()[class_name]()
+		try:
+			migration_instance.up()
+			add_schema_version(version)
+		except Exception, err:
+			print "Broke on migration file: '" + migration_file + "'."
+			print err.message
+			return
 
 
 execfile('config/database.py')
@@ -155,25 +198,7 @@ if str.join(' ', sys.argv[1:]) == "create controller":
 
 # migrate
 if str.join(' ', sys.argv[1:]) == "migrate":
-	# Get the last schema version
-	last_version = get_schema_version()
-
-	for migration_file in os.listdir('db/migrate/'):
-		# Skip the non python files
-		if not migration_file.endswith('.py'):
-			continue
-
-		# Skip previous migrations
-		version = int(migration_file[0:4])
-		if version <= last_version:
-			continue
-
-		# Run the migration
-		class_name = camelize(migration_file[5:-3])
-		execfile('db/migrate/' + migration_file)
-		migration_instance = globals()[class_name]()
-		migration_instance.up()
-		add_schema_version(version)
+	migrate()
 
 
 
