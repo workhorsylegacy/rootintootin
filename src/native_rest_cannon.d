@@ -63,6 +63,19 @@ public template ModelBaseMixin(T, char[] model_name) {
 		return tango.text.Util.join(_field_names, ", ");
 	}
 
+	static char[] unique_field_names_as_comma_string() {
+		return tango.text.Util.join(_unique_field_names, ", ");
+	}
+
+	char[] unique_fields_as_comma_string() {
+		char[][] fields;
+		foreach(char[] field_name; _unique_field_names) {
+			fields ~= "'" ~ this.get_field_by_name(field_name) ~ "'";
+		}
+
+		return tango.text.Util.join(fields, ", ");
+	}
+
 	// Returns a single model that matches the id, or null.
 	static T find(int id) {
 		char[] query = "select * from " ~ typeof(T)._table_name ~ " where id=" ~ tango.text.convert.Integer.toString(id) ~ ";";
@@ -120,6 +133,31 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 	static T find_first() {
 		return null;
+	}
+
+	bool save() {
+		char[] query = "";
+
+		// If there is no id, use an insert query
+		if(this._id < 1) {
+			query ~= "insert into " ~ typeof(this)._table_name ~ "(" ~ unique_field_names_as_comma_string ~ ")";
+			query ~= " values(";
+			query ~= this.unique_fields_as_comma_string();
+		 	query ~= ");";
+		} else {
+		// If there is an id, user an update query
+			query ~= "update " ~ typeof(this)._table_name ~ " set(";
+			foreach(char[] field_name ; typeof(this)._unique_field_names) {
+				query ~= field_name ~ "='" ~ this.get_field_by_name(field_name) ~ "', ";
+			}
+			query ~= " where id='" ~ tango.text.convert.Integer.toString(this.id) ~ "';";
+		}
+
+		int row_len, col_len;
+		char*** result = db.d_db_query(query, row_len, col_len);
+		db.d_free_db_query(result, row_len, col_len);
+
+		return false;
 	}
 }
 

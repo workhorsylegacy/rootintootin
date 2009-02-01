@@ -90,14 +90,24 @@ def combine_code_files(routes, table_map):
 	"	UserController controller = new UserController(request);\n")
 	
 	for controller, actions in routes.items():
-		for action in actions['member']:
+		for action, method in actions['member'].items():
 			if action == "new":
 				action = "New"
+			elif action == "delete":
+				action = "Delete"
 			out_file.write(
 			"\n	if(request.action == \"" + action + "\") {\n" +
-			"		controller." + action + "();\n" +
-			"		render_text(" + action.capitalize() + "View.render(controller, line_translations));\n" +
-			"	}\n")
+			"		controller." + action + "();\n"
+			)
+
+			if method == "get":
+				out_file.write(
+				"		render_text(" + action.capitalize() + "View.render(controller, line_translations));\n"
+				)
+
+			out_file.write(
+			"	}\n"
+			)
 
 	out_file.write("}\n")
 
@@ -129,6 +139,16 @@ def convert_string_to_d_type(d_type, d_string_variable_name):
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
+def convert_d_type_to_string(d_type, d_string_variable_name):
+	cast_map = { 'int' : 'tango.text.convert.Integer.toString(#)',
+				'long' : 'tango.text.convert.Integer.toString(#)',
+				'float' : 'tango.text.convert.Float.toString(#)',
+				'bool' : '(# == true ? "true" : "false")',
+				'char' : '#',
+				'char[]' : 'tango.text.Util.repeat(#, 1)' }
+
+	return cast_map[d_type].replace('#', d_string_variable_name)
+
 def model_generated_properties_class(model_name, model_map):
 	# Add class opening
 	properties = "public class " + model_name.capitalize() + "ModelGeneratedProperties : ModelBase {\n"
@@ -136,6 +156,14 @@ def model_generated_properties_class(model_name, model_map):
 	# Add a list of all field names
 	properties += "private static char[][] _field_names = ["
 	for field, values in model_map.items():
+		properties += "\"" + field + "\", ";
+	properties += "];\n\n";
+
+	# Add a list of the unique field names
+	properties += "private static char[][] _unique_field_names = ["
+	for field, values in model_map.items():
+		if field == "id":
+			continue
 		properties += "\"" + field + "\", ";
 	properties += "];\n\n";
 
@@ -174,6 +202,23 @@ def model_generated_properties_class(model_name, model_map):
 				"	}\n" + \
 				"}\n"
 
+	# Add the get_field_by_name method
+	properties += \
+				"public char[] get_field_by_name(char[] field_name) {\n" + \
+				"	switch(field_name) {\n"
+
+	# tango.text.convert.Integer.parse.toString
+	for field, values in model_map.items():
+		value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "_" + field)
+		properties += \
+				"		case \"" + field + "\":\n" + \
+				"			return " + value_to_string + ";\n" + \
+				"			break;\n"
+
+	properties += \
+				"	}\n" + \
+				"}\n"
+
 	# Add class closing
 	properties += "}"
 
@@ -182,8 +227,10 @@ def model_generated_properties_class(model_name, model_map):
 
 def generate_models():
 	# Connect to the database
-	# FIXME: This should be gotten from the config file
-	db = MySQLdb.connect(host="localhost", user="root", passwd="letmein", db="me_love_movies_development")
+	db = MySQLdb.connect(host = globals()['database_configuration']['host'], 
+						user = globals()['database_configuration']['user'], 
+						passwd = globals()['database_configuration']['password'], 
+						db = globals()['database_configuration']['name'])
 
 	# Get all the tables
 	table_map = {}
@@ -317,6 +364,7 @@ def process_template_body(body, output):
 
 # Get the routes
 execfile("config/routes.py")
+execfile("config/database.py")
 
 # Do code generation
 generate_layouts()

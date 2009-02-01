@@ -1,0 +1,4 @@
+
+<p><b>Name:</b> <%=controller._user.name%></p>
+<p><b>Email:</b> <%=controller._user.email%></p>
+

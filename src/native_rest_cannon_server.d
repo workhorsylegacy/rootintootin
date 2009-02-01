@@ -166,7 +166,7 @@ public class Server {
 	public static void start(void function(Request request, void function(char[]) render_text) run_action) {
 		// Connect to the database
 		// FIXME: This should be loaded from a configuration file, instead of hard coded.
-		d_db_connect("localhost", "root", "letmein", "me_love_movies_development");
+		d_db_connect("localhost", "root", "letmein", "native_rest_cannon");
 
 		const int MAX_CONNECTIONS = 100;
 		ushort port = 2345;
@@ -212,7 +212,9 @@ public class Server {
 //					Stdout.format("Received from {}: \n\"{}\"\n", client_sockets[i].remoteAddress(), buffer[0 .. read]).flush;
 
 					// Get the request
-					char[][] request = tango.text.Util.splitLines(buffer[0 .. read]);
+					char[] raw_request = buffer[0 .. read];
+					char[][] request = tango.text.Util.splitLines(raw_request);
+					//Stdout.format("\tRequest: [[{}]]\n", raw_request).flush;
 
 					// Get the header
 					char[][] header = tango.text.Util.split(request[0], " ");
@@ -260,10 +262,18 @@ public class Server {
 						}
 					}
 
-					// Get the params
+					// Get the HTTP GET params
 					char[][char[]] params;
 					if(tango.text.Util.contains(uri, '?')) {
 						foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
+							char[][] pair = tango.text.Util.split(param, "=");
+							params[pair[0]] = pair[1];
+						}
+					}
+
+					// Get the HTTP POST params
+					if(method == "POST" && tango.text.Util.contains(request[request.length-1], ':') == false) {
+						foreach(char[] param ; tango.text.Util.split(request[request.length-1], "&")) {
 							char[][] pair = tango.text.Util.split(param, "=");
 							params[pair[0]] = pair[1];
 						}

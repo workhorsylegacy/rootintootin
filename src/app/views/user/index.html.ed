@@ -4,11 +4,14 @@
 		<td>
 			<ul>
 				<li><%=user.name%></li>
-				<li><%=user.user_name%></li>
-				<li><%=user.disabled ? "True" : "False" %></li>
 				<li><%=user.email%></li>
 			</ul>
 		</td>
+	</tr>
+	<% } %>
+	<% if(controller._users.length == 0) { %>
+	<tr>
+		<td>There are no users.</td>
 	</tr>
 	<% } %>
 </table>

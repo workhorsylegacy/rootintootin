@@ -1,5 +1,8 @@
 
 <form action="/user/create" method="post">
-	<input id="user_name" name="user_name" type="text" value="<%=controller._user.name()%>" />
+	<h1>New User</h1>
+	Name: <input id="user_name" name="name" type="text" value="<%=controller._user.name%>" />
+	Email: <input id="user_email" name="email" type="text" value="<%=controller._user.email%>" />
+	<input type="Submit" value="Create" />
 </form>
 
