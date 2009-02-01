@@ -20,6 +20,7 @@ import tango.time.WallClock;
 import tango.time.Clock;
 
 import native_rest_cannon;
+import helper;
 import db;
 
 
@@ -30,80 +31,6 @@ public class Server {
 	private static int _session_id = 0;
 	private static char[][char[]] _sessions;
 	private static char[][char[]] _cookies;
-
-	private static char[][ushort] status_code;
-	private static char[][char[]] cookie_escape_map;
-
-	public static this() {
-		status_code[100] = "Continue";
-		status_code[101] = "Switching Protocols";
-		status_code[200] = "OK";
-		status_code[201] = "Created";
-		status_code[202] = "Accepted";
-		status_code[203] = "Non-Authoritative Information";
-		status_code[204] = "No Content";
-		status_code[205] = "Reset Content";
-		status_code[206] = "Partial Content";
-		status_code[300] = "Multiple Choices";
-		status_code[301] = "Moved Permanently";
-		status_code[302] = "Found";
-		status_code[303] = "See Other";
-		status_code[304] = "Not Modified";
-		status_code[305] = "Use Proxy";
-		status_code[307] = "Temporary Redirect";
-		status_code[400] = "Bad Request";
-		status_code[401] = "Unauthorized";
-		status_code[402] = "Payment Required";
-		status_code[403] = "Forbidden";
-		status_code[404] = "Not Found";
-		status_code[405] = "Method Not Allowed";
-		status_code[406] = "Not Acceptable";
-		status_code[407] = "Proxy Authentication Required";
-		status_code[408] = "Request Time-out";
-		status_code[409] = "Conflict";
-		status_code[410] = "Gone";
-		status_code[411] = "Length Required";
-		status_code[412] = "Precondition Failed";
-		status_code[413] = "Request Entity Too Large";
-		status_code[414] = "Request-URI Too Large";
-		status_code[415] = "Unsupported Media Type";
-		status_code[416] = "Requested range not satisfiable";
-		status_code[417] = "Expectation Failed";
-		status_code[500] = "Internal Server Error";
-		status_code[501] = "Not Implemented";
-		status_code[502] = "Bad Gateway";
-		status_code[503] = "Service Unavailable";
-		status_code[504] = "Gateway Time-out";
-		status_code[505] = "HTTP Version not supported";
-
-		cookie_escape_map[";"] = "%3B";
-		cookie_escape_map[" "] = "+";
-		cookie_escape_map["\n"] = "%0A";
-		cookie_escape_map["\r"] = "%0D";
-		cookie_escape_map["\t"] = "%09";
-		cookie_escape_map["="] = "%3D";
-		cookie_escape_map["+"] = "%2B";
-	}
-
-	public static char[] get_verbose_status_code(ushort code) {
-		return tango.text.convert.Integer.toString(code) ~ " " ~ status_code[code];
-	}
-
-	public static char[] escape_cookie_value(char[] value) {
-		foreach(char[] before, char[] after ; cookie_escape_map) {
-			value = tango.text.Util.substitute(value, before, after);
-		}
-
-		return value;
-	}
-
-	public static char[] unescape_cookie_value(char[] value) {
-		foreach(char[] before, char[] after ; cookie_escape_map) {
-			value = tango.text.Util.substitute(value, after, before);
-		}
-
-		return value;
-	}
 
 	public static char[] hash_and_base64(char[] value) {
 		Sha0 sha_encoder = new Sha0();
@@ -120,7 +47,7 @@ public class Server {
 			throw new Exception("This action has already rendered.");
 		}
 
-		char[] status = get_verbose_status_code(200);
+		char[] status = Helper.get_verbose_status_code(200);
 
 		// If there is no session add one to the cookies
 		// FIXME: Session ids are not yet salted, so they can easily be looked up in a rainbow table or googled
@@ -138,7 +65,7 @@ public class Server {
 		// Get all the new cookie values to send
 		// FIXME: This is sending all cookies. It should only send the ones that have changed
 		foreach(char[] name, char[] value ; _cookies) {
-			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ escape_cookie_value(value) ~ "\r\n";
+			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ Helper.escape_value(value) ~ "\r\n";
 		}
 
 		// Add the HTTP headers
@@ -249,7 +176,7 @@ public class Server {
 							if(pair.length != 2) {
 								Stdout.format("Malformed cookie: {}", cookie).flush;
 							} else {
-								_cookies[pair[0]] = unescape_cookie_value(pair[1]);
+								_cookies[pair[0]] = Helper.unescape_value(pair[1]);
 							}
 						}
 					}
@@ -267,7 +194,7 @@ public class Server {
 					if(tango.text.Util.contains(uri, '?')) {
 						foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
 							char[][] pair = tango.text.Util.split(param, "=");
-							params[pair[0]] = pair[1];
+							params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
 						}
 					}
 
@@ -275,7 +202,9 @@ public class Server {
 					if(method == "POST" && tango.text.Util.contains(request[request.length-1], ':') == false) {
 						foreach(char[] param ; tango.text.Util.split(request[request.length-1], "&")) {
 							char[][] pair = tango.text.Util.split(param, "=");
-							params[pair[0]] = pair[1];
+							if(pair.length == 2) {
+								params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+							}
 						}
 					}
 

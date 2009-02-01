@@ -7,12 +7,16 @@ void d_db_connect(char[] server, char[] user_name, char[] password, char[] datab
 	db_connect(toStringz(server), toStringz(user_name), toStringz(password), toStringz(database));
 }
 
-char*** d_db_query(char[] query, out int row_len, out int col_len) {
-	return db_query(toStringz(query), &row_len, &col_len);
+void d_db_query(char[] query) {
+	db_query(toStringz(query));
 }
 
-void d_free_db_query(char*** result, int row_len, int col_len) {
-	free_db_query(result, row_len, col_len);
+char*** d_db_query_with_result(char[] query, out int row_len, out int col_len) {
+	return db_query_with_result(toStringz(query), &row_len, &col_len);
+}
+
+void d_free_db_query_with_result(char*** result, int row_len, int col_len) {
+	free_db_query_with_result(result, row_len, col_len);
 }
 
 private:
@@ -20,6 +24,7 @@ private:
 extern (C):
 
 void db_connect(char* server, char* user_name, char* password, char* database);
-char*** db_query(char* query, int* row_len, int* col_len);
-void free_db_query(char*** result, int row_len, int col_len);
+void db_query(char* query);
+char*** db_query_with_result(char* query, int* row_len, int* col_len);
+void free_db_query_with_result(char*** result, int row_len, int col_len);
 

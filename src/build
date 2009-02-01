@@ -72,7 +72,10 @@ def combine_code_files(routes, table_map):
 
 	# Write the views into the file
 	for controller, actions in routes.items():
-		for member, http_method in actions['member'].items():
+		all_actions = {}
+		all_actions.update(actions['member'])
+		all_actions.update(actions['collection'])
+		for member, http_method in all_actions.items():
 			if not os.path.exists('app/views/' + controller + '/' + member + '.d'):
 				continue
 
@@ -90,7 +93,10 @@ def combine_code_files(routes, table_map):
 	"	UserController controller = new UserController(request);\n")
 	
 	for controller, actions in routes.items():
-		for action, method in actions['member'].items():
+		all_actions = {}
+		all_actions.update(actions['member'])
+		all_actions.update(actions['collection'])
+		for action, method in all_actions.items():
 			if action == "new":
 				action = "New"
 			elif action == "delete":
@@ -262,7 +268,10 @@ def generate_models():
 
 def generate_views(routes):
 	for controller, actions in routes.items():
-		for member, http_method in actions['member'].items():
+		all_actions = {}
+		all_actions.update(actions['member'])
+		all_actions.update(actions['collection'])
+		for member, http_method in all_actions.items():
 			# If there is no template, then skip it
 			if not os.path.exists('app/views/' + controller + '/' + member + '.html.ed'):
 				continue
@@ -376,7 +385,7 @@ combine_code_files(routes, table_map)
 result = ""
 result += pexpect.run("gcc -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
-command = "gdc -fversion=Posix -o run native_rest_cannon.d native_rest_cannon_server.d run.d db.d /usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
+command = "gdc -fversion=Posix -o run helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d /usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
 result += pexpect.run(command)
 print result
 

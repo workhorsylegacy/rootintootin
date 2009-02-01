@@ -19,8 +19,18 @@ void db_connect(char* server, char* user_name, char* password, char* database) {
 					0, NULL, 0);
 }
 
+// Runs the query and returns nothing
+void db_query(char* query) {
+	// Run the query and get the result
+	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
+	res = mysql_store_result(&mysql);
+
+	// Free the resources for the result
+	mysql_free_result(res);
+}
+
 // Runs the query and returns it as a 3D array of characters
-char*** db_query(char* query, int* row_len, int* col_len) {
+char*** db_query_with_result(char* query, int* row_len, int* col_len) {
 	char*** retval;
 
 	// Run the query and get the result
@@ -64,7 +74,7 @@ char*** db_query(char* query, int* row_len, int* col_len) {
 	return retval;
 }
 
-void free_db_query(char*** result, int row_len, int col_len) {
+void free_db_query_with_result(char*** result, int row_len, int col_len) {
 	int i, j;
 	for(i=0; i < row_len; i++) {
 		for(j=0; j < col_len; j++) {

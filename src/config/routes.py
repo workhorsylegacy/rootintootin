@@ -5,7 +5,7 @@ routes = {'user' : { 'member' : { 'show' : 'get',
 								'create' : 'post',
 								'edit' : 'get',
 								'update' : 'put',
-								'delete' : 'delete' }
+								'destroy' : 'delete' }
 					,
 					'collection' : { 'index' : 'get' }
 					}
