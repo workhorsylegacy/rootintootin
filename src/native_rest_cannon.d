@@ -80,7 +80,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static T find(int id) {
 		char[] query = "select * from " ~ typeof(T)._table_name ~ " where id=" ~ tango.text.convert.Integer.toString(id) ~ ";";
 		int row_len, col_len;
-		char*** result = db.d_db_query_with_result(query, row_len, col_len);
+		char*** result = db.db_query_with_result(query, row_len, col_len);
 
 		// Just return null if there was none found
 		if(row_len == 0) return null;
@@ -90,7 +90,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 			model.set_field_by_name(_field_names[i], tango.stdc.stringz.fromStringz(result[0][i]));
 		}
 
-		db.d_free_db_query_with_result(result, row_len, col_len);
+		db.free_db_query_with_result(result, row_len, col_len);
 
 		return model;
 	}
@@ -115,7 +115,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 		query ~= ";";
 
 		int row_len, col_len;
-		char*** result = db.d_db_query_with_result(query, row_len, col_len);
+		char*** result = db.db_query_with_result(query, row_len, col_len);
 
 		T model = null;
 		for(int i=0; i<row_len; i++) {
@@ -126,7 +126,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 			all ~= model;
 		}
 
-		db.d_free_db_query_with_result(result, row_len, col_len);
+		db.free_db_query_with_result(result, row_len, col_len);
 
 		return all;
 	}
@@ -153,7 +153,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 			query ~= " where id='" ~ tango.text.convert.Integer.toString(this.id) ~ "';";
 		}
 
-		db.d_db_query(query);
+		db.db_query(query);
 
 		return false;
 	}

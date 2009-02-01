@@ -10,7 +10,7 @@ MYSQL mysql;
 MYSQL_RES *res;
 MYSQL_ROW row;
 
-void db_connect(char* server, char* user_name, char* password, char* database) {
+void c_db_connect(char* server, char* user_name, char* password, char* database) {
 	mysql_init(&mysql);
 	mysql_real_connect(&mysql,
 					server, 
@@ -20,7 +20,7 @@ void db_connect(char* server, char* user_name, char* password, char* database) {
 }
 
 // Runs the query and returns nothing
-void db_query(char* query) {
+void c_db_query(char* query) {
 	// Run the query and get the result
 	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
 	res = mysql_store_result(&mysql);
@@ -30,7 +30,7 @@ void db_query(char* query) {
 }
 
 // Runs the query and returns it as a 3D array of characters
-char*** db_query_with_result(char* query, int* row_len, int* col_len) {
+char*** c_db_query_with_result(char* query, int* row_len, int* col_len) {
 	char*** retval;
 
 	// Run the query and get the result
@@ -74,7 +74,7 @@ char*** db_query_with_result(char* query, int* row_len, int* col_len) {
 	return retval;
 }
 
-void free_db_query_with_result(char*** result, int row_len, int col_len) {
+void c_free_db_query_with_result(char*** result, int row_len, int col_len) {
 	int i, j;
 	for(i=0; i < row_len; i++) {
 		for(j=0; j < col_len; j++) {

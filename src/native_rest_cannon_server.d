@@ -93,7 +93,7 @@ public class Server {
 	public static void start(void function(Request request, void function(char[]) render_text) run_action) {
 		// Connect to the database
 		// FIXME: This should be loaded from a configuration file, instead of hard coded.
-		d_db_connect("localhost", "root", "letmein", "native_rest_cannon");
+		db_connect("localhost", "root", "letmein", "native_rest_cannon");
 
 		const int MAX_CONNECTIONS = 100;
 		ushort port = 2345;
