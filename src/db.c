@@ -19,8 +19,25 @@ void c_db_connect(char* server, char* user_name, char* password, char* database)
 					0, NULL, 0);
 }
 
+// Runs the query and returns the id of the last inserted row
+unsigned long long c_db_insert_query_with_result_id(char* query) {
+	unsigned long long id = -1;
+
+	// Run the query and get the result
+	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
+	res = mysql_store_result(&mysql);
+
+	// Return the id of the last inserted row
+	id = mysql_insert_id(&mysql);
+
+	// Free the resources for the result
+	mysql_free_result(res);
+
+	return id;
+}
+
 // Runs the query and returns nothing
-void c_db_query(char* query) {
+void c_db_update_query(char* query) {
 	// Run the query and get the result
 	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
 	res = mysql_store_result(&mysql);

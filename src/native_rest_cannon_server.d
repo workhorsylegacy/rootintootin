@@ -25,26 +25,34 @@ import db;
 
 
 public class Server {
-	private static bool _has_rendered = false;
-	private static Request _request = null;
-	private static Socket _client_socket = null;
-	private static int _session_id = 0;
-	private static char[][char[]] _sessions;
-	private static char[][char[]] _cookies;
+	private bool _has_rendered = false;
+	private Request _request = null;
+	private Socket _client_socket = null;
+	private int _session_id = 0;
+	private char[][char[]] _sessions;
+	private char[][char[]] _cookies;
 
-	public static char[] hash_and_base64(char[] value) {
-		Sha0 sha_encoder = new Sha0();
-		sha_encoder.update(value);
-		ubyte[] encoded = sha_encoder.binaryDigest();
-
-		char[] encodebuf = new char[tango.io.encode.Base64.allocateEncodeSize(cast(ubyte[])encoded)];
-		return tango.io.encode.Base64.encode(cast(ubyte[])encoded, encodebuf);
-	}
-
-	public static void render_text(char[] text) {
+	public void redirect_to(char[] url) {
 		// If we have already rendered, show an error
 		if(_has_rendered) {
-			throw new Exception("This action has already rendered.");
+			throw new Exception("Something has already been rendered.");
+		}
+
+		char[] status = Helper.get_verbose_status_code(301);
+
+		char[]  header = "HTTP/1.1 " ~ status ~ "\r\n" ~
+		"Location: " ~ url ~ "\r\n" ~
+		"Content-Type: text/html\r\n" ~
+		"Content-Length: 0" ~
+		"\r\n";
+
+		_client_socket.send(header);
+	}
+
+	public void render_text(char[] text) {
+		// If we have already rendered, show an error
+		if(_has_rendered) {
+			throw new Exception("Something has already been rendered.");
 		}
 
 		char[] status = Helper.get_verbose_status_code(200);
@@ -53,7 +61,7 @@ public class Server {
 		// FIXME: Session ids are not yet salted, so they can easily be looked up in a rainbow table or googled
 		char[] set_cookies = "";
 		if(("_appname_session" in _cookies) == null || (_cookies["_appname_session"] in _sessions) == null) {
-			char[] hashed_session_id = hash_and_base64(tango.text.convert.Integer.toString(_session_id));
+			char[] hashed_session_id = Helper.hash_and_base64(tango.text.convert.Integer.toString(_session_id));
 			_cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
 			_sessions[hashed_session_id] = [];
 			Stdout.format("\nCreated session number '{}' '{}'\n", _session_id, hashed_session_id).flush;
@@ -90,7 +98,7 @@ public class Server {
 		_client_socket.send(tango.text.Util.join(reply, ""));
 	}
 
-	public static void start(void function(Request request, void function(char[]) render_text) run_action) {
+	public void start(void function(Request request, Server server) run_action) {
 		// Connect to the database
 		// FIXME: This should be loaded from a configuration file, instead of hard coded.
 		db_connect("localhost", "root", "letmein", "native_rest_cannon");
@@ -221,7 +229,7 @@ public class Server {
 					_request = new Request(method, uri, http_version, controller, action, params, _cookies);
 
 					// Run the action
-					run_action(_request, &render_text);
+					run_action(_request, this);
 
 					// FIXME: this prints out all the values we care about
 					/*

@@ -2,6 +2,10 @@
 import tango.text.Util;
 import tango.text.convert.Integer;
 
+import tango.io.digest.Digest;
+import tango.io.digest.Sha0;
+import tango.io.encode.Base64;
+
 public class Helper {
 	private static char[][ushort] status_code;
 	private static char[][char[]] escape_map;
@@ -24,6 +28,15 @@ public class Helper {
 
 	public static char[] get_verbose_status_code(ushort code) {
 		return tango.text.convert.Integer.toString(code) ~ " " ~ status_code[code];
+	}
+
+	public static char[] hash_and_base64(char[] value) {
+		Sha0 sha_encoder = new Sha0();
+		sha_encoder.update(value);
+		ubyte[] encoded = sha_encoder.binaryDigest();
+
+		char[] encodebuf = new char[tango.io.encode.Base64.allocateEncodeSize(cast(ubyte[])encoded)];
+		return tango.io.encode.Base64.encode(cast(ubyte[])encoded, encodebuf);
 	}
 
 	public static this() {

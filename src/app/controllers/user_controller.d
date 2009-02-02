@@ -24,9 +24,10 @@ public class UserController : ControllerBase {
 		_user.name = _request.params["user[name]"];
 		_user.email = _request.params["user[email]"];
 
-		if(_user.save()){
-//			_response.redirect_to("show/" ~ tango.text.convert.Integer.parse.toString(_user.id));
+		if(_user.save()) {
+			redirect_to("/users/show/" ~ tango.text.convert.Integer.toString(_user.id));
 		} else {
+			redirect_to("http://yahoo.com/");
 //			_response.render("new");
 		}
 	}
@@ -36,6 +37,16 @@ public class UserController : ControllerBase {
 	}
 
 	public void update() {
+		_user = User.find(tango.text.convert.Integer.parse(_request.params["id"]));
+		_user.name = _request.params["user[name]"];
+		_user.email = _request.params["user[email]"];
+
+		if(_user.save()) {
+			redirect_to("/users/show/" ~ tango.text.convert.Integer.toString(_user.id));
+		} else {
+			redirect_to("http://yahoo.com/");
+//			_response.render("edit");
+		}
 	}
 
 	public void destroy() {

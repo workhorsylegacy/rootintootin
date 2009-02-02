@@ -77,8 +77,9 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 
 	// Returns a single model that matches the id, or null.
-	static T find(int id) {
-		char[] query = "select * from " ~ typeof(T)._table_name ~ " where id=" ~ tango.text.convert.Integer.toString(id) ~ ";";
+	static T find(ulong id) {
+		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ typeof(T)._table_name;
+		query ~= " where id=" ~ tango.text.convert.Integer.toString(id) ~ ";";
 		int row_len, col_len;
 		char*** result = db.db_query_with_result(query, row_len, col_len);
 
@@ -96,7 +97,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 
 	// Returns a single model that matches the id, or throws if not found.
-	static T find_by_id(int id) {
+	static T find_by_id(ulong id) {
 		T model = find(id);
 		if(model == null) {
 			throw new Exception("No {} with the id '{}' was found.", _model_name, id);
@@ -144,18 +145,27 @@ public template ModelBaseMixin(T, char[] model_name) {
 			query ~= " values(";
 			query ~= this.unique_fields_as_comma_string();
 		 	query ~= ");";
+
+			// Run the query, and save the id
+			_id = db.db_insert_query_with_result_id(query);
 		} else {
-		// If there is an id, user an update query
-			query ~= "update " ~ typeof(this)._table_name ~ " set(";
+		// If there is an id, use an update query
+			query ~= "update " ~ typeof(this)._table_name ~ " set ";
+			uint counter = 0;
 			foreach(char[] field_name ; typeof(this)._unique_field_names) {
-				query ~= field_name ~ "='" ~ this.get_field_by_name(field_name) ~ "', ";
+				counter++;
+				query ~= field_name ~ "='" ~ this.get_field_by_name(field_name) ~ "'";
+				if(counter < typeof(this)._unique_field_names.length) {
+					query ~= ", ";
+				}
 			}
-			query ~= " where id='" ~ tango.text.convert.Integer.toString(this.id) ~ "';";
+			query ~= " where id=" ~ tango.text.convert.Integer.toString(this._id) ~ ";";
+
+			// Run the query
+			db.db_update_query(query);
 		}
 
-		db.db_query(query);
-
-		return false;
+		return true;
 	}
 }
 
@@ -165,9 +175,15 @@ public class ControllerBase {
 
 public template ControllerBaseMixin(T) {
 	private Request _request = null;
+	private Server _server = null;
 
-	public this(Request request) {
+	public this(Request request, Server server) {
 		_request = request;
+		_server = server;
+	}
+
+	public void redirect_to(char[] url) {
+		_server.redirect_to(url);
 	}
 }
 

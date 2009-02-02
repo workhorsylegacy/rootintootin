@@ -88,9 +88,9 @@ def combine_code_files(routes, table_map):
 	
 	# Write the run action function
 	out_file.write(
-	"public void run_action(Request request, void function(char[]) render_text) {\n" +
+	"public void run_action(Request request, Server server) {\n" +
 	"	int[int] line_translations;\n" +
-	"	UserController controller = new UserController(request);\n")
+	"	UserController controller = new UserController(request, server);\n")
 	
 	for controller, actions in routes.items():
 		all_actions = {}
@@ -108,7 +108,7 @@ def combine_code_files(routes, table_map):
 
 			if method == "get":
 				out_file.write(
-				"		render_text(" + action.capitalize() + "View.render(controller, line_translations));\n"
+				"		server.render_text(" + action.capitalize() + "View.render(controller, line_translations));\n"
 				)
 
 			out_file.write(
@@ -120,7 +120,8 @@ def combine_code_files(routes, table_map):
 	# Write the main function
 	out_file.write(
 	"\n\nint main() {\n" +
-	"	Server.start(&run_action);\n" +
+	"	Server server = new Server();\n" +
+	"	server.start(&run_action);\n" +
 	"\n" +
 	"	return 0;\n" +
 	"}\n")
@@ -130,7 +131,7 @@ def sql_type_to_d_type(sql_type):
 	type_map = { 'tinyint(1)' : 'bool',
 				 'varchar(255)' : 'char[]',
 				 'datetime' : 'char[]',
-				 'int(11)' : 'int',
+				 'int(11)' : 'ulong',
 				 'text' : 'char[]' }
 
 	return type_map[sql_type]
@@ -138,6 +139,7 @@ def sql_type_to_d_type(sql_type):
 def convert_string_to_d_type(d_type, d_string_variable_name):
 	cast_map = { 'int' : 'tango.text.convert.Integer.toInt(#)',
 				'long' : 'tango.text.convert.Integer.toLong(#)',
+				'ulong' : 'tango.text.convert.Integer.convert(#)',
 				'float' : 'tango.text.convert.Float.toFloat(#)',
 				'bool' : '(# == "true" ? true : false)',
 				'char' : '#',
@@ -148,6 +150,7 @@ def convert_string_to_d_type(d_type, d_string_variable_name):
 def convert_d_type_to_string(d_type, d_string_variable_name):
 	cast_map = { 'int' : 'tango.text.convert.Integer.toString(#)',
 				'long' : 'tango.text.convert.Integer.toString(#)',
+				'ulong' : 'tango.text.convert.Integer.toString(#)',
 				'float' : 'tango.text.convert.Float.toString(#)',
 				'bool' : '(# == true ? "true" : "false")',
 				'char' : '#',
