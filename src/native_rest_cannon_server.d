@@ -105,10 +105,15 @@ public class Server {
 
 		const int MAX_CONNECTIONS = 100;
 		ushort port = 2345;
+
+		// Create a socket that is non-blocking, can re-uses dangling addresses, and can hold many connections.
 		Socket server = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
 		server.blocking = false;
 		server.bind(new InternetAddress(port));
+		uint[1] opt = 1;
+		server.setOption(SocketOptionLevel.SOCKET, SocketOption.SO_REUSEADDR, opt);
 		server.listen(MAX_CONNECTIONS);
+
 		// FIXME: Isn't this socket_set doing the same thing as the client_sockets array? Is it needed?
 		SocketSet socket_set = new SocketSet(MAX_CONNECTIONS + 1);
 		Socket[] client_sockets;
