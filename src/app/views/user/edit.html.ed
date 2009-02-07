@@ -1,5 +1,5 @@
 
-<form action="/users/update/<%=tango.text.convert.Integer.toString(controller._user.id)%>" class="edit_user" id="edit_user_<%=tango.text.convert.Integer.toString(controller._user.id)%>" method="post">
+<form action="/users/update/<%=controller._user.id%>" class="edit_user" id="edit_user_<%=controller._user.id%>" method="post">
 	<h1>Editing User</h1>
 	<p>
 		<label for="user_name">Name</label><br />
@@ -13,7 +13,7 @@
 	<input id="user_submit" name="commit" type="submit" value="Update" />
 </form>
 
-<a href="/users/show/<%=tango.text.convert.Integer.toString(controller._user.id)%>">Show</a> |
+<a href="/users/show/<%=controller._user.id%>">Show</a> |
 <a href="/users">Back</a>
 
 

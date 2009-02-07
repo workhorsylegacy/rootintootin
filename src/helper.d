@@ -6,6 +6,8 @@ import tango.io.digest.Digest;
 import tango.io.digest.Sha0;
 import tango.io.encode.Base64;
 
+
+// Helper functions for the server
 public class Helper {
 	private static char[][ushort] status_code;
 	private static char[][char[]] escape_map;
@@ -453,3 +455,4 @@ public class Helper {
 		escape_map["ſ"] = "%17F";
 	}
 }
+

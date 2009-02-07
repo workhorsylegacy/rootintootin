@@ -2,6 +2,6 @@
 <p><b>Name:</b> <%=controller._user.name%></p>
 <p><b>Email:</b> <%=controller._user.email%></p>
 
-<a href="/users/edit/<%=tango.text.convert.Integer.toString(controller._user.id)%>">Edit</a> | 
+<a href="/users/edit/<%=controller._user.id%>">Edit</a> | 
 <a href="/users">Back</a>
 

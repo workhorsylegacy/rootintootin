@@ -20,6 +20,8 @@ def combine_code_files(routes, table_map):
 		"import tango.time.WallClock;\n" +
 
 		"\n" +
+		"import language_helper;\n" +
+		"import helper;\n" +
 		"import native_rest_cannon;\n" +
 		"import native_rest_cannon_server;\n\n"
 	);
@@ -290,13 +292,13 @@ def generate_views(routes):
 			"public class " + member.capitalize() + "View { \n" +
 			"public static char[] render(" + controller.capitalize() + "Controller controller, out int[int] line_translations) { \n" +
 			"	// Generate the view as an array of strings\n" +
-			"	char[][] builder;")
+			"	AutoStringArray builder = new AutoStringArray();")
 
 			process_template_body(body, output)
 
 			# Print the closing of the function
 			output.append(
-			"\n	return DefaultLayout.render(tango.text.Util.join(builder, \"\")); \n" +
+			"\n	return DefaultLayout.render(tango.text.Util.join(builder.value, \"\")); \n" +
 			"}\n" +
 			"}\n")
 
@@ -325,13 +327,13 @@ def generate_layouts():
 		"public class " + layout.capitalize() + "Layout { \n" +
 		"public static char[] render(char[] yield) { \n" +
 		"	// Generate the layout as an array of strings\n" +
-		"	char[][] builder;")
+		"	AutoStringArray builder = new AutoStringArray();")
 
 		process_template_body(body, output)
 
 		# Print the closing of the function
 		output.append(
-		"\n	return tango.text.Util.join(builder, \"\"); \n" +
+		"\n	return tango.text.Util.join(builder.value, \"\"); \n" +
 		"}\n" +
 		"}\n")
 
@@ -388,7 +390,9 @@ combine_code_files(routes, table_map)
 result = ""
 result += pexpect.run("gcc -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
-command = "gdc -fversion=Posix -o run helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d /usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
+command = "gdc -fversion=Posix -o run " + \
+			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d " + \
+			"/usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
 result += pexpect.run(command)
 print result
 

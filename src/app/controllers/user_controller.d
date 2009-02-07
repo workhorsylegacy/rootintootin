@@ -12,7 +12,7 @@ public class UserController : ControllerBase {
 	}
 
 	public void show() {
-		_user = User.find(tango.text.convert.Integer.parse(_request.params["id"]));
+		_user = User.find(to_ulong(_request.params["id"]));
 	}
 
 	public void New() {
@@ -25,7 +25,7 @@ public class UserController : ControllerBase {
 		_user.email = _request.params["user[email]"];
 
 		if(_user.save()) {
-			redirect_to("/users/show/" ~ tango.text.convert.Integer.toString(_user.id));
+			redirect_to("/users/show/" ~ to_s(_user.id));
 		} else {
 			redirect_to("http://yahoo.com/");
 //			_response.render("new");
@@ -33,16 +33,16 @@ public class UserController : ControllerBase {
 	}
 
 	public void edit() {
-		_user = User.find(tango.text.convert.Integer.parse(_request.params["id"]));
+		_user = User.find(to_ulong(_request.params["id"]));
 	}
 
 	public void update() {
-		_user = User.find(tango.text.convert.Integer.parse(_request.params["id"]));
+		_user = User.find(to_ulong(_request.params["id"]));
 		_user.name = _request.params["user[name]"];
 		_user.email = _request.params["user[email]"];
 
 		if(_user.save()) {
-			redirect_to("/users/show/" ~ tango.text.convert.Integer.toString(_user.id));
+			redirect_to("/users/show/" ~ to_s(_user.id));
 		} else {
 			redirect_to("http://yahoo.com/");
 //			_response.render("edit");
@@ -50,7 +50,7 @@ public class UserController : ControllerBase {
 	}
 
 	public void destroy() {
-		_user = User.find(tango.text.convert.Integer.parse(_request.params["id"]));
+		_user = User.find(to_ulong(_request.params["id"]));
 	}
 }
 
