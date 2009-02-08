@@ -39,9 +39,14 @@ def create_table(table_name, field_map):
 	query = "create table `" + db_name + "`.`" + table_name + "` ("
 	query += "id int not null auto_increment primary key, "
 	for field_name, field_type in field_map.items():
-		query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
+		if field_name == "references":
+			query += "`" + field_type + "_id` int not null, "
+			query += "foreign key(`" + field_type + "_id`) references `" + pluralize(field_type) + "`(`id`), "
+		else:
+			query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
 	query = str.rstrip(query, ', ')
 	query += ") ENGINE=innoDB;"
+
 	cursor = db.cursor()
 
 	# Try running the query
@@ -184,10 +189,13 @@ if str.join(' ', sys.argv[1:3]) == "create migration":
 		"	def up(self):\n" +
 		"		create_table('" + pluralize(model_name) + "', {\n"
 	)
+	
 	for field in sys.argv[4:]:
-		f.write("\t\t\t'" + field.split(':')[0] + "' : '" + field.split(':')[1] + "', \n", )
-	f.write("		})\n\n" +
-		"	def down(self):\n" +
+		field_name, field_type = field.split(':')
+		f.write("\t\t\t'" + field_name + "' : '" + field_type + "', \n")
+	f.write("		}) \n")
+
+	f.write("	def down(self):\n" +
 		"		drop_table('" + pluralize(model_name) + "')\n" +
 		"\n\n"
 	)

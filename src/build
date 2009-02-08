@@ -4,6 +4,8 @@ import os
 import pexpect
 import MySQLdb
 
+# Move the path to the location of the current file
+os.chdir(os.sys.path[0])
 
 def combine_code_files(routes, table_map):
 	# Open the output file
