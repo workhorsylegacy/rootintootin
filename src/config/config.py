@@ -5,3 +5,8 @@ database_configuration = {
 	'password' : 'letmein', 
 	'host' : 'localhost'
 }
+
+server_configuration = {
+	'port' : 2345,
+	'max_connections' : 100
+}

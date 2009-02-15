@@ -121,11 +121,21 @@ def combine_code_files(routes, table_map):
 
 	out_file.write("}\n")
 
+	port = globals()['server_configuration']['port']
+	max_connections = globals()['server_configuration']['max_connections']
+	db_host = globals()['database_configuration']['host']
+	db_user = globals()['database_configuration']['user']
+	db_password = globals()['database_configuration']['password']
+	db_name = globals()['database_configuration']['name']
+
 	# Write the main function
 	out_file.write(
 	"\n\nint main() {\n" +
 	"	Server server = new Server();\n" +
-	"	server.start(&run_action);\n" +
+	"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" +
+	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
+	"				\"" + db_password + "\", \"" + db_name + "\",\n" +
+	"				&run_action);\n" +
 	"\n" +
 	"	return 0;\n" +
 	"}\n")
@@ -380,7 +390,7 @@ def process_template_body(body, output):
 
 # Get the routes
 execfile("config/routes.py")
-execfile("config/database.py")
+execfile("config/config.py")
 
 # Do code generation
 generate_layouts()

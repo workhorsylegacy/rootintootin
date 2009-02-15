@@ -99,13 +99,11 @@ public class Server {
 		_client_socket.send(tango.text.Util.join(reply, ""));
 	}
 
-	public void start(void function(Request request, Server server) run_action) {
+	public void start(ushort port, int max_connections, 
+						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
+						void function(Request request, Server server) run_action) {
 		// Connect to the database
-		// FIXME: This should be loaded from a configuration file, instead of hard coded.
-		db_connect("localhost", "root", "letmein", "native_rest_cannon");
-
-		const int MAX_CONNECTIONS = 100;
-		ushort port = 2345;
+		db_connect(db_host, db_user, db_password, db_name);
 
 		// Create a socket that is non-blocking, can re-uses dangling addresses, and can hold many connections.
 		Socket server = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
@@ -113,13 +111,11 @@ public class Server {
 		server.bind(new InternetAddress(port));
 		uint[1] opt = 1;
 		server.setOption(SocketOptionLevel.SOCKET, SocketOption.SO_REUSEADDR, opt);
-		server.listen(MAX_CONNECTIONS);
+		server.listen(max_connections);
 
 		// FIXME: Isn't this socket_set doing the same thing as the client_sockets array? Is it needed?
-		SocketSet socket_set = new SocketSet(MAX_CONNECTIONS + 1);
+		SocketSet socket_set = new SocketSet(max_connections + 1);
 		Socket[] client_sockets;
-
-		Stdout.format("Running on port {}.\n", port).flush;
 
 		while(true) {
 			// Get a  socket set to hold all the client sockets while they wait to be processed
@@ -272,7 +268,7 @@ public class Server {
 			if(socket_set.isSet(server)) {
 				Socket pending_client;
 				try {
-					if(client_sockets.length < MAX_CONNECTIONS) {
+					if(client_sockets.length < max_connections) {
 						pending_client = server.accept();
 //						Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
 //						assert(pending_client.isAlive);
