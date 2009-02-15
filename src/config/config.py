@@ -1,12 +1,13 @@
 
 database_configuration = {
-	'name' : 'native_rest_cannon', 
-	'user' : 'root', 
-	'password' : 'letmein', 
-	'host' : 'localhost'
+	"host" : "localhost", 
+	"password" : "letmein", 
+	"name" : "native_rest_cannon", 
+	"user" : "root", 
 }
 
 server_configuration = {
-	'port' : 2345,
-	'max_connections' : 100
+	"port" : "2345", 
+	"max_connections" : "100", 
 }
+
