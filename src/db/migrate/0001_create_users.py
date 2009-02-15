@@ -1,8 +1,8 @@
 class CreateUsers:
-	def up(self):
-		create_table('users', {
+	def up(self, generator):
+		generator.create_table('users', {
 			'name' : 'string',
 			'email' : 'string'})
 
-	def down(self):
-		drop_table('users')
+	def down(self, generator):
+		generator.drop_table('users')

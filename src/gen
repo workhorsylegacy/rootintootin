@@ -9,10 +9,6 @@ os.chdir(os.sys.path[0])
 
 #import Inflector
 
-db = None
-database_configuration = None
-server_configuration = None
-
 def pluralize(value):
 	if value.endswith('s'):
 		return value
@@ -21,6 +17,7 @@ def pluralize(value):
 
 def camelize(word):
 	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
+
 
 def migration_type_to_sql_type(migration_type):
 	type_map = {'binary' : 'blob',
@@ -37,143 +34,261 @@ def migration_type_to_sql_type(migration_type):
 
 	return type_map[migration_type]
 
-def connect_to_database():
-	execfile('config/config.py')
+class Generator(object):
+	def __init__(self):
+		self._db = None
+		self._database_configuration = None
+		self._server_configuration = None
+		self.load_configuration()
 
-	globals()['database_configuration'] = locals()['database_configuration']
-	globals()['server_configuration'] = locals()['server_configuration']
+	def create_table(self, table_name, field_map):
+		self.connect_to_database()
 
-	globals()['db'] = MySQLdb.connect(
-				host = locals()['database_configuration']['host'], 
-				user = locals()['database_configuration']['user'], 
-				passwd = locals()['database_configuration']['password'])
+		# Create the query that will create the table
+		db_name = self._database_configuration['name']
+		query = "create table `" + db_name + "`.`" + table_name + "` ("
+		query += "id int not null auto_increment primary key, "
+		for field_name, field_type in field_map.items():
+			if field_name == "references":
+				query += "`" + field_type + "_id` int not null, "
+				query += "foreign key(`" + field_type + "_id`) references `" + pluralize(field_type) + "`(`id`), "
+			else:
+				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
+		query = str.rstrip(query, ', ')
+		query += ") ENGINE=innoDB;"
 
-def create_table(table_name, field_map):
-	# Create the query that will create the table
-	db_name = database_configuration['name']
-	query = "create table `" + db_name + "`.`" + table_name + "` ("
-	query += "id int not null auto_increment primary key, "
-	for field_name, field_type in field_map.items():
-		if field_name == "references":
-			query += "`" + field_type + "_id` int not null, "
-			query += "foreign key(`" + field_type + "_id`) references `" + pluralize(field_type) + "`(`id`), "
-		else:
-			query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
-	query = str.rstrip(query, ', ')
-	query += ") ENGINE=innoDB;"
+		cursor = self._db.cursor()
 
-	cursor = db.cursor()
-
-	# Try running the query
-	try:
-		cursor.execute(query)
-		print "Created the table '" + table_name + "'."
-	except MySQLdb.OperationalError:
-		raise Exception("Table '" + table_name + "' already exists.")
-	cursor.close()
-
-def drop_table(table_name):
-	# Create the query that will drop the table
-	db_name = database_configuration['name']
-	query = "drop table `" + db_name + "`.`" + table_name + "`;"
-	cursor = db.cursor()
-
-	# Try running the query
-	try:
-		cursor.execute(query)
-		print "Dropped the table '" + table_name + "'."
-	except MySQLdb.OperationalError:
-		raise Exception("Table '" + table_name + "' not dropped.")
-	cursor.close()
-
-def get_schema_version():
-	db_name = database_configuration['name']
-	query = "select max(version) from `" + db_name + "`.`schema_version`;"
-	cursor = db.cursor()
-	cursor.execute(query)
-	version = cursor.fetchone()
-	cursor.close()
-	if version[0] == None:
-		return 0
-	else:
-		return int(version[0])
-
-def add_schema_version(version):
-	db_name = database_configuration['name']
-
-	query = "insert into `" + db_name + \
-	"`.`schema_version`(version) values('" + \
-	str(version) + "');"
-
-	db.query(query)
-	db.commit()
-
-def migrate():
-	connect_to_database()
-	# Get the last schema version
-	last_version = get_schema_version()
-
-	migration_files = os.listdir('db/migrate/')
-	migration_files.sort()
-
-	# Check to see if there are no files to migrate
-	if len(migration_files) == 0:
-		print "There are no migration files."
-		return
-
-	# Check to see if we don't need to migrate
-	if last_version == int(migration_files[-1][0:4]):
-		print "Already migrated to latest version: " + str(last_version) + "."
-		return
-
-	for migration_file in migration_files:
-		# Skip the non python files
-		if not migration_file.endswith('.py'):
-			continue
-
-		# Skip previous migrations
-		version = int(migration_file[0:4])
-		if version <= last_version:
-			continue
-
-		# Run the migration
-		class_name = camelize(migration_file[5:-3])
-		execfile('db/migrate/' + migration_file)
-		migration_instance = locals()[class_name]()
+		# Try running the query
 		try:
-			migration_instance.up()
-			add_schema_version(version)
-		except Exception, err:
-			print "Broke on migration file: '" + migration_file + "'."
-			print err.message
+			cursor.execute(query)
+			print "Created the table '" + table_name + "'."
+		except MySQLdb.OperationalError:
+			raise Exception("Table '" + table_name + "' already exists.")
+		cursor.close()
+
+	def drop_table(self, table_name):
+		self.connect_to_database()
+
+		# Create the query that will drop the table
+		db_name = self._database_configuration['name']
+		query = "drop table `" + db_name + "`.`" + table_name + "`;"
+		cursor = self._db.cursor()
+
+		# Try running the query
+		try:
+			cursor.execute(query)
+			print "Dropped the table '" + table_name + "'."
+		except MySQLdb.OperationalError:
+			raise Exception("Table '" + table_name + "' not dropped.")
+		cursor.close()
+
+	def create_database(self):
+		self.connect_to_database()
+		cursor = self._db.cursor()
+		db_name = self._database_configuration['name']
+		try:
+			cursor.execute("create database " + db_name)
+			print "Created the database " + self._database_configuration['name'] + "."
+		except MySQLdb.ProgrammingError:
+			print "Database '" + self._database_configuration['name'] + "' already exists."
+		cursor.close()
+		self.create_table("schema_version", {
+			'version' : 'integer'
+		})
+
+	def drop_database(self):
+		self.connect_to_database()
+		cursor = self._db.cursor()
+		db_name = self._database_configuration['name']
+		try:
+			cursor.execute("drop database " + db_name)
+			print "Dropped the database " + self._database_configuration['name'] + "."
+		except MySQLdb.OperationalError:
+			print "Database '" + self._database_configuration['name'] + "' does not exists."
+		cursor.close()
+
+	def create_migration(self, model_name, pairs):
+		self.connect_to_database()
+
+		# Get the last schema version
+		last_version = self.get_schema_version()
+		version = str(last_version + 1).rjust(4, '0')
+
+		f = open('db/migrate/' + version + '_create_' + model_name + '.py', 'w')
+
+		f.write(
+			"class Create" + model_name.capitalize() + ":\n" +
+			"	def up(self, generator):\n" +
+			"		generator.create_table('" + pluralize(model_name) + "', {\n"
+		)
+	
+		for field in pairs:
+			field_name, field_type = field.split(':')
+			f.write("\t\t\t'" + field_name + "' : '" + field_type + "', \n")
+		f.write("		}) \n")
+
+		f.write("	def down(self, generator):\n" +
+			"		generator.drop_table('" + pluralize(model_name) + "')\n" +
+			"\n\n"
+		)
+
+	def migrate(self):
+		self.connect_to_database()
+		# Get the last schema version
+		last_version = self.get_schema_version()
+
+		migration_files = os.listdir('db/migrate/')
+		migration_files.sort()
+
+		# Check to see if there are no files to migrate
+		if len(migration_files) == 0:
+			print "There are no migration files."
 			return
+
+		# Check to see if we don't need to migrate
+		if last_version == int(migration_files[-1][0:4]):
+			print "Already migrated to latest version: " + str(last_version) + "."
+			return
+
+		for migration_file in migration_files:
+			# Skip the non python files
+			if not migration_file.endswith('.py'):
+				continue
+
+			# Skip previous migrations
+			version = int(migration_file[0:4])
+			if version <= last_version:
+				continue
+
+			# Run the migration
+			class_name = camelize(migration_file[5:-3])
+			execfile('db/migrate/' + migration_file)
+			migration_instance = locals()[class_name]()
+			try:
+				migration_instance.up(self)
+				self.add_schema_version(version)
+			except Exception, err:
+				print "Broke on migration file: '" + migration_file + "'."
+				print err.message
+				return
+
+	def configure_database(self, pairs):
+		# Add each key-value pair to the configuration hash
+		for pair in pairs:
+			key, value = pair.split(':')
+
+			if key == 'user':
+				self._database_configuration['user'] = value
+			elif key == 'password':
+				self._database_configuration['password'] = value
+			elif key == 'name':
+				self._database_configuration['name'] = value
+			elif key == 'user':
+				self._database_configuration['user'] = value
+
+		self.save_configuration()
+
+	def configure_server(self, pairs):
+		# Add each key-value pair to the configuration hash
+		for pair in pairs:
+			key, value = pair.split(':')
+
+			if key == 'port':
+				self._server_configuration['port'] = value
+			elif key == 'max_connections':
+				self._server_configuration['max_connections'] = value
+
+		self.save_configuration()
+
+#private
+
+	def load_configuration(self):
+		execfile('config/config.py')
+		self._database_configuration = locals()['database_configuration']
+		self._server_configuration = locals()['server_configuration']
+
+	def save_configuration(self):
+		f = open('config/config.py', 'w')
+
+		f.write("\ndatabase_configuration = {\n")
+		for key, value in self._database_configuration.items():
+			f.write("	\"" + key + "\" : \"" + value + "\", \n")
+		f.write("}\n\n")
+
+		f.write("server_configuration = {\n")
+		for key, value in self._server_configuration.items():
+			f.write("	\"" + str(key) + "\" : \"" + str(value) + "\", \n")
+		f.write("}\n\n")
+
+		f.close()
+
+	def connect_to_database(self):
+		if self._db != None:
+			return
+
+		self._db = MySQLdb.connect(
+					host = self._database_configuration['host'], 
+					user = self._database_configuration['user'], 
+					passwd = self._database_configuration['password'])
+
+	def get_schema_version(self):
+		self.connect_to_database()
+
+		db_name = self._database_configuration['name']
+		query = "select max(version) from `" + db_name + "`.`schema_version`;"
+		cursor = self._db.cursor()
+		cursor.execute(query)
+		version = cursor.fetchone()
+		cursor.close()
+		if version[0] == None:
+			return 0
+		else:
+			return int(version[0])
+
+	def add_schema_version(self, version):
+		self.connect_to_database()
+		db_name = self._database_configuration['name']
+
+		query = "insert into `" + db_name + \
+		"`.`schema_version`(version) values('" + \
+		str(version) + "');"
+
+		self._db.query(query)
+		self._db.commit()
+
+
+generator = Generator()
 
 # create database
 if str.join(' ', sys.argv[1:]) == "create database":
-	connect_to_database()
-	cursor = db.cursor()
-	db_name = database_configuration['name']
-	try:
-		cursor.execute("create database " + db_name)
-		print "Created the database " + database_configuration['name'] + "."
-	except MySQLdb.ProgrammingError:
-		print "Database '" + database_configuration['name'] + "' already exists."
-	cursor.close()
-	create_table("schema_version", {
-		'version' : 'integer'
-	})
+	generator.create_database()
 
 # drop database
 if str.join(' ', sys.argv[1:]) == "drop database":
-	connect_to_database()
-	cursor = db.cursor()
-	db_name = database_configuration['name']
-	try:
-		cursor.execute("drop database " + db_name)
-		print "Dropped the database " + database_configuration['name'] + "."
-	except MySQLdb.OperationalError:
-		print "Database '" + database_configuration['name'] + "' does not exists."
-	cursor.close()
+	generator.drop_database()
+
+# create migration [name] [field:type] ...
+if str.join(' ', sys.argv[1:3]) == "create migration":
+	model_name = sys.argv[3]
+	generator.create_migration(model_name, sys.argv[4:])
+
+# create controller [name]
+if str.join(' ', sys.argv[1:]) == "create controller":
+	print "Not implemented."
+
+# migrate
+if str.join(' ', sys.argv[1:]) == "migrate":
+	generator.migrate()
+
+# configure database
+if str.join(' ', sys.argv[1:3]) == "configure database":
+	generator.configure_database(sys.argv[3:])
+
+# configure server
+if str.join(' ', sys.argv[1:3]) == "configure server":
+	generator.configure_server(sys.argv[3:])
+
 
 '''
 create model [name] [field:type] ...
@@ -186,106 +301,3 @@ remove field [field] from [name]
 rename field [field] to [field] from [name]
 alter field [field] from [name] name_of_migration
 '''
-# create migration [name] [field:type] ...
-if str.join(' ', sys.argv[1:3]) == "create migration":
-	connect_to_database()
-
-	# Get the last schema version
-	last_version = get_schema_version()
-	version = str(last_version + 1).rjust(4, '0')
-
-	model_name = sys.argv[3]
-	f = open('db/migrate/' + version + '_create_' + model_name + '.py', 'w')
-
-	f.write(
-		"class Create" + model_name.capitalize() + ":\n" +
-		"	def up(self):\n" +
-		"		create_table('" + pluralize(model_name) + "', {\n"
-	)
-	
-	for field in sys.argv[4:]:
-		field_name, field_type = field.split(':')
-		f.write("\t\t\t'" + field_name + "' : '" + field_type + "', \n")
-	f.write("		}) \n")
-
-	f.write("	def down(self):\n" +
-		"		drop_table('" + pluralize(model_name) + "')\n" +
-		"\n\n"
-	)
-
-# create controller [name]
-if str.join(' ', sys.argv[1:]) == "create controller":
-	print "Not implemented."
-
-# migrate
-if str.join(' ', sys.argv[1:]) == "migrate":
-	migrate()
-
-
-# configure database
-if str.join(' ', sys.argv[1:3]) == "configure database":
-	# Read the existing configuration files into hashes
-	execfile('config/config.py')
-	database_configuration = locals()['database_configuration']
-	server_configuration = locals()['server_configuration']
-
-	# Add each key-value pair to the configuration hash
-	for pair in sys.argv[3:]:
-		key, value = pair.split(':')
-
-		if key == 'user':
-			database_configuration['user'] = value
-		elif key == 'password':
-			database_configuration['password'] = value
-		elif key == 'name':
-			database_configuration['name'] = value
-		elif key == 'user':
-			database_configuration['user'] = value
-
-	# Write the updated hashes to the config file
-	f = open('config/config.py', 'w')
-
-	f.write("\ndatabase_configuration = {\n")
-	for key, value in database_configuration.items():
-		f.write("	\"" + key + "\" : \"" + value + "\", \n")
-	f.write("}\n\n")
-
-	f.write("server_configuration = {\n")
-	for key, value in server_configuration.items():
-		f.write("	\"" + str(key) + "\" : \"" + str(value) + "\", \n")
-	f.write("}\n\n")
-
-	f.close()
-
-# configure server
-if str.join(' ', sys.argv[1:3]) == "configure server":
-	# Read the existing configuration files into hashes
-	execfile('config/config.py')
-	database_configuration = locals()['database_configuration']
-	server_configuration = locals()['server_configuration']
-
-	# Add each key-value pair to the configuration hash
-	for pair in sys.argv[3:]:
-		key, value = pair.split(':')
-
-		if key == 'port':
-			server_configuration['port'] = value
-		elif key == 'max_connections':
-			server_configuration['max_connections'] = value
-
-	# Write the updated hashes to the config file
-	f = open('config/config.py', 'w')
-
-	f.write("\ndatabase_configuration = {\n")
-	for key, value in database_configuration.items():
-		f.write("	\"" + key + "\" : \"" + value + "\", \n")
-	f.write("}\n\n")
-
-	f.write("server_configuration = {\n")
-	for key, value in server_configuration.items():
-		f.write("	\"" + str(key) + "\" : \"" + str(value) + "\", \n")
-	f.write("}\n\n")
-
-	f.close()
-
-

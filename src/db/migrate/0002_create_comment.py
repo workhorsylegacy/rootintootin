@@ -1,10 +1,10 @@
 class CreateComment:
-	def up(self):
-		create_table('comments', {
+	def up(self, generator):
+		generator.create_table('comments', {
 			'body' : 'string', 
 			'references' : 'user', 
 		}) 
-	def down(self):
-		drop_table('comments')
+	def down(self, generator):
+		generator.drop_table('comments')
 
 
