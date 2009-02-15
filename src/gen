@@ -133,7 +133,7 @@ def migrate():
 			return
 
 
-execfile('config/database.py')
+execfile('config/config.py')
 db = MySQLdb.connect(
 			host=database_configuration['host'], 
 			user=database_configuration['user'], 
