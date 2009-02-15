@@ -237,6 +237,41 @@ if str.join(' ', sys.argv[1:3]) == "configure database":
 			database_configuration['user'] = value
 		elif key == 'password':
 			database_configuration['password'] = value
+		elif key == 'name':
+			database_configuration['name'] = value
+		elif key == 'user':
+			database_configuration['user'] = value
+
+	# Write the updated hashes to the config file
+	f = open('config/config.py', 'w')
+
+	f.write("\ndatabase_configuration = {\n")
+	for key, value in database_configuration.items():
+		f.write("	\"" + key + "\" : \"" + value + "\", \n")
+	f.write("}\n\n")
+
+	f.write("server_configuration = {\n")
+	for key, value in server_configuration.items():
+		f.write("	\"" + str(key) + "\" : \"" + str(value) + "\", \n")
+	f.write("}\n\n")
+
+	f.close()
+
+# configure server
+if str.join(' ', sys.argv[1:3]) == "configure server":
+	# Read the existing configuration files into hashes
+	execfile('config/config.py')
+	database_configuration = locals()['database_configuration']
+	server_configuration = locals()['server_configuration']
+
+	# Add each key-value pair to the configuration hash
+	for pair in sys.argv[3:]:
+		key, value = pair.split(':')
+
+		if key == 'port':
+			server_configuration['port'] = value
+		elif key == 'max_connections':
+			server_configuration['max_connections'] = value
 
 	# Write the updated hashes to the config file
 	f = open('config/config.py', 'w')
