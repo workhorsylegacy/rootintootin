@@ -10,6 +10,16 @@ class Helper(object):
 			try:
 				other_globals['pexpect'] = __import__("pexpect")
 				other_globals['MySQLdb'] = __import__("MySQLdb")
+
+				# Make sure gdc, and gcc exists
+				for command in ['gdc', 'gcc']:
+					if commands.getoutput("which " + command) == '':
+						raise Exception('')
+
+				# Make sure the mysql and tango libs are installed
+				for lib in ['/usr/include/mysql/mysql.h', '/usr/lib/tango-gdc/libgtango.a db.']:
+					if commands.getoutput('test -f ' + lib + '; echo $?') == '1':
+						raise Exception('')
 			except:
 				# Make sure we have all the requirements installed
 				os_name = "unknown"
@@ -32,16 +42,20 @@ class Helper(object):
 					os_name = str.split(str.split(commands.getoutput('cat /etc/*-release'), "DISTRIB_ID=")[1], "\n")[0]
 
 				if ['Ubuntu', 'Debian'].count(os_name):
-					print "Please install requirements:\n    sudo apt-get install python-pexpect python-mysqldb"
+					print "Please install requirements:\n" + \
+							"    sudo apt-get install mysql-client mysql-server libmysqlclient15-dev python-pexpect python-mysqldb gcc"
 					exit()
 				elif ['Fedora'].count(os_name):
-					print "Please install requirements:\n    sudo yum install pexpect MySQL-python"
+					print "Please install requirements:\n" + \
+							"    sudo yum install mysql-client mysql-server libmysqlclient15-dev pexpect MySQL-python gcc gdc"
 					exit()
 				elif ['Foresight Linux'].count(os_name):
-					print "Please install requirements:\n    python-pexpect and python-mysqldb"
+					print "Please install requirements:\n" + \
+							"    mysql-client mysql-server libmysqlclient15-dev, python-pexpect, python-mysqldb, gcc, tango-gdc, and gdc"
 					exit()
 				else:
-					print "Please install requirements for your unknown Linux distro:\n    python-pexpect and python-mysqldb"
+					print "Please install requirements for your unknown Linux distro:\n" + \
+							"    mysql-client, mysql-server, libmysqlclient15-dev, python-pexpect, python-mysqldb, gcc, tango-gdc, and gdc"
 					exit()
 
 		elif platform.system() == 'Windows':

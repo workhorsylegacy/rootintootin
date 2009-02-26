@@ -228,10 +228,14 @@ class Generator(object):
 		if self._db != None:
 			return
 
-		self._db = MySQLdb.connect(
-					host = self._database_configuration['host'], 
-					user = self._database_configuration['user'], 
-					passwd = self._database_configuration['password'])
+		try:
+			self._db = MySQLdb.connect(
+						host = self._database_configuration['host'], 
+						user = self._database_configuration['user'], 
+						passwd = self._database_configuration['password'])
+		except MySQLdb.OperationalError, err:
+			print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
+			exit()
 
 	def get_schema_version(self):
 		self.connect_to_database()
