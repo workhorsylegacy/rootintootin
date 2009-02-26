@@ -19,15 +19,15 @@ class Helper(object):
 					exit()
 				elif commands.getoutput('which lsb_release') != '':
 					os_name = commands.getoutput('lsb_release -is')
-				elif commands.getoutput('cat /etc/fedora-release') != '':
+				elif commands.getoutput('test -f /etc/fedora-release; echo $?') == '0':
 					os_name = "Fedora"
-				elif commands.getoutput('cat /etc/SuSE-release') != '':
+				elif commands.getoutput('test -f /etc/SuSE-release; echo $?') == '0':
 					os_name = "SuSE"
-				elif commands.getoutput('cat /etc/mandriva-release') != '':
+				elif commands.getoutput('test -f /etc/mandriva-release; echo $?') == '0':
 					os_name = "Mandriva"
-				elif commands.getoutput('cat /etc/distro-release') != '':
+				elif commands.getoutput('test -f /etc/distro-release; echo $?') == '0':
 					os_name = commands.getoutput('cat /etc/distro-release')
-				elif commands.getoutput('cat /etc/*-release') != '':
+				elif commands.getoutput('test -f /etc/*-release; echo $?') == '0':
 					os_name = str.split(str.split(commands.getoutput('cat /etc/*-release'), "DISTRIB_ID=")[1], "\n")[0]
 
 				if ['Ubuntu', 'Debian'].count(os_name):
