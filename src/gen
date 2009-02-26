@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import os, sys, re
-import pexpect
-import MySQLdb
+from helper import *
+
+Helper.require_dependencies()
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
