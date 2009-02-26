@@ -5,10 +5,11 @@ import commands
 import platform
 
 class Helper(object):
-	def require_dependencies():
+	def require_dependencies(other_globals):
 		if platform.system() == 'Linux':
 			try:
-				import pexpect, MySQLdb
+				other_globals['pexpect'] = __import__("pexpect")
+				other_globals['MySQLdb'] = __import__("MySQLdb")
 			except:
 				# Make sure we have all the requirements installed
 				os_name = "unknown"

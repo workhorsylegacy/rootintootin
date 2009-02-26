@@ -3,7 +3,7 @@
 import os, sys, re
 from helper import *
 
-Helper.require_dependencies()
+Helper.require_dependencies(globals())
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
