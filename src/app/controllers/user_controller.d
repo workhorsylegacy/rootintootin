@@ -51,6 +51,9 @@ public class UserController : ControllerBase {
 
 	public void destroy() {
 		_user = User.find(to_ulong(_request.params["id"]));
+		_user.destroy();
+
+		redirect_to("/users/index");
 	}
 }
 

@@ -169,6 +169,18 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 		return true;
 	}
+
+	bool destroy() {
+		// Create the delete query
+		char[] query = "";
+		query ~= "delete from " ~ typeof(this)._table_name;
+		query ~= " where id=" ~ tango.text.convert.Integer.toString(this._id) ~ ";";
+
+		// Run the query
+		db.db_update_query(query);
+
+		return true;
+	}
 }
 
 public class ControllerBase {
