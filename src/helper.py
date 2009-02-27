@@ -17,7 +17,7 @@ class Helper(object):
 						raise Exception('')
 
 				# Make sure the mysql and tango libs are installed
-				for lib in ['/usr/include/mysql/mysql.h', '/usr/lib/tango-gdc/libgtango.a db.']:
+				for lib in ["'/usr/include/mysql/mysql.h'", "'/usr/lib/tango-gdc/libgtango.a'"]:
 					if commands.getoutput('test -f ' + lib + '; echo $?') == '1':
 						raise Exception('')
 			except:
