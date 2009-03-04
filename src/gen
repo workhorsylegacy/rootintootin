@@ -50,9 +50,9 @@ class Generator(object):
 		query = "create table `" + db_name + "`.`" + table_name + "` ("
 		query += "id int not null auto_increment primary key, "
 		for field_name, field_type in field_map.items():
-			if field_name == "references":
-				query += "`" + field_type + "_id` int not null, "
-				query += "foreign key(`" + field_type + "_id`) references `" + pluralize(field_type) + "`(`id`), "
+			if field_type == "reference":
+				query += "`" + field_name + "_id` int not null, "
+				query += "foreign key(`" + field_name + "_id`) references `" + pluralize(field_name) + "`(`id`), "
 			else:
 				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
 		query = str.rstrip(query, ', ')

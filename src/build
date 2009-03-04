@@ -282,6 +282,24 @@ def generate_models():
 
 		cursor.close()
 
+	# Add the relationships to the table
+	for table, fields in table_map.items():
+		cursor = db.cursor()
+		query = "select column_name, referenced_table_name, referenced_column_name from " + \
+				"information_schema.key_column_usage where " + \
+				"table_schema='" + globals()['database_configuration']['name'] + "' " + \
+				"and table_name='" + table + "' and " + \
+				"referenced_table_name is not null and referenced_column_name is not null;"
+		cursor.execute(query)
+		result = cursor.fetchall()
+
+		for row in result:
+			column_name, referenced_table_name, referenced_column_name = row
+			table_map[table][column_name]['referenced_table'] = referenced_table_name
+			table_map[table][column_name]['referenced_column'] = referenced_column_name
+
+		cursor.close()
+
 	return table_map
 
 def generate_views(routes):
