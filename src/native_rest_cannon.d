@@ -15,6 +15,16 @@ import language_helper;
 import db;
 import helper;
 
+public template ModelArrayMixin(ParentClass, ModelClass) {
+	ParentClass _parent = null;
+	ModelClass[] _models;
+
+	public void opCatAssign(ModelClass model) {
+		model.parent = _parent;
+		_models ~= model;
+	}
+}
+
 public class Request {
 	private char[] _method;
 	private char[] _uri;

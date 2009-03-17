@@ -8,7 +8,7 @@ Helper.require_dependencies(globals())
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
-def combine_code_files(routes, table_map):
+def combine_code_files(routes, table_map, reference_map):
 	# Open the output file
 	out_file = open('run.d', 'w')
 
@@ -38,7 +38,7 @@ def combine_code_files(routes, table_map):
 		model_map = table_map[model_name + 's']
 
 		out_file.write("\n\n")
-		out_file.write(model_generated_properties_class(model_name, model_map))
+		out_file.write(model_generated_properties_class(model_name, model_map, reference_map))
 		out_file.write("\n\n")
 
 	# Write the models into the file
@@ -173,7 +173,7 @@ def convert_d_type_to_string(d_type, d_string_variable_name):
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
-def model_generated_properties_class(model_name, model_map):
+def model_generated_properties_class(model_name, model_map, reference_map):
 	# Add class opening
 	properties = "public class " + model_name.capitalize() + "ModelGeneratedProperties : ModelBase {\n"
 
@@ -209,6 +209,41 @@ def model_generated_properties_class(model_name, model_map):
 						"	public void " + field + "(" + sql_type_to_d_type(values['type']) + " value) {\n" + \
 						"		_" + field + " = value;\n" + \
 						"	}\n"
+
+	# Add the belongs_to references
+	for table_name, has_manys in reference_map.iteritems():
+		table_name = table_name[:-1]
+		for has_many in has_manys:
+			if has_many[:-1] == model_name:
+				properties += \
+						"	private " + table_name.capitalize() + "ModelGeneratedProperties _" + table_name + " = null;\n" + \
+						"\n" + \
+						"	public void parent(" + table_name.capitalize() + "ModelGeneratedProperties value) {\n" + \
+						"		_" + table_name + " = value;\n" + \
+						"	}\n" + \
+						"	public " + table_name.capitalize() + "ModelGeneratedProperties parent() {\n" + \
+						"		return _" + table_name + ";\n" + \
+						"	}\n"
+	
+	# Add the has_many references
+	table_name = model_name + 's'
+	if reference_map.has_key(table_name):
+		for has_many in reference_map[table_name]:
+			has_many = has_many[:-1]
+			properties += \
+					"	private class " + has_many.capitalize() + "s {\n" + \
+					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "ModelGeneratedProperties, \n" + \
+					"								" + has_many.capitalize() + "ModelGeneratedProperties);\n" + \
+					"	}\n" + \
+					"\n" + \
+					"	private " + has_many.capitalize() + "s _" + has_many + "s;\n" + \
+					"	public void " + has_many + "s(" + has_many.capitalize() + "s value) {\n" + \
+					"		_" + has_many + "s = value;\n" + \
+					"	}\n" + \
+					"	public " + has_many.capitalize() + "s " + has_many + "s() {\n" + \
+					"		return _" + has_many + "s;\n" + \
+					"	}\n"
+
 
 	# Add the set_field_by_name method
 	properties += \
@@ -273,6 +308,10 @@ def generate_models():
 
 		for row in result:
 			field = row[0]
+
+			# Skip fields that are references
+			if row[3] == 'MUL': continue
+
 			table_map[table][field] = {}
 			table_map[table][field]['type'] = row[1]
 			table_map[table][field]['null'] = row[2]
@@ -283,6 +322,7 @@ def generate_models():
 		cursor.close()
 
 	# Add the relationships to the table
+	reference_map = {}
 	for table, fields in table_map.items():
 		cursor = db.cursor()
 		query = "select column_name, referenced_table_name, referenced_column_name from " + \
@@ -295,12 +335,13 @@ def generate_models():
 
 		for row in result:
 			column_name, referenced_table_name, referenced_column_name = row
-			table_map[table][column_name]['referenced_table'] = referenced_table_name
-			table_map[table][column_name]['referenced_column'] = referenced_column_name
+			if not reference_map.has_key(referenced_table_name):
+				reference_map[referenced_table_name] = []
+			reference_map[referenced_table_name].append(table)
 
 		cursor.close()
 
-	return table_map
+	return table_map, reference_map
 
 def generate_views(routes):
 	for controller, actions in routes.items():
@@ -414,8 +455,8 @@ execfile("config/config.py")
 # Do code generation
 generate_layouts()
 generate_views(routes)
-table_map = generate_models()
-combine_code_files(routes, table_map)
+table_map, reference_map = generate_models()
+combine_code_files(routes, table_map, reference_map)
 
 # Compile the application into an executable
 result = ""
