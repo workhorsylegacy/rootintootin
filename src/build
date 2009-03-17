@@ -178,13 +178,13 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 	properties = "public class " + model_name.capitalize() + "ModelGeneratedProperties : ModelBase {\n"
 
 	# Add a list of all field names
-	properties += "private static char[][] _field_names = ["
+	properties += "	private static char[][] _field_names = ["
 	for field, values in model_map.items():
 		properties += "\"" + field + "\", ";
 	properties += "];\n\n";
 
 	# Add a list of the unique field names
-	properties += "private static char[][] _unique_field_names = ["
+	properties += "	private static char[][] _unique_field_names = ["
 	for field, values in model_map.items():
 		if field == "id":
 			continue
@@ -247,36 +247,36 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 
 	# Add the set_field_by_name method
 	properties += \
-				"public void set_field_by_name(char[] field_name, char[] value) {\n" + \
-				"	switch(field_name) {\n"
+				"	public void set_field_by_name(char[] field_name, char[] value) {\n" + \
+				"		switch(field_name) {\n"
 
 	for field, values in model_map.items():
 		value_with_cast = convert_string_to_d_type(sql_type_to_d_type(values['type']), 'value')
 		properties += \
-				"		case \"" + field + "\":\n" + \
-				"			_" + field + " = " + value_with_cast + ";\n" + \
-				"			break;\n"
+				"			case \"" + field + "\":\n" + \
+				"				_" + field + " = " + value_with_cast + ";\n" + \
+				"				break;\n"
 
 	properties += \
-				"	}\n" + \
-				"}\n"
+				"		}\n" + \
+				"	}\n"
 
 	# Add the get_field_by_name method
 	properties += \
-				"public char[] get_field_by_name(char[] field_name) {\n" + \
-				"	switch(field_name) {\n"
+				"	public char[] get_field_by_name(char[] field_name) {\n" + \
+				"		switch(field_name) {\n"
 
 	# tango.text.convert.Integer.parse.toString
 	for field, values in model_map.items():
 		value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "_" + field)
 		properties += \
-				"		case \"" + field + "\":\n" + \
-				"			return " + value_to_string + ";\n" + \
-				"			break;\n"
+				"			case \"" + field + "\":\n" + \
+				"				return " + value_to_string + ";\n" + \
+				"				break;\n"
 
 	properties += \
-				"	}\n" + \
-				"}\n"
+				"		}\n" + \
+				"	}\n"
 
 	# Add class closing
 	properties += "}"
