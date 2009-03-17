@@ -175,7 +175,8 @@ def convert_d_type_to_string(d_type, d_string_variable_name):
 
 def model_generated_properties_class(model_name, model_map, reference_map):
 	# Add class opening
-	properties = "public class " + model_name.capitalize() + "ModelGeneratedProperties : ModelBase {\n"
+	properties = "public class " + model_name.capitalize() + "ModelBase : ModelBase {\n"
+	properties += "	mixin ModelBaseMixin!(" + model_name.capitalize() + ", \"" + model_name + "\");\n\n"
 
 	# Add a list of all field names
 	properties += "	private static char[][] _field_names = ["
@@ -216,12 +217,12 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 		for has_many in has_manys:
 			if has_many[:-1] == model_name:
 				properties += \
-						"	private " + table_name.capitalize() + "ModelGeneratedProperties _" + table_name + " = null;\n" + \
+						"	private " + table_name.capitalize() + "ModelBase _" + table_name + " = null;\n" + \
 						"\n" + \
-						"	public void parent(" + table_name.capitalize() + "ModelGeneratedProperties value) {\n" + \
+						"	public void parent(" + table_name.capitalize() + "ModelBase value) {\n" + \
 						"		_" + table_name + " = value;\n" + \
 						"	}\n" + \
-						"	public " + table_name.capitalize() + "ModelGeneratedProperties parent() {\n" + \
+						"	public " + table_name.capitalize() + "ModelBase parent() {\n" + \
 						"		return _" + table_name + ";\n" + \
 						"	}\n"
 	
@@ -232,8 +233,8 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 			has_many = has_many[:-1]
 			properties += \
 					"	private class " + has_many.capitalize() + "s {\n" + \
-					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "ModelGeneratedProperties, \n" + \
-					"								" + has_many.capitalize() + "ModelGeneratedProperties);\n" + \
+					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "ModelBase, \n" + \
+					"								" + has_many.capitalize() + "ModelBase);\n" + \
 					"	}\n" + \
 					"\n" + \
 					"	private " + has_many.capitalize() + "s _" + has_many + "s;\n" + \

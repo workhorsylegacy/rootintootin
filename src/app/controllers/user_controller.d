@@ -1,6 +1,6 @@
 
 
-public class UserController : ControllerBase {
+public class UserController {
 	mixin ControllerBaseMixin!(UserController);
 
 	public User[] _users;

@@ -193,10 +193,6 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 }
 
-public class ControllerBase {
-
-}
-
 public template ControllerBaseMixin(T) {
 	private Request _request = null;
 	private Server _server = null;

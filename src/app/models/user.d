@@ -1,7 +1,7 @@
 
 
-public class User : UserModelGeneratedProperties {
-	mixin ModelBaseMixin!(User, "user");
+public class User : UserModelBase {
+
 }
 
 
