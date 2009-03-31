@@ -151,7 +151,7 @@ public class Server {
 					// Get the request
 					char[] raw_request = buffer[0 .. read];
 					char[][] request = tango.text.Util.splitLines(raw_request);
-					//Stdout.format("\tRequest: [[{}]]\n", raw_request).flush;
+					Stdout.format("\tRequest: [[{}]]\n", raw_request).flush;
 
 					// Get the header
 					char[][] header = tango.text.Util.split(request[0], " ");

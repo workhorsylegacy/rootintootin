@@ -94,10 +94,15 @@ def combine_code_files(routes, table_map, reference_map):
 	# Write the run action function
 	out_file.write(
 	"public void run_action(Request request, Server server) {\n" +
-	"	int[int] line_translations;\n" +
-	"	UserController controller = new UserController(request, server);\n")
+	"	int[int] line_translations;\n"
+	)
 	
 	for controller, actions in routes.items():
+		out_file.write(
+		"	if(request.controller == \"" + controller + "s\") {\n" +
+		"		" + controller.capitalize() + "Controller controller = new " + controller.capitalize() + "Controller(request, server);\n"
+		)
+
 		all_actions = {}
 		all_actions.update(actions['member'])
 		all_actions.update(actions['collection'])
@@ -107,18 +112,18 @@ def combine_code_files(routes, table_map, reference_map):
 			elif action == "delete":
 				action = "Delete"
 			out_file.write(
-			"\n	if(request.action == \"" + action + "\") {\n" +
-			"		controller." + action + "();\n"
+			"		if(request.action == \"" + action + "\") {\n" +
+			"			controller." + action + "();\n"
 			)
 
 			if method == "get":
 				out_file.write(
-				"		server.render_text(" + action.capitalize() + "View.render(controller, line_translations));\n"
+				"			server.render_text(" + controller.capitalize() + action.capitalize() + "View.render(controller, line_translations));\n"
 				)
 
-			out_file.write(
-			"	}\n"
-			)
+			out_file.write("		}\n")
+
+		out_file.write("	}\n")
 
 	out_file.write("}\n")
 
@@ -362,7 +367,7 @@ def generate_views(routes):
 			# Print the openining of the function
 			output = []
 			output.append(
-			"public class " + member.capitalize() + "View { \n" +
+			"public class " + controller.capitalize() + member.capitalize() + "View { \n" +
 			"public static char[] render(" + controller.capitalize() + "Controller controller, out int[int] line_translations) { \n" +
 			"	// Generate the view as an array of strings\n" +
 			"	AutoStringArray builder = new AutoStringArray();")
@@ -461,9 +466,9 @@ combine_code_files(routes, table_map, reference_map)
 
 # Compile the application into an executable
 result = ""
-result += pexpect.run("gcc -c db.c -o db.o")
+result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
-command = "gdc -fversion=Posix -o run " + \
+command = "gdc -g -fversion=Posix -o run " + \
 			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d " + \
 			"/usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
 result += pexpect.run(command)

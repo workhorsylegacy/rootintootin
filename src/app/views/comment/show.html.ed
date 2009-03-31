@@ -1,0 +1,7 @@
+
+<p><b>User:</b> <%=controller._comment.parent.id%></p>
+<p><b>Value:</b> <%=controller._comment.value%></p>
+
+<a href="/comments/edit/<%=controller._comment.id%>">Edit</a> | 
+<a href="/comments">Back</a>
+

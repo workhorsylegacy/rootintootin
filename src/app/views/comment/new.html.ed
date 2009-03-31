@@ -1,0 +1,21 @@
+
+<form action="/comments/create" class="new_comment" id="new_comment" method="post">
+	<h1>New Comments</h1>
+	<p>
+		<label for="comment_user">User</label><br />
+		<select id="comment_user" name="comment[user]">
+			<% foreach(User user ; controller._users) { %>
+				<option value="<%=user.id%>"><%=user.name%></option>
+			<% } %>
+		</select>
+	</p>
+	<p>
+		<label for="comment_value">Value</label><br />
+		<input id="comment_value" name="comment[value]" type="text" value="<%=controller._comment.value%>" />
+	</p>
+
+	<input id="comment_submit" name="commit" type="submit" value="Create" />
+</form>
+
+<a href="/comments">Back</a>
+
