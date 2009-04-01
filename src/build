@@ -199,10 +199,14 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 
 	# Add all the fields
 	for field, values in model_map.items():
-		properties += "	private " + sql_type_to_d_type(values['type']) + " _" + field + ";\n"
+		if not field.endswith('_id'):
+			properties += "	private " + sql_type_to_d_type(values['type']) + " _" + field + ";\n"
 
 	# Add the field properties
 	for field, values in model_map.items():
+		if field.endswith('_id'):
+			continue
+
 		# Add getter
 		properties += \
 						"	// " + values['type'] + "\n" + \
