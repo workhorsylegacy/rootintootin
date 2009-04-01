@@ -10,9 +10,9 @@
 	<tr>
 		<td><%= comment.parent.name %></td>
 		<td><%= comment.value %></td>
-		<td><a href="/users/show/<%=comment.id%>">Show</a></td>
-		<td><a href="/users/edit/<%=comment.id%>">Edit</a></td>
-		<td><a href="/users/destroy/<%=comment.id%>" onclick="post_href('delete'); return false;">Destroy</a></td>
+		<td><a href="/comments/show/<%=comment.id%>">Show</a></td>
+		<td><a href="/comments/edit/<%=comment.id%>">Edit</a></td>
+		<td><a href="/comments/destroy/<%=comment.id%>" onclick="post_href('delete'); return false;">Destroy</a></td>
 	</tr>
 <% } %>
 </table>

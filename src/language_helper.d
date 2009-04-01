@@ -32,6 +32,10 @@ public static char[] to_s(bool value) {
 	return value ? "true" : "false";
 }
 
+public static char[] to_s(char[] value) {
+	return tango.text.Util.repeat(value, 1);
+}
+
 public static char[] to_s(char value) {
 	char[] new_value;
 	new_value ~= value;

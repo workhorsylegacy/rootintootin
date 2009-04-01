@@ -36,6 +36,7 @@ public class CommentController {
 
 	public void edit() {
 		_comment = Comment.find(to_ulong(_request.params["id"]));
+		_users = User.find_all();
 	}
 
 	public void update() {

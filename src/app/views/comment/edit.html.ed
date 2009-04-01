@@ -5,7 +5,11 @@
 		<label for="comment_user">User</label><br />
 		<select id="comment_user" name="comment[user]">
 			<% foreach(User user ; controller._users) { %>
-				<option value="<%=user.id%>"><%=user.name%></option>
+				<% if(controller._comment.parent && controller._comment.parent.id == user.id) { %>
+					<option selected="yes" value="<%=user.id%>"><%=user.name%></option>
+				<% } else { %>
+					<option value="<%=user.id%>"><%=user.name%></option>
+				<% } %>
 			<% } %>
 		</select>
 	</p>
