@@ -4,12 +4,14 @@
 	<tr>
 		<th>Name</th>
 		<th>Email</th>
+		<th>Comments</th>
 	</tr>
 
 <% foreach(User user ; controller._users) { %>
 	<tr>
 		<td><%= user.name %></td>
 		<td><%= user.email %></td>
+		<td><%= user.comments.length %></td>
 		<td><a href="/users/show/<%=user.id%>">Show</a></td>
 		<td><a href="/users/edit/<%=user.id%>">Edit</a></td>
 		<td><a href="/users/destroy/<%=user.id%>" onclick="post_href('delete'); return false;">Destroy</a></td>

@@ -246,7 +246,12 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 					"								" + has_many.capitalize() + "ModelBase);\n" + \
 					"	}\n" + \
 					"\n" + \
-					"	private " + has_many.capitalize() + "s _" + has_many + "s;\n" + \
+					"	private " + has_many.capitalize() + "s _" + has_many + "s;\n\n" + \
+					"	public void after_this() {\n" + \
+					"		_" + has_many + "s = new " + has_many.capitalize() + "s(\n" + \
+					"		" + has_many.capitalize() + "ModelBase.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
+					"		);\n" + \
+					"	}\n\n" + \
 					"	public void " + has_many + "s(" + has_many.capitalize() + "s value) {\n" + \
 					"		_" + has_many + "s = value;\n" + \
 					"	}\n" + \

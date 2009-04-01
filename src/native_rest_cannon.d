@@ -19,9 +19,17 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 	ParentClass _parent = null;
 	ModelClass[] _models;
 
+	public this(ModelClass[] models) {
+		_models = models;
+	}
+
 	public void opCatAssign(ModelClass model) {
 		model.parent = _parent;
 		_models ~= model;
+	}
+
+	public int length() {
+		return _models.length;
 	}
 }
 
@@ -71,6 +79,9 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static char[] _table_name = model_name ~ "s";
 	static char[] _model_name = model_name;
 
+	public void after_this() {
+	}
+
 	static char[] field_names_as_comma_string() {
 		return tango.text.Util.join(_field_names, ", ");
 	}
@@ -98,10 +109,12 @@ public template ModelBaseMixin(T, char[] model_name) {
 		// Just return null if there was none found
 		if(row_len == 0) return null;
 
+		// Copy all the fields into the model
 		T model = new T();
 		for(int i=0; i<col_len; i++) {
 			model.set_field_by_name(_field_names[i], tango.stdc.stringz.fromStringz(result[0][i]));
 		}
+		//model.after_this();
 
 		db.free_db_query_with_result(result, row_len, col_len);
 
@@ -136,6 +149,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 			for(int j=0; j<col_len; j++) {
 				model.set_field_by_name(_field_names[j], tango.stdc.stringz.fromStringz(result[i][j]));
 			}
+			model.after_this();
 			all ~= model;
 		}
 
