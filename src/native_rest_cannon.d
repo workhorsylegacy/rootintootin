@@ -101,13 +101,17 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 	// Returns a single model that matches the id, or null.
 	static T find(ulong id) {
+		// Create the query and run it
 		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ typeof(T)._table_name;
 		query ~= " where id=" ~ tango.text.convert.Integer.toString(id) ~ ";";
 		int row_len, col_len;
 		char*** result = db.db_query_with_result(query, row_len, col_len);
 
 		// Just return null if there was none found
-		if(row_len == 0) return null;
+		if(row_len == 0) {
+			db.free_db_query_with_result(result, row_len, col_len);
+			return null;
+		}
 
 		// Copy all the fields into the model
 		T model = new T();
@@ -135,14 +139,15 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static T[] find_all(char[] conditions = null, char[] order = null) {
 		T[] all = [];
 
+		// Create the query and run it
 		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ _table_name;
 		if(conditions != null) query ~= " where " ~ conditions;
 		if(order != null) query ~= " order by " ~ order;
 		query ~= ";";
-
 		int row_len, col_len;
 		char*** result = db.db_query_with_result(query, row_len, col_len);
 
+		// Copy all the fields into each model
 		T model = null;
 		for(int i=0; i<row_len; i++) {
 			model = new T();
