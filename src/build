@@ -211,12 +211,14 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 		properties += \
 						"	// " + values['type'] + "\n" + \
 						"	public " + sql_type_to_d_type(values['type']) + " " + field + "() {\n" + \
+						"		ensure_was_pulled_from_database();\n" + \
 						"		return _" + field + ";\n" + \
 						"	}\n"
 		# Add setter, but not for id
 		if field != 'id':
 			properties += \
 						"	public void " + field + "(" + sql_type_to_d_type(values['type']) + " value) {\n" + \
+						"		ensure_was_pulled_from_database();\n" + \
 						"		_" + field + " = value;\n" + \
 						"	}\n"
 
@@ -229,9 +231,11 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 						"	private " + table_name.capitalize() + "ModelBase _" + table_name + " = null;\n" + \
 						"\n" + \
 						"	public void parent(" + table_name.capitalize() + "ModelBase value) {\n" + \
+						"		ensure_was_pulled_from_database();\n" + \
 						"		_" + table_name + " = value;\n" + \
 						"	}\n" + \
 						"	public " + table_name.capitalize() + "ModelBase parent() {\n" + \
+						"		ensure_was_pulled_from_database();\n" + \
 						"		return _" + table_name + ";\n" + \
 						"	}\n"
 	
@@ -248,21 +252,23 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 					"\n" + \
 					"	private " + has_many.capitalize() + "s _" + has_many + "s;\n\n" + \
 					"	public void after_this() {\n" + \
-					"		_" + has_many + "s = new " + has_many.capitalize() + "s(\n" + \
-					"		" + has_many.capitalize() + "ModelBase.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
-					"		);\n" + \
+					"		_" + has_many + "s = new " + has_many.capitalize() + "s();\n" + \
 					"	}\n\n" + \
 					"	public void " + has_many + "s(" + has_many.capitalize() + "s value) {\n" + \
+					"		ensure_was_pulled_from_database();\n" + \
 					"		_" + has_many + "s = value;\n" + \
 					"	}\n" + \
 					"	public " + has_many.capitalize() + "s " + has_many + "s() {\n" + \
+					"		ensure_was_pulled_from_database();\n" + \
 					"		return _" + has_many + "s;\n" + \
 					"	}\n"
 
 
 	# Add the set_field_by_name method
 	properties += \
-				"	public void set_field_by_name(char[] field_name, char[] value) {\n" + \
+				"	public void set_field_by_name(char[] field_name, char[] value, bool must_check_database_first = true) {\n" + \
+				"		if(must_check_database_first)\n" + \
+				"			ensure_was_pulled_from_database();\n\n" + \
 				"		switch(field_name) {\n"
 
 	for field, values in model_map.items():
@@ -271,7 +277,8 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 			value_with_cast = convert_string_to_d_type(sql_type_to_d_type(values['type']), 'value')
 			properties += \
 					"			case \"" + field + "\":\n" + \
-					"				_" + reference_type + " = " + reference_type.capitalize() + ".find(" + value_with_cast + ");\n" + \
+					"				_" + reference_type + " = new " + reference_type.capitalize() + "();\n" + \
+					"				_" + reference_type + ".set_field_by_name(\"id\", value, false);\n" + \
 					"				break;\n"
 		else:
 			value_with_cast = convert_string_to_d_type(sql_type_to_d_type(values['type']), 'value')
@@ -296,10 +303,10 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "_" + field)
 			properties += \
 					"			case \"" + field + "\":\n" + \
-					"				return _" + reference_type + " == null ? null : to_s(_" + reference_type + ".id);\n" + \
+					"				return _" + reference_type + " is null ? null : to_s(_" + reference_type + ".id);\n" + \
 					"				break;\n"
 		else:
-			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "_" + field)
+			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "this." + field)
 			properties += \
 					"			case \"" + field + "\":\n" + \
 					"				return " + value_to_string + ";\n" + \
@@ -485,6 +492,7 @@ generate_layouts()
 generate_views(routes)
 table_map, reference_map = generate_models()
 combine_code_files(routes, table_map, reference_map)
+
 
 # Compile the application into an executable
 result = ""

@@ -19,8 +19,7 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 	ParentClass _parent = null;
 	ModelClass[] _models;
 
-	public this(ModelClass[] models) {
-		_models = models;
+	public this() {
 	}
 
 	public void opCatAssign(ModelClass model) {
@@ -79,7 +78,26 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static char[] _table_name = model_name ~ "s";
 	static char[] _model_name = model_name;
 
+	private bool _was_pulled_from_database = true;
+
 	public void after_this() {
+	}
+
+	private void ensure_was_pulled_from_database() {
+		// Just return if is was already pulled
+		if(_was_pulled_from_database == true) 
+			return;
+
+		if(_id < 1)
+			throw new Exception(_model_name ~ "The id has not been set.");
+
+		// Get the model from the database and copy all its fields to this model
+		T model = T.find(_id);
+
+		foreach(char[] field_name; model._unique_field_names) {
+			this.set_field_by_name(field_name, model.get_field_by_name(field_name), false);
+		}
+		_was_pulled_from_database = true;
 	}
 
 	static char[] field_names_as_comma_string() {
@@ -115,10 +133,12 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 		// Copy all the fields into the model
 		T model = new T();
+		model._was_pulled_from_database = false;
 		for(int i=0; i<col_len; i++) {
-			model.set_field_by_name(_field_names[i], tango.stdc.stringz.fromStringz(result[0][i]));
+			model.set_field_by_name(_field_names[i], tango.stdc.stringz.fromStringz(result[0][i]), false);
 		}
-		//model.after_this();
+		model._was_pulled_from_database = true;
+		model.after_this();
 
 		db.free_db_query_with_result(result, row_len, col_len);
 
@@ -151,9 +171,11 @@ public template ModelBaseMixin(T, char[] model_name) {
 		T model = null;
 		for(int i=0; i<row_len; i++) {
 			model = new T();
+			model._was_pulled_from_database = false;
 			for(int j=0; j<col_len; j++) {
-				model.set_field_by_name(_field_names[j], tango.stdc.stringz.fromStringz(result[i][j]));
+				model.set_field_by_name(_field_names[j], tango.stdc.stringz.fromStringz(result[i][j]), false);
 			}
+			model._was_pulled_from_database = true;
 			model.after_this();
 			all ~= model;
 		}

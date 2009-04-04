@@ -116,6 +116,7 @@ public class Server {
 		// FIXME: Isn't this socket_set doing the same thing as the client_sockets array? Is it needed?
 		SocketSet socket_set = new SocketSet(max_connections + 1);
 		Socket[] client_sockets;
+		Stdout("Server running ...\n").flush;
 
 		while(true) {
 			// Get a  socket set to hold all the client sockets while they wait to be processed
@@ -151,7 +152,7 @@ public class Server {
 					// Get the request
 					char[] raw_request = buffer[0 .. read];
 					char[][] request = tango.text.Util.splitLines(raw_request);
-					Stdout.format("\tRequest: [[{}]]\n", raw_request).flush;
+//					Stdout.format("\tRequest: [[{}]]\n", raw_request).flush;
 
 					// Get the header
 					char[][] header = tango.text.Util.split(request[0], " ");
