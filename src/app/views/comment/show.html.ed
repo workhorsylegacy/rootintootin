@@ -1,6 +1,6 @@
 
 <!-- FIXME: The way we have to test to see if it is null here is ugly -->
-<p><b>User:</b> <%=controller._comment.parent == null ? "" : to_s(controller._comment.parent.id)%></p>
+<p><b>User:</b> <%=controller._comment.parent is null ? "" : to_s(controller._comment.parent.id)%></p>
 <p><b>Value:</b> <%=controller._comment.value%></p>
 
 <a href="/comments/edit/<%=controller._comment.id%>">Edit</a> | 

@@ -149,7 +149,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 	// Returns a single model that matches the id, or throws if not found.
 	static T find_by_id(ulong id) {
 		T model = find(id);
-		if(model == null) {
+		if(model is null) {
 			throw new Exception("No {} with the id '{}' was found.", _model_name, id);
 		} else {
 			return model;
