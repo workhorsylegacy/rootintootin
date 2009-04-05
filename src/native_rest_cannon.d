@@ -15,23 +15,6 @@ import language_helper;
 import db;
 import helper;
 
-public template ModelArrayMixin(ParentClass, ModelClass) {
-	ParentClass _parent = null;
-	ModelClass[] _models;
-
-	public this() {
-	}
-
-	public void opCatAssign(ModelClass model) {
-		model.parent = _parent;
-		_models ~= model;
-	}
-
-	public int length() {
-		return _models.length;
-	}
-}
-
 public class Request {
 	private char[] _method;
 	private char[] _uri;
@@ -67,6 +50,24 @@ public class Request {
 public class SqlError : Exception {
 	public this(char[] message) {
 		super(message);
+	}
+}
+
+public template ModelArrayMixin(ParentClass, ModelClass) {
+	ParentClass _parent = null;
+	ModelClass[] _models;
+
+	public this(ModelClass[] models) {
+		_models = models;
+	}
+
+	public void opCatAssign(ModelClass model) {
+		model.parent = _parent;
+		_models ~= model;
+	}
+
+	public int length() {
+		return _models.length;
 	}
 }
 
