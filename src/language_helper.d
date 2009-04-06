@@ -17,7 +17,8 @@ public static char[] to_s(long value) {
 }
 
 public static char[] to_s(ulong value) {
-	return tango.text.convert.Integer.toString(value);
+	char[66] tmp = void;
+	return tango.text.convert.Integer.format(tmp, value, "u").dup;
 }
 
 public static char[] to_s(float value) {
@@ -48,7 +49,7 @@ public static int to_int(char[] value) {
 }
 
 public static uint to_uint(char[] value) {
-	return tango.text.convert.Integer.convert(value);
+	return cast(uint) tango.text.convert.Integer.convert(value);
 }
 
 public static long to_long(char[] value) {

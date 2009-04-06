@@ -62,7 +62,7 @@ public class Server {
 		// FIXME: Session ids are not yet salted, so they can easily be looked up in a rainbow table or googled
 		char[] set_cookies = "";
 		if(("_appname_session" in _cookies) == null || (_cookies["_appname_session"] in _sessions) == null) {
-			char[] hashed_session_id = Helper.hash_and_base64(tango.text.convert.Integer.toString(_session_id));
+			char[] hashed_session_id = Helper.hash_and_base64(to_s(_session_id));
 			_cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
 			_sessions[hashed_session_id] = [];
 			Stdout.format("\nCreated session number '{}' '{}'\n", _session_id, hashed_session_id).flush;
@@ -83,7 +83,7 @@ public class Server {
 		auto date = Gregorian.generic.toDate(now);
 		char[][] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
-		"Date: ", tango.text.convert.Integer.toString(date.day), tango.text.convert.Integer.toString(date.month), tango.text.convert.Integer.toString(date.year), "\r\n", 
+		"Date: ", to_s(date.day), to_s(date.month), to_s(date.year), "\r\n", 
 		"Server: Native_Rest_Cannon_0.1\r\n", 
 		set_cookies, 
 		"Status: ", status, "\r\n",
@@ -91,7 +91,7 @@ public class Server {
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
 		"Cache-Control: private, max-age=0\r\n",
 		"Content-Type: text/html; charset=utf-8\r\n",
-		"Content-Length: ", tango.text.convert.Integer.toString(text.length), "\r\n",
+		"Content-Length: ", to_s(text.length), "\r\n",
 		//"Vary: User-Agent\r\n",
 		"\r\n",
 		text];
@@ -102,6 +102,7 @@ public class Server {
 	public void start(ushort port, int max_connections, 
 						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
 						void function(Request request, Server server) run_action) {
+
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
 
@@ -129,7 +130,7 @@ public class Server {
 
 			// Reply to clients
 			int read = 0;
-			for(int i=0; i<client_sockets.length; i++) {
+			for(size_t i=0; i<client_sockets.length; i++) {
 				if(socket_set.isSet(client_sockets[i]) == false) {
 					continue;
 				}

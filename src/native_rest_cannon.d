@@ -66,7 +66,7 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 		_models ~= model;
 	}
 
-	public int length() {
+	public size_t length() {
 		return _models.length;
 	}
 }
@@ -122,7 +122,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static T find(ulong id) {
 		// Create the query and run it
 		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ typeof(T)._table_name;
-		query ~= " where id=" ~ tango.text.convert.Integer.toString(id) ~ ";";
+		query ~= " where id=" ~ to_s(id) ~ ";";
 		int row_len, col_len;
 		char*** result = db.db_query_with_result(query, row_len, col_len);
 
@@ -150,7 +150,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static T find_by_id(ulong id) {
 		T model = find(id);
 		if(model is null) {
-			throw new Exception("No {} with the id '{}' was found.", _model_name, id);
+			throw new Exception("No '" ~ _model_name ~ "' with the id '" ~ to_s(id) ~ "' was found.");
 		} else {
 			return model;
 		}
@@ -213,7 +213,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 					query ~= ", ";
 				}
 			}
-			query ~= " where id=" ~ tango.text.convert.Integer.toString(this._id) ~ ";";
+			query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 			// Run the query
 			db.db_update_query(query);
@@ -226,7 +226,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 		// Create the delete query
 		char[] query = "";
 		query ~= "delete from " ~ typeof(this)._table_name;
-		query ~= " where id=" ~ tango.text.convert.Integer.toString(this._id) ~ ";";
+		query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 		// Run the query
 		db.db_update_query(query);

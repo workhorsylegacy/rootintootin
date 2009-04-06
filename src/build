@@ -291,6 +291,8 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 					"				break;\n"
 
 	properties += \
+				"			default:\n" + \
+				"				break;\n" + \
 				"		}\n" + \
 				"	}\n"
 
@@ -306,17 +308,18 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "_" + field)
 			properties += \
 					"			case \"" + field + "\":\n" + \
-					"				return _" + reference_type + " is null ? null : to_s(_" + reference_type + ".id);\n" + \
-					"				break;\n"
+					"				return _" + reference_type + " is null ? null : to_s(_" + reference_type + ".id);\n"
 		else:
 			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "this." + field)
 			properties += \
 					"			case \"" + field + "\":\n" + \
-					"				return " + value_to_string + ";\n" + \
-					"				break;\n"
+					"				return " + value_to_string + ";\n"
 
 	properties += \
+				"			default:\n" + \
+				"				break;\n" + \
 				"		}\n" + \
+				"		return null;\n" + \
 				"	}\n"
 
 	# Add class closing
@@ -496,12 +499,12 @@ generate_views(routes)
 table_map, reference_map = generate_models()
 combine_code_files(routes, table_map, reference_map)
 
-
 # Compile the application into an executable
 result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
-command = "gdc -g -fversion=Posix -o run " + \
+opts = "-Wall -Wextra -Wshadow -Werror -pedantic-errors"
+command = "gdc -g " + opts + " -fversion=Posix -o run " + \
 			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d " + \
 			"/usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
 result += pexpect.run(command)
