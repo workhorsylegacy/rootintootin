@@ -129,130 +129,12 @@ public class Server {
 			Socket.select(socket_set, null, null);
 
 			// Reply to clients
-			int read = 0;
 			for(size_t i=0; i<client_sockets.length; i++) {
 				if(socket_set.isSet(client_sockets[i]) == false) {
 					continue;
 				}
 
-				char[1024] buffer;
-				read = client_sockets[i].receive(buffer);
-
-				if(Socket.ERROR == read) {
-					Stdout("Connection error.\n").flush;
-				} else if(0 == read) {
-					try {
-						//if the connection closed due to an error, remoteAddress() could fail
-						Stdout.format("Connection from {} closed.\n", client_sockets[i].remoteAddress()).flush;
-					} catch {
-						Stdout("Connection from unknown closed.\n").flush;
-					}
-				} else {
-//					Stdout.format("Received from {}: \n\"{}\"\n", client_sockets[i].remoteAddress(), buffer[0 .. read]).flush;
-
-					// Get the request
-					char[] raw_request = buffer[0 .. read];
-					char[][] request = tango.text.Util.splitLines(raw_request);
-//					Stdout.format("\tRequest: [[{}]]\n", raw_request).flush;
-
-					// Get the header
-					char[][] header = tango.text.Util.split(request[0], " ");
-					//"OPTIONS"                ; Section 9.2
-                    //"GET"                    ; Section 9.3
-                    //"HEAD"                   ; Section 9.4
-                    //"POST"                   ; Section 9.5
-                    //"PUT"                    ; Section 9.6
-                    //"DELETE"                 ; Section 9.7
-                    //"TRACE"                  ; Section 9.8
-                    //"CONNECT"                ; Section 9.9
-					char[] method = header[0];
-					char[] uri = header[1];
-					char[] http_version = header[2];
-
-					// Get all the fields
-					char[][char[]] fields;
-					foreach(char[] line ; request) {
-						// Break if we are at the end of the fields
-						if(line.length == 0) break;
-
-						char[][] pair = tango.text.Util.split(line, ": ");
-						if(pair.length == 2) {
-							fields[pair[0]] = pair[1];
-						}
-					}
-
-					// Get the cookies
-					if(("Cookie" in fields) != null) {
-						foreach(char[] cookie ; tango.text.Util.split(fields["Cookie"], "; ")) {
-							char[][] pair = tango.text.Util.split(cookie, "=");
-							if(pair.length != 2) {
-								Stdout.format("Malformed cookie: {}", cookie).flush;
-							} else {
-								_cookies[pair[0]] = Helper.unescape_value(pair[1]);
-							}
-						}
-					}
-
-					// Make sure the session id is one we created
-					if(("_appname_session" in _cookies) != null) {
-						char[] hashed_session_id = _cookies["_appname_session"];
-						if((hashed_session_id in _sessions) == null) {
-							Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
-						}
-					}
-
-					// Get the HTTP GET params
-					char[][char[]] params;
-					if(tango.text.Util.contains(uri, '?')) {
-						foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
-							char[][] pair = tango.text.Util.split(param, "=");
-							params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
-						}
-					}
-
-					// Get the HTTP POST params
-					if(method == "POST" && tango.text.Util.contains(request[request.length-1], ':') == false) {
-						foreach(char[] param ; tango.text.Util.split(request[request.length-1], "&")) {
-							char[][] pair = tango.text.Util.split(param, "=");
-							if(pair.length == 2) {
-								params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
-							}
-						}
-					}
-
-					// Get the controller and action
-					char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
-					char[] controller = route.length > 1 ? route[1] : null;
-					char[] action = route.length > 2 ? route[2] : "index";
-					char[] id = route.length > 3 ? route[3] : null;
-					if(id != null) params["id"] = id;
-
-					// Assemble the request object
-					_has_rendered = false;
-					_client_socket = client_sockets[i];
-					_request = new Request(method, uri, http_version, controller, action, params, _cookies);
-
-					// Run the action
-					run_action(_request, this);
-
-					// FIXME: this prints out all the values we care about
-					/*
-					Stdout.format("Total params: {}\n", params.length).flush;
-					foreach(char[] name, char[] value ; params) {
-						Stdout.format("\t{} => {}\n", name, value).flush;
-					}
-
-					Stdout.format("Total cookies: {}\n", _cookies.length).flush;
-					foreach(char[] name, char[] value ; _cookies) {
-						Stdout.format("\t{} => {}\n", name, value).flush;
-					}
-					*/
-					Stdout("Route :\n").flush;
-					Stdout.format("\tController Name: {}\n", controller).flush;
-					Stdout.format("\tAction Name: {}\n", action).flush;
-					Stdout.format("\tID: {}\n", id).flush;
-					//*/
-				}
+				this.process_request(client_sockets[i], run_action);
 
 				// Remove this client from the socket set
 				client_sockets[i].shutdown(SocketShutdown.BOTH);
@@ -300,6 +182,142 @@ public class Server {
 		}
 
 		return 0;
+	}
+
+	private void process_request(Socket client_socket, 
+								void function(Request request, Server server) run_action) {
+		// Get the http header
+		char[8192] buffer;
+		int buffer_length = client_socket.receive(buffer);
+		// FIXME: have this return a 413 if the end of the header is not found?
+		char[][] buffer_pair = tango.text.Util.split(buffer[0 .. buffer_length], "\r\n\r\n");
+		char[] raw_header = buffer_pair[0];
+		char[] raw_body = buffer_pair.length > 1 ? buffer_pair[1] : "";
+
+		// Print an error if the header was bad
+		if(Socket.ERROR == buffer_length) {
+			Stdout("Connection error.\n").flush;
+			return;
+		} else if(0 == buffer_length) {
+			try {
+				//if the connection closed due to an error, remoteAddress() could fail
+				Stdout.format("Connection from {} closed.\n", client_socket.remoteAddress()).flush;
+			} catch {
+				Stdout("Connection from unknown closed.\n").flush;
+			}
+			return;
+		}
+
+		// Get the header info
+		char[][] header_lines = tango.text.Util.splitLines(raw_header);
+		char[][] first_line = tango.text.Util.split(header_lines[0], " ");
+		char[] method = first_line[0];
+		char[] uri = first_line[1];
+		char[] http_version = first_line[2];
+
+		// Get the content length and body
+		// FIXME: update this to put large bodies into a file, so we don't waste ram
+		int content_length = 0;
+		if(method == "POST" || method == "PUT") {
+			content_length = to_int(between(raw_header, "Content-Length: ", "\r\n"));
+
+			int remaining_length = content_length - raw_body.length;
+			while(remaining_length > 0) {
+				char[8192] other_buffer;
+				// FIXME: check for errors after receive like above
+				buffer_length = client_socket.receive(other_buffer);
+				if(buffer_length > 0)
+					raw_body ~= other_buffer[0 .. buffer_length];
+				remaining_length -= 8192;
+			}
+		}
+
+		//Stdout.format("GOT \"{}\": LENGTH: {}\n", raw_header, raw_header.length).flush;
+		//Stdout.format("GOT \"{}\": LENGTH: {}\n", raw_body, raw_body.length).flush;
+
+		// Get all the fields
+		char[][char[]] fields;
+		foreach(char[] line ; header_lines) {
+			// Break if we are at the end of the fields
+			if(line.length == 0) break;
+
+			char[][] pair = tango.text.Util.split(line, ": ");
+			if(pair.length == 2) {
+				fields[pair[0]] = pair[1];
+			}
+		}
+
+		// Get the cookies
+		if(("Cookie" in fields) != null) {
+			foreach(char[] cookie ; tango.text.Util.split(fields["Cookie"], "; ")) {
+				char[][] pair = tango.text.Util.split(cookie, "=");
+				if(pair.length != 2) {
+					Stdout.format("Malformed cookie: {}", cookie).flush;
+				} else {
+					_cookies[pair[0]] = Helper.unescape_value(pair[1]);
+				}
+			}
+		}
+
+		// Make sure the session id is one we created
+		if(("_appname_session" in _cookies) != null) {
+			char[] hashed_session_id = _cookies["_appname_session"];
+			if((hashed_session_id in _sessions) == null) {
+				Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
+			}
+		}
+
+		// Get the HTTP GET params
+		char[][char[]] params;
+		if(tango.text.Util.contains(uri, '?')) {
+			foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
+				char[][] pair = tango.text.Util.split(param, "=");
+				params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+			}
+		}
+
+		// Get the HTTP POST params
+		if(method == "POST" && tango.text.Util.contains(header_lines[header_lines.length-1], ':') == false) {
+			foreach(char[] param ; tango.text.Util.split(header_lines[header_lines.length-1], "&")) {
+				char[][] pair = tango.text.Util.split(param, "=");
+				if(pair.length == 2) {
+					params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+				}
+			}
+		}
+
+		// Get the controller and action
+		char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
+		char[] controller = route.length > 1 ? route[1] : null;
+		char[] action = route.length > 2 ? route[2] : "index";
+		char[] id = route.length > 3 ? route[3] : null;
+		if(id != null) params["id"] = id;
+
+		// Assemble the request object
+		_has_rendered = false;
+		_client_socket = client_socket;
+		_request = new Request(method, uri, http_version, controller, action, params, _cookies);
+
+		// Run the action
+		run_action(_request, this);
+
+		// FIXME: this prints out all the values we care about
+		/*
+		Stdout.format("Total params: {}\n", params.length).flush;
+		foreach(char[] name, char[] value ; params) {
+			Stdout.format("\t{} => {}\n", name, value).flush;
+		}
+
+		Stdout.format("Total cookies: {}\n", _cookies.length).flush;
+		foreach(char[] name, char[] value ; _cookies) {
+			Stdout.format("\t{} => {}\n", name, value).flush;
+		}
+		*/
+		Stdout("Route :\n").flush;
+		Stdout.format("\tController Name: {}\n", controller).flush;
+		Stdout.format("\tAction Name: {}\n", action).flush;
+		Stdout.format("\tID: {}\n", id).flush;
+		//*/
 	}
 }
 
