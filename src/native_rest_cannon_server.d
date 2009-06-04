@@ -41,7 +41,7 @@ public class Server {
 
 		char[] status = Helper.get_verbose_status_code(301);
 
-		char[]  header = "HTTP/1.1 " ~ status ~ "\r\n" ~
+		char[] header = "HTTP/1.1 " ~ status ~ "\r\n" ~
 		"Location: " ~ url ~ "\r\n" ~
 		"Content-Type: text/html\r\n" ~
 		"Content-Length: 0" ~
@@ -106,7 +106,7 @@ public class Server {
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
 
-		// Create a socket that is non-blocking, can re-uses dangling addresses, and can hold many connections.
+		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
 		Socket server = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
 		server.blocking = false;
 		server.bind(new InternetAddress(port));
@@ -120,7 +120,7 @@ public class Server {
 		Stdout("Server running ...\n").flush;
 
 		while(true) {
-			// Get a  socket set to hold all the client sockets while they wait to be processed
+			// Get a socket set to hold all the client sockets while they wait to be processed
 			socket_set.reset();
 			socket_set.add(server);
 			foreach(Socket each; client_sockets) {
