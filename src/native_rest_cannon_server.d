@@ -8,6 +8,7 @@ import tango.io.encode.Base64;
 import tango.text.convert.Integer;
 import tango.text.Util;
 import tango.stdc.stringz;
+import tango.io.FileConduit;
 
 import tango.io.Stdout;
 import tango.net.Socket;
@@ -221,7 +222,6 @@ public class Server {
 		// Clone the buffer segments into the raw header and body
 		char[][] buffer_pair = tango.text.Util.split(buffer[0 .. buffer_length], "\r\n\r\n");
 		char[] raw_header = "" ~ buffer_pair[0];
-		char[] raw_body = buffer_pair.length > 1 ? ("" ~ buffer_pair[1]) : "";
 
 		// Get the header info
 		char[][] header_lines = tango.text.Util.splitLines(raw_header);
@@ -231,8 +231,9 @@ public class Server {
 		char[] http_version = first_line[2];
 
 		// Get the content length and body
-		// FIXME: update this to put large bodies into a file, so we don't waste ram
 		int content_length = 0;
+		FileConduit body_file = null;
+
 		if(method == "POST" || method == "PUT") {
 			// Show an 'HTTP 411 Length Required' error if there is no Content-Length
 			if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
@@ -240,15 +241,29 @@ public class Server {
 				return;
 			}
 
+			// Get the content length
 			content_length = to_int(between(raw_header, "Content-Length: ", "\r\n"));
 
-			int remaining_length = content_length - raw_body.length;
-			while(remaining_length > 0) {
-				// FIXME: check for errors after receive like above
-				buffer_length = _client_socket.receive(buffer);
-				if(buffer_length > 0)
-					raw_body ~= buffer[0 .. buffer_length];
-				remaining_length -= header_max_size;
+			// Write the request body into a file
+			if(content_length > 0) {
+				// Write any left-over body from when we read the header into the file
+				int remaining_length = content_length;
+				body_file = new FileConduit("raw_body", FileConduit.WriteCreate);
+				if(buffer_pair.length >= 2 && buffer_pair[1].length > 0) {
+					char[] raw_body = buffer_pair.length > 1 ? buffer_pair[1] : "";
+					remaining_length -= raw_body.length;
+					body_file.output.write(raw_body);
+				}
+
+				// Write the remaining body into the file
+				while(remaining_length > 0) {
+					// FIXME: check for errors after receive like above
+					buffer_length = _client_socket.receive(buffer);
+					if(buffer_length > 0) {
+						body_file.output.write(buffer[0 .. buffer_length]);
+					}
+					remaining_length -= header_max_size;
+				}
 			}
 		}
 
