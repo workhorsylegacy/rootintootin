@@ -129,6 +129,7 @@ def combine_code_files(routes, table_map, reference_map):
 
 	port = globals()['server_configuration']['port']
 	max_connections = globals()['server_configuration']['max_connections']
+	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
 	db_user = globals()['database_configuration']['user']
 	db_password = globals()['database_configuration']['password']
@@ -138,7 +139,9 @@ def combine_code_files(routes, table_map, reference_map):
 	out_file.write(
 	"\n\nint main() {\n" +
 	"	Server server = new Server();\n" +
-	"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" +
+	"	char[" + str(header_max_size) + "] buffer;\n\n" + 
+	"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" + 
+					"buffer, " + str(header_max_size) + ", \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\",\n" +
 	"				&run_action);\n" +

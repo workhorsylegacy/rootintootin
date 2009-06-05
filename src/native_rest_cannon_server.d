@@ -50,13 +50,16 @@ public class Server {
 		_client_socket.send(header);
 	}
 
-	public void render_text(char[] text) {
+	public void render_text(char[] text, ushort status_code = cast(ushort)-1) {
 		// If we have already rendered, show an error
 		if(_has_rendered) {
 			throw new Exception("Something has already been rendered.");
 		}
 
-		char[] status = Helper.get_verbose_status_code(200);
+		// Get the status code. Use 200 as default
+		if(status_code == -1)
+			status_code = 200;
+		char[] status = Helper.get_verbose_status_code(status_code);
 
 		// If there is no session add one to the cookies
 		// FIXME: Session ids are not yet salted, so they can easily be looked up in a rainbow table or googled
@@ -99,7 +102,8 @@ public class Server {
 		_client_socket.send(tango.text.Util.join(reply, ""));
 	}
 
-	public void start(ushort port, int max_connections, 
+	public void start(ushort port, uint max_connections, 
+						char[] buffer, uint header_max_size, 
 						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
 						void function(Request request, Server server) run_action) {
 
@@ -134,7 +138,7 @@ public class Server {
 					continue;
 				}
 
-				this.process_request(client_sockets[i], run_action);
+				this.process_request(client_sockets[i], buffer, header_max_size, run_action);
 
 				// Remove this client from the socket set
 				client_sockets[i].shutdown(SocketShutdown.BOTH);
@@ -185,16 +189,12 @@ public class Server {
 	}
 
 	private void process_request(Socket client_socket, 
+								char[] buffer, uint header_max_size, 
 								void function(Request request, Server server) run_action) {
 		// Get the http header
-		char[8192] buffer;
 		int buffer_length = client_socket.receive(buffer);
-		// FIXME: have this return a 413 if the end of the header is not found?
-		char[][] buffer_pair = tango.text.Util.split(buffer[0 .. buffer_length], "\r\n\r\n");
-		char[] raw_header = buffer_pair[0];
-		char[] raw_body = buffer_pair.length > 1 ? buffer_pair[1] : "";
 
-		// Print an error if the header was bad
+		// Show an error if the header was bad
 		if(Socket.ERROR == buffer_length) {
 			Stdout("Connection error.\n").flush;
 			return;
@@ -208,6 +208,17 @@ public class Server {
 			return;
 		}
 
+		// Show an 'HTTP 413 Request Entity Too Large' if the end of the header was not read
+		if(tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0) == buffer_length) {
+			this.render_text("The end of the HTTP header was not found when reading the first " ~ to_s(header_max_size) ~ " bytes.", 413);
+			return;
+		}
+
+		// Clone the buffer segments into the raw header and body
+		char[][] buffer_pair = tango.text.Util.split(buffer[0 .. buffer_length], "\r\n\r\n");
+		char[] raw_header = "" ~ buffer_pair[0];
+		char[] raw_body = buffer_pair.length > 1 ? ("" ~ buffer_pair[1]) : "";
+
 		// Get the header info
 		char[][] header_lines = tango.text.Util.splitLines(raw_header);
 		char[][] first_line = tango.text.Util.split(header_lines[0], " ");
@@ -219,16 +230,21 @@ public class Server {
 		// FIXME: update this to put large bodies into a file, so we don't waste ram
 		int content_length = 0;
 		if(method == "POST" || method == "PUT") {
+			// Show an 'HTTP 411 Length Required' error if there is no Content-Length
+			if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
+				this.render_text("Content-Length is required for HTTP POST and PUT.", 411);
+				return;
+			}
+
 			content_length = to_int(between(raw_header, "Content-Length: ", "\r\n"));
 
 			int remaining_length = content_length - raw_body.length;
 			while(remaining_length > 0) {
-				char[8192] other_buffer;
 				// FIXME: check for errors after receive like above
-				buffer_length = client_socket.receive(other_buffer);
+				buffer_length = client_socket.receive(buffer);
 				if(buffer_length > 0)
-					raw_body ~= other_buffer[0 .. buffer_length];
-				remaining_length -= 8192;
+					raw_body ~= buffer[0 .. buffer_length];
+				remaining_length -= header_max_size;
 			}
 		}
 
