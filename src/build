@@ -141,7 +141,7 @@ def combine_code_files(routes, table_map, reference_map):
 	"	Server server = new Server();\n" +
 	"	char[" + str(header_max_size) + "] buffer;\n\n" + 
 	"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" + 
-					"buffer, " + str(header_max_size) + ", \n" + 
+	"				buffer, " + str(header_max_size) + ", \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\",\n" +
 	"				&run_action);\n" +

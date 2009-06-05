@@ -57,7 +57,7 @@ public class Server {
 		}
 
 		// Get the status code. Use 200 as default
-		if(status_code == -1)
+		if(status_code == cast(ushort)-1)
 			status_code = 200;
 		char[] status = Helper.get_verbose_status_code(status_code);
 
@@ -138,11 +138,16 @@ public class Server {
 					continue;
 				}
 
-				this.process_request(client_sockets[i], buffer, header_max_size, run_action);
+				// Save the current socket
+				_has_rendered = false;
+				_client_socket = client_sockets[i];
+
+				// FIXME: Catch exceptions here and show them to the user
+				this.process_request(buffer, header_max_size, run_action);
 
 				// Remove this client from the socket set
-				client_sockets[i].shutdown(SocketShutdown.BOTH);
-				client_sockets[i].detach();
+				_client_socket.shutdown(SocketShutdown.BOTH);
+				_client_socket.detach();
 				if(i != client_sockets.length - 1)
 					client_sockets[i] = client_sockets[client_sockets.length - 1];
 				client_sockets = client_sockets[0 .. client_sockets.length - 1];
@@ -188,11 +193,10 @@ public class Server {
 		return 0;
 	}
 
-	private void process_request(Socket client_socket, 
-								char[] buffer, uint header_max_size, 
+	private void process_request(char[] buffer, uint header_max_size, 
 								void function(Request request, Server server) run_action) {
 		// Get the http header
-		int buffer_length = client_socket.receive(buffer);
+		int buffer_length = _client_socket.receive(buffer);
 
 		// Show an error if the header was bad
 		if(Socket.ERROR == buffer_length) {
@@ -201,7 +205,7 @@ public class Server {
 		} else if(0 == buffer_length) {
 			try {
 				//if the connection closed due to an error, remoteAddress() could fail
-				Stdout.format("Connection from {} closed.\n", client_socket.remoteAddress()).flush;
+				Stdout.format("Connection from {} closed.\n", _client_socket.remoteAddress()).flush;
 			} catch {
 				Stdout("Connection from unknown closed.\n").flush;
 			}
@@ -241,7 +245,7 @@ public class Server {
 			int remaining_length = content_length - raw_body.length;
 			while(remaining_length > 0) {
 				// FIXME: check for errors after receive like above
-				buffer_length = client_socket.receive(buffer);
+				buffer_length = _client_socket.receive(buffer);
 				if(buffer_length > 0)
 					raw_body ~= buffer[0 .. buffer_length];
 				remaining_length -= header_max_size;
@@ -310,8 +314,6 @@ public class Server {
 		if(id != null) params["id"] = id;
 
 		// Assemble the request object
-		_has_rendered = false;
-		_client_socket = client_socket;
 		_request = new Request(method, uri, http_version, controller, action, params, _cookies);
 
 		// Run the action
