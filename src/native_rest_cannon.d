@@ -121,7 +121,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 	// Returns a single model that matches the id, or null.
 	static T find(ulong id) {
 		// Create the query and run it
-		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ typeof(T)._table_name;
+		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ T._table_name;
 		query ~= " where id=" ~ to_s(id) ~ ";";
 		int row_len, col_len;
 		char*** result = db.db_query_with_result(query, row_len, col_len);

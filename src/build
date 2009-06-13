@@ -505,11 +505,10 @@ combine_code_files(routes, table_map, reference_map)
 # Compile the application into an executable
 result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
-result += pexpect.run("ar rcs db.a db.o")
-opts = "-Wall -Wextra -Wshadow -Werror -pedantic-errors"
-command = "gdc -g " + opts + " -fversion=Posix -o run " + \
+result += pexpect.run("ar -r db.a db.o")
+command = "ldc -g -of run " + \
 			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d " + \
-			"/usr/lib/tango-gdc/libgtango.a db.a -lz -lmysqlclient -L /usr/lib/mysql/"
+			"db.a -L=\"-lmysqlclient\""
 result += pexpect.run(command)
 print result
 

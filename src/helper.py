@@ -32,37 +32,32 @@ class Helper(object):
 				other_globals['pexpect'] = __import__("pexpect")
 				other_globals['MySQLdb'] = __import__("MySQLdb")
 
-				# Make sure gdc exists
-				for command in ['gcc', 'gdc']:
+				# Make sure ldc exists
+				for command in ['gcc', 'ldc']:
 					if commands.getoutput("which " + command) == '':
 						raise Exception('')
 
 			except:
 				if ['Ubuntu', 'Debian'].count(os_name):
 					print "Please install requirements:\n" + \
-							"    sudo apt-get install mysql-client mysql-server libmysqlclient15-dev python-pexpect python-mysqldb gcc gdc"
+							"    sudo apt-get install mysql-client mysql-server libmysqlclient15-dev python-pexpect python-mysqldb gcc ldc"
 					exit()
 				elif ['Fedora'].count(os_name):
 					print "Please install requirements:\n" + \
-							"    sudo yum install mysql-client mysql-server libmysqlclient15-dev pexpect MySQL-python gcc gdc"
+							"    sudo yum install mysql-client mysql-server libmysqlclient15-dev pexpect MySQL-python gcc ldc"
 					exit()
 				elif ['Foresight Linux'].count(os_name):
 					print "Please install requirements:\n" + \
-							"    mysql-client mysql-server libmysqlclient15-dev, python-pexpect, python-mysqldb, gcc, tango-gdc, and gdc"
+							"    mysql-client mysql-server libmysqlclient15-dev, python-pexpect, python-mysqldb, gcc, tango-ldc, and ldc"
 					exit()
 				else:
 					print "Please install requirements for your unknown Linux distro:\n" + \
-							"    mysql-client, mysql-server, libmysqlclient15-dev, python-pexpect, python-mysqldb, gcc, tango-gdc, and gdc"
+							"    mysql-client, mysql-server, libmysqlclient15-dev, python-pexpect, python-mysqldb, gcc, tango-ldc, and ldc"
 					exit()
 
 			# Make sure the mysql libs are installed
 			if commands.getoutput('test -f ' + "'/usr/include/mysql/mysql.h'" + '; echo $?') == '1':
 				print "Please install the MySQL development libraries."
-				exit()
-
-			# Make sure the tango libs are installed
-			if commands.getoutput('test -f ' + "'/usr/lib/tango-gdc/libgtango.a'" + '; echo $?') == '1':
-				print "Please install the GDC Tango development libraries."
 				exit()
 
 		elif platform.system() == 'Windows':
