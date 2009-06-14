@@ -8,7 +8,7 @@ import tango.io.encode.Base64;
 import tango.text.convert.Integer;
 import tango.text.Util;
 import tango.stdc.stringz;
-import tango.io.FileConduit;
+import tango.io.device.File;
 
 import tango.io.Stdout;
 import tango.net.Socket;
@@ -232,7 +232,7 @@ public class Server {
 
 		// Get the content length and body
 		int content_length = 0;
-		FileConduit body_file = null;
+		File body_file = null;
 
 		if(method == "POST" || method == "PUT") {
 			// Show an 'HTTP 411 Length Required' error if there is no Content-Length
@@ -248,7 +248,7 @@ public class Server {
 			if(content_length > 0) {
 				// Write any left-over body from when we read the header into the file
 				int remaining_length = content_length;
-				body_file = new FileConduit("raw_body", FileConduit.WriteCreate);
+				body_file = new File("raw_body", File.WriteCreate);
 				if(buffer_pair.length >= 2 && buffer_pair[1].length > 0) {
 					char[] raw_body = buffer_pair.length > 1 ? buffer_pair[1] : "";
 					remaining_length -= raw_body.length;
@@ -311,12 +311,22 @@ public class Server {
 			}
 		}
 
-		// Get the HTTP POST params
-		if(method == "POST" && tango.text.Util.contains(header_lines[header_lines.length-1], ':') == false) {
-			foreach(char[] param ; tango.text.Util.split(header_lines[header_lines.length-1], "&")) {
-				char[][] pair = tango.text.Util.split(param, "=");
-				if(pair.length == 2) {
-					params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+		// Get the HTTP POST and PUT params
+		// FIXME: This will put the whole post body into ram. It should put the params into a file
+		if((method == "POST" || method == "PUT") && ("Content-Type" in fields) != null) {
+			if(fields["Content-Type"] == "application/x-www-form-urlencoded") {
+				File raw_body_file = new File("raw_body", File.ReadExisting);
+				char[] raw_body = "";
+				char[10] buf;
+				int len = 0;
+				while((len = raw_body_file.read(buf)) > 0) {
+					raw_body ~= buf[0 .. len];
+				}
+				foreach(char[] param ; tango.text.Util.split(raw_body, "&")) {
+					char[][] pair = tango.text.Util.split(param, "=");
+					if(pair.length == 2) {
+						params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+					}
 				}
 			}
 		}
@@ -331,9 +341,6 @@ public class Server {
 		// Assemble the request object
 		_request = new Request(method, uri, http_version, controller, action, params, _cookies);
 
-		// Run the action
-		run_action(_request, this);
-
 		// FIXME: this prints out all the values we care about
 		/*
 		Stdout.format("Total params: {}\n", params.length).flush;
@@ -346,6 +353,10 @@ public class Server {
 			Stdout.format("\t{} => {}\n", name, value).flush;
 		}
 		*/
+
+		// Run the action
+		run_action(_request, this);
+
 		Stdout("Route :\n").flush;
 		Stdout.format("\tController Name: {}\n", controller).flush;
 		Stdout.format("\tAction Name: {}\n", action).flush;
