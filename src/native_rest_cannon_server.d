@@ -143,8 +143,12 @@ public class Server {
 				_has_rendered = false;
 				_client_socket = client_sockets[i];
 
-				// FIXME: Catch exceptions here and show them to the user
-				this.process_request(buffer, header_max_size, run_action);
+				try {
+					this.process_request(buffer, header_max_size, run_action);
+				} catch(Exception e) {
+					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
+					this.render_text(msg, 500);
+				}
 
 				// Remove this client from the socket set
 				_client_socket.shutdown(SocketShutdown.BOTH);
