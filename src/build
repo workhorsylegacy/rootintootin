@@ -113,7 +113,7 @@ def combine_code_files(routes, table_map, reference_map):
 
 	for controller, actions in routes.items():
 		out_file.write(
-		"	if(controller_name == \"" + controller + "\") {\n")
+		"	if(controller_name == \"" + controller + "s\") {\n")
 
 		all_actions = {}
 		all_actions.update(actions['member'])
@@ -127,12 +127,13 @@ def combine_code_files(routes, table_map, reference_map):
 			if method == "get":
 				out_file.write(
 				"		if(view_name == \"" + action + "\") {\n" +
-				"			return " + controller.capitalize() + action.capitalize() + "View.render(this._" + controller + "_controller, line_translations);\n" \
+				"			return " + controller.capitalize() + action.capitalize() + "View.render(this._" + controller + "_controller, line_translations);\n"
 				)
 
 				out_file.write("		}\n")
 
 		out_file.write("	}\n")
+	out_file.write("	return \"Unknown view '\" ~ view_name ~ \"'\";\n")
 	out_file.write("}\n")
 
 
@@ -175,6 +176,7 @@ def combine_code_files(routes, table_map, reference_map):
 
 		out_file.write("	}\n")
 
+	out_file.write("	return null;\n")
 	out_file.write("}\n")
 	out_file.write("}\n")
 

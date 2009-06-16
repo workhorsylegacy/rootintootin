@@ -203,9 +203,8 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 	bool save() {
 		// Return false if the validation failed
-		if(this.is_valid()) {
+		if(this.is_valid() == false)
 			return false;
-		}
 
 		char[] query = "";
 
@@ -259,29 +258,46 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 }
 
+public class RenderViewException : Exception {
+	private char[] _view_name = null;
+
+	public this(char[] view_name, char[] file="", long line=-1) {
+		super("A vew needs to be rendred.", file, line);
+		_view_name = view_name;
+	}
+
+	public char[] view_name() {
+		return _view_name;
+	}
+
+}
+
+public class RedirectToException : Exception {
+	private char[] _url = null;
+
+	public this(char[] url, char[] file="", long line=-1) {
+		super("A redirect needs to be made.", file, line);
+		_url = url;
+	}
+
+	public char[] url() {
+		return _url;
+	}
+}
+
 public template ControllerBaseMixin(T) {
 	private Request _request = null;
-	private char[] _render_view = null;
-	private char[] _redirect_to = null;
 
 	public this(Request request) {
 		_request = request;
 	}
 
 	public void render_view(char[] name) {
-		_render_view = name;
+		throw new RenderViewException(name);
 	}
 
 	public void redirect_to(char[] url) {
-		_redirect_to = url;
-	}
-
-	public char[] get_render_view() {
-		return _render_view;
-	}
-
-	public char[] get_redirect_to() {
-		return _redirect_to;
+		throw new RedirectToException(url);
 	}
 }
 

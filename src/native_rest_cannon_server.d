@@ -361,9 +361,15 @@ public class Server {
 		*/
 
 		// Run the action
-		char[] result = _runner.run_action(_request);
-		if(result !is null) {
-			this.render_text(result);
+		try {
+			char[] result = _runner.run_action(_request);
+			if(result != null) {
+				this.render_text(result);
+			}
+		} catch(RedirectToException e) {
+			this.redirect_to(e.url);
+		} catch(RenderViewException e) {
+			this.render_text(_runner.render_view(_request.controller, e.view_name));
 		}
 
 		Stdout("Route :\n").flush;
