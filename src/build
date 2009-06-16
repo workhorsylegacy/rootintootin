@@ -98,17 +98,55 @@ def combine_code_files(routes, table_map, reference_map):
 			out_file.write("\n\n")
 			f.close()
 
-	
+
+	# Write the runner class
+	out_file.write(
+	"public class Runner : RunnerBase {\n")
+	for controller, actions in routes.items():
+		out_file.write("	private " + controller.capitalize() + "Controller _" + controller + "_controller;\n")
+	out_file.write("\n")
+
+	# Write the render view function
+	out_file.write(
+	"public char[] render_view(char[] controller_name, char[] view_name) {\n" +
+	"	int[int] line_translations;\n")
+
+	for controller, actions in routes.items():
+		out_file.write(
+		"	if(controller_name == \"" + controller + "\") {\n")
+
+		all_actions = {}
+		all_actions.update(actions['member'])
+		all_actions.update(actions['collection'])
+		for action, method in all_actions.items():
+			if action == "new":
+				action = "New"
+			elif action == "delete":
+				action = "Delete"
+
+			if method == "get":
+				out_file.write(
+				"		if(view_name == \"" + action + "\") {\n" +
+				"			return " + controller.capitalize() + action.capitalize() + "View.render(this._" + controller + "_controller, line_translations);\n" \
+				)
+
+				out_file.write("		}\n")
+
+		out_file.write("	}\n")
+	out_file.write("}\n")
+
+
 	# Write the run action function
 	out_file.write(
-	"public void run_action(Request request, Server server) {\n" +
-	"	int[int] line_translations;\n"
+	"public char[] run_action(Request request) {\n" +
+	"\n"
 	)
 	
 	for controller, actions in routes.items():
 		out_file.write(
 		"	if(request.controller == \"" + controller + "s\") {\n" +
-		"		" + controller.capitalize() + "Controller controller = new " + controller.capitalize() + "Controller(request, server);\n"
+		"		this._" + controller + "_controller = new " + controller.capitalize() + "Controller(request);\n" +
+		"\n"
 		)
 
 		all_actions = {}
@@ -121,18 +159,23 @@ def combine_code_files(routes, table_map, reference_map):
 				action = "Delete"
 			out_file.write(
 			"		if(request.action == \"" + action + "\") {\n" +
-			"			controller." + action + "();\n"
+			"			this._" + controller + "_controller." + action + "();\n"
 			)
 
 			if method == "get":
 				out_file.write(
-				"			server.render_text(" + controller.capitalize() + action.capitalize() + "View.render(controller, line_translations));\n"
+				"			return this.render_view(request.controller, request.action);\n"
+				)
+			else:
+				out_file.write(
+				"			return null;\n"
 				)
 
 			out_file.write("		}\n")
 
 		out_file.write("	}\n")
 
+	out_file.write("}\n")
 	out_file.write("}\n")
 
 	port = globals()['server_configuration']['port']
@@ -152,7 +195,7 @@ def combine_code_files(routes, table_map, reference_map):
 	"				buffer, " + str(header_max_size) + ", \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\",\n" +
-	"				&run_action);\n" +
+	"				new Runner());\n" +
 	"\n" +
 	"	return 0;\n" +
 	"}\n")

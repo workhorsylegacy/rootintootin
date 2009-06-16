@@ -27,8 +27,7 @@ public class UserController {
 		if(_user.save()) {
 			redirect_to("/users/show/" ~ to_s(_user.id));
 		} else {
-			redirect_to("http://yahoo.com/");
-//			_response.render("new");
+			render_view("new");
 		}
 	}
 
@@ -44,8 +43,7 @@ public class UserController {
 		if(_user.save()) {
 			redirect_to("/users/show/" ~ to_s(_user.id));
 		} else {
-			redirect_to("http://yahoo.com/");
-//			_response.render("edit");
+			render_view("edit");
 		}
 	}
 

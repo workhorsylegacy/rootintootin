@@ -75,9 +75,20 @@ public class ModelBase {
 
 }
 
+public class RunnerBase {
+	public char[] render_view(char[] controller_name, char[] view_name) {
+		return null;
+	}
+
+	public char[] run_action(Request request) {
+		return null;
+	}
+}
+
 public template ModelBaseMixin(T, char[] model_name) {
 	static char[] _table_name = model_name ~ "s";
 	static char[] _model_name = model_name;
+	char[][] _errors;
 
 	private bool _was_pulled_from_database = true;
 
@@ -191,6 +202,11 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 
 	bool save() {
+		// Return false if the validation failed
+		if(this.is_valid()) {
+			return false;
+		}
+
 		char[] query = "";
 
 		// If there is no id, use an insert query
@@ -222,6 +238,14 @@ public template ModelBaseMixin(T, char[] model_name) {
 		return true;
 	}
 
+	void reset_validation_errors() {
+	}
+
+	bool is_valid() {
+		this.reset_validation_errors();
+		return this._errors.length == 0;
+	}
+
 	bool destroy() {
 		// Create the delete query
 		char[] query = "";
@@ -237,15 +261,27 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 public template ControllerBaseMixin(T) {
 	private Request _request = null;
-	private Server _server = null;
+	private char[] _render_view = null;
+	private char[] _redirect_to = null;
 
-	public this(Request request, Server server) {
+	public this(Request request) {
 		_request = request;
-		_server = server;
+	}
+
+	public void render_view(char[] name) {
+		_render_view = name;
 	}
 
 	public void redirect_to(char[] url) {
-		_server.redirect_to(url);
+		_redirect_to = url;
+	}
+
+	public char[] get_render_view() {
+		return _render_view;
+	}
+
+	public char[] get_redirect_to() {
+		return _redirect_to;
 	}
 }
 

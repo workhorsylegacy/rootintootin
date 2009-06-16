@@ -33,6 +33,7 @@ public class Server {
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
+	private RunnerBase _runner = null;
 
 	public void redirect_to(char[] url) {
 		// If we have already rendered, show an error
@@ -106,7 +107,9 @@ public class Server {
 	public void start(ushort port, uint max_connections, 
 						char[] buffer, uint header_max_size, 
 						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
-						void function(Request request, Server server) run_action) {
+						RunnerBase runner) {
+
+		this._runner = runner;
 
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
@@ -144,7 +147,7 @@ public class Server {
 				_client_socket = client_sockets[i];
 
 				try {
-					this.process_request(buffer, header_max_size, run_action);
+					this.process_request(buffer, header_max_size);
 				} catch(Exception e) {
 					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
 					this.render_text(msg, 500);
@@ -198,8 +201,7 @@ public class Server {
 		return 0;
 	}
 
-	private void process_request(char[] buffer, uint header_max_size, 
-								void function(Request request, Server server) run_action) {
+	private void process_request(char[] buffer, uint header_max_size) {
 		// Get the http header
 		int buffer_length = _client_socket.receive(buffer);
 
@@ -359,7 +361,10 @@ public class Server {
 		*/
 
 		// Run the action
-		run_action(_request, this);
+		char[] result = _runner.run_action(_request);
+		if(result !is null) {
+			this.render_text(result);
+		}
 
 		Stdout("Route :\n").flush;
 		Stdout.format("\tController Name: {}\n", controller).flush;

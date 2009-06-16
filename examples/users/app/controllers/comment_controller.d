@@ -29,8 +29,7 @@ public class CommentController {
 		if(_comment.save()) {
 			redirect_to("/comments/show/" ~ to_s(_comment.id));
 		} else {
-			redirect_to("http://yahoo.com/");
-//			_response.render("new");
+			render_view("new");
 		}
 	}
 
@@ -48,8 +47,7 @@ public class CommentController {
 		if(_comment.save()) {
 			redirect_to("/comments/show/" ~ to_s(_comment.id));
 		} else {
-			redirect_to("http://yahoo.com/");
-//			_response.render("edit");
+			render_view("edit");
 		}
 	}
 
