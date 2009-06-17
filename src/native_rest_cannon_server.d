@@ -361,15 +361,17 @@ public class Server {
 		*/
 
 		// Run the action
+		char[] response = null;
 		try {
-			char[] result = _runner.run_action(_request);
-			if(result != null) {
-				this.render_text(result);
+			response = _runner.run_action(_request);
+			if(response != null) {
+				this.render_text(response);
 			}
 		} catch(RedirectToException e) {
 			this.redirect_to(e.url);
 		} catch(RenderViewException e) {
-			this.render_text(_runner.render_view(_request.controller, e.view_name));
+			response = _runner.render_view(_request.controller, e.view_name);
+			this.render_text(response, 200);
 		}
 
 		Stdout("Route :\n").flush;

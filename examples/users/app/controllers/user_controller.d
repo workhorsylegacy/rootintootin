@@ -5,7 +5,6 @@ public class UserController {
 
 	public User[] _users;
 	public User _user;
-	public char[] _things;
 
 	public void index() {
 		_users = User.find_all();

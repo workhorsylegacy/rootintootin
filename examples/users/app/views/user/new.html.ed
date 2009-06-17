@@ -1,6 +1,9 @@
 
 <form action="/users/create" class="new_user" id="new_user" method="post">
 	<h1>New User</h1>
+
+	<%= UI.errors_for(controller._user, "user") %>
+
 	<p>
 		<label for="user_name">Name</label><br />
 		<input id="user_name" name="user[name]" type="text" value="<%=controller._user.name%>" />

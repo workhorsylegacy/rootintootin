@@ -34,7 +34,8 @@ def combine_code_files(routes, table_map, reference_map):
 		"import language_helper;\n" +
 		"import helper;\n" +
 		"import native_rest_cannon;\n" +
-		"import native_rest_cannon_server;\n\n"
+		"import native_rest_cannon_server;\n" +
+		"import ui;\n\n"
 	);
 
 	# Write the generated model base classes into the file
@@ -119,14 +120,9 @@ def combine_code_files(routes, table_map, reference_map):
 		all_actions.update(actions['member'])
 		all_actions.update(actions['collection'])
 		for action, method in all_actions.items():
-			if action == "new":
-				action = "New"
-			elif action == "delete":
-				action = "Delete"
-
 			if method == "get":
 				out_file.write(
-				"		if(view_name == \"" + action + "\") {\n" +
+				"		if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
 				"			return " + controller.capitalize() + action.capitalize() + "View.render(this._" + controller + "_controller, line_translations);\n"
 				)
 
@@ -574,7 +570,7 @@ result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar -r db.a db.o")
 command = "ldc -g -of run " + \
-			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d run.d db.d " + \
+			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d ui.d run.d db.d " + \
 			"db.a -L=\"-lmysqlclient\""
 result += pexpect.run(command)
 print result

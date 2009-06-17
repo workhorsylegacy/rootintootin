@@ -72,7 +72,19 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 }
 
 public class ModelBase {
+	protected char[][] _errors;
 
+	protected void reset_validation_errors() {
+	}
+
+	public bool is_valid() {
+		this.reset_validation_errors();
+		return this._errors.length == 0;
+	}
+
+	public char[][] errors() {
+		return this._errors;
+	}
 }
 
 public class RunnerBase {
@@ -88,7 +100,6 @@ public class RunnerBase {
 public template ModelBaseMixin(T, char[] model_name) {
 	static char[] _table_name = model_name ~ "s";
 	static char[] _model_name = model_name;
-	char[][] _errors;
 
 	private bool _was_pulled_from_database = true;
 
@@ -235,14 +246,6 @@ public template ModelBaseMixin(T, char[] model_name) {
 		}
 
 		return true;
-	}
-
-	void reset_validation_errors() {
-	}
-
-	bool is_valid() {
-		this.reset_validation_errors();
-		return this._errors.length == 0;
 	}
 
 	bool destroy() {

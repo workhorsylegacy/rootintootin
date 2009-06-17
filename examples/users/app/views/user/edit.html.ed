@@ -1,6 +1,9 @@
 
 <form action="/users/update/<%=controller._user.id%>" class="edit_user" id="edit_user_<%=controller._user.id%>" method="post">
 	<h1>Editing User</h1>
+
+	<%= UI.errors_for(controller._user, "user") %>
+
 	<p>
 		<label for="user_name">Name</label><br />
 		<input id="user_name" name="user[name]" type="text" value="<%=controller._user.name%>" />
