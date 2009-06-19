@@ -1,14 +1,11 @@
 
 
 
-import tango.io.digest.Digest;
-import tango.io.digest.Sha0;
-import tango.io.encode.Base64;
-
 import tango.text.convert.Integer;
 import tango.text.Util;
 import tango.stdc.stringz;
 import tango.io.device.File;
+import tango.math.random.engines.Twister;
 
 import tango.io.Stdout;
 import tango.net.Socket;
@@ -33,7 +30,16 @@ public class Server {
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
+	private char[] _salt;
 	private RunnerBase _runner = null;
+
+	public this() {
+		// Get a random salt for salting sessions
+		Twister* random = new Twister();
+		random.seed(Clock.now.span.millis);
+		this._salt = to_s(random.next());
+		delete random;
+	}
 
 	public void redirect_to(char[] url) {
 		// If we have already rendered, show an error
@@ -64,10 +70,9 @@ public class Server {
 		char[] status = Helper.get_verbose_status_code(status_code);
 
 		// If there is no session add one to the cookies
-		// FIXME: Session ids are not yet salted, so they can easily be looked up in a rainbow table or googled
 		char[] set_cookies = "";
 		if(("_appname_session" in _cookies) == null || (_cookies["_appname_session"] in _sessions) == null) {
-			char[] hashed_session_id = Helper.hash_and_base64(to_s(_session_id));
+			char[] hashed_session_id = Helper.hash_and_base64(to_s(_session_id), _salt);
 			_cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
 			_sessions[hashed_session_id] = [];
 			Stdout.format("\nCreated session number '{}' '{}'\n", _session_id, hashed_session_id).flush;
@@ -144,6 +149,8 @@ public class Server {
 
 				// Save the current socket
 				_has_rendered = false;
+				foreach(char[] key ; _cookies.keys)
+					_cookies.remove(key);
 				_client_socket = client_sockets[i];
 
 				try {
