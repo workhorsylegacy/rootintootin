@@ -1,0 +1,14 @@
+
+<form action="/files/create" class="new_file" id="new_file" method="post">
+	<h1>New File</h1>
+
+	<%= UI.errors_for(controller._file, "file") %>
+
+	File: <input id="file_name" name="file[name]" type="file" />
+	<br />
+
+	<input name="commit" type="submit" value="Upload file" />
+</form>
+
+<a href="/files">Back</a>
+

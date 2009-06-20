@@ -2,13 +2,13 @@
 database_configuration = {
 	"host" : "localhost", 
 	"password" : "letmein", 
-	"name" : "users", 
+	"name" : "file_upload", 
 	"user" : "root", 
 }
 
 server_configuration = {
+	"header_max_size" : "8192", 
 	"port" : "2345", 
 	"max_connections" : "100", 
-	"header_max_size" : "8192"
 }
 
