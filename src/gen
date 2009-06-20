@@ -297,11 +297,11 @@ if str.join(' ', sys.argv[2:]) == "migrate":
 
 # configure database
 if str.join(' ', sys.argv[2:4]) == "configure database":
-	generator.configure_database(sys.argv[3:])
+	generator.configure_database(sys.argv[4:])
 
 # configure server
 if str.join(' ', sys.argv[2:4]) == "configure server":
-	generator.configure_server(sys.argv[3:])
+	generator.configure_server(sys.argv[4:])
 
 # Nothing
 if str.join(' ', sys.argv[2:]) == "":
