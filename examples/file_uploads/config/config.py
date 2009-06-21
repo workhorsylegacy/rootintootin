@@ -2,7 +2,7 @@
 database_configuration = {
 	"host" : "localhost", 
 	"password" : "letmein", 
-	"name" : "file_upload", 
+	"name" : "file_uploads", 
 	"user" : "root", 
 }
 

@@ -211,6 +211,7 @@ public class Server {
 	private void process_request(char[] buffer, uint header_max_size) {
 		// Get the http header
 		int buffer_length = _client_socket.receive(buffer);
+		//Stdout.format("GOT \"{}\": LENGTH: {}\n", buffer[0 .. buffer_length], buffer_length).flush;
 
 		// Show an error if the header was bad
 		if(Socket.ERROR == buffer_length) {
@@ -233,7 +234,11 @@ public class Server {
 		}
 
 		// Clone the buffer segments into the raw header and body
-		char[][] buffer_pair = tango.text.Util.split(buffer[0 .. buffer_length], "\r\n\r\n");
+		char[][] buffer_pair = ["", ""];
+		int header_end = tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0);
+		buffer_pair[0] = buffer[0 .. buffer_length][0 .. header_end];
+		buffer_pair[1] = buffer[0 .. buffer_length][header_end+4 .. length];
+
 		char[] raw_header = "" ~ buffer_pair[0];
 
 		// Get the header info
@@ -262,10 +267,9 @@ public class Server {
 				// Write any left-over body from when we read the header into the file
 				int remaining_length = content_length;
 				body_file = new File("raw_body", File.WriteCreate);
-				if(buffer_pair.length >= 2 && buffer_pair[1].length > 0) {
-					char[] raw_body = buffer_pair.length > 1 ? buffer_pair[1] : "";
-					remaining_length -= raw_body.length;
-					body_file.output.write(raw_body);
+				if(buffer_pair.length == 2 && buffer_pair[1].length > 0) {
+					remaining_length -= buffer_pair[1].length;
+					body_file.output.write(buffer_pair[1]);
 				}
 
 				// Write the remaining body into the file
@@ -275,7 +279,7 @@ public class Server {
 					if(buffer_length > 0) {
 						body_file.output.write(buffer[0 .. buffer_length]);
 					}
-					remaining_length -= header_max_size;
+					remaining_length -= buffer_length;
 				}
 			}
 		}
@@ -324,13 +328,13 @@ public class Server {
 			}
 		}
 
-		// Get the HTTP POST and PUT params
+		// Get the params from a url encoded body
 		// FIXME: This will put the whole post body into ram. It should put the params into a file
 		if((method == "POST" || method == "PUT") && ("Content-Type" in fields) != null) {
 			if(fields["Content-Type"] == "application/x-www-form-urlencoded") {
 				File raw_body_file = new File("raw_body", File.ReadExisting);
 				char[] raw_body = "";
-				char[10] buf;
+				char[100] buf;
 				int len = 0;
 				while((len = raw_body_file.read(buf)) > 0) {
 					raw_body ~= buf[0 .. len];
@@ -343,7 +347,39 @@ public class Server {
 				}
 			}
 		}
+/*
+		// Get the file from a miltipart encoded body
+		// FIXME: This will put the whole post body into ram. It should put the body into a file
+		if((method == "POST" || method == "PUT") && ("Content-Type" in fields) != null) {
+			char[] content_type = fields["Content-Type"];
+			if(tango.text.Util.locatePattern(content_type, "multipart/form-data; boundary=", 0) == 0) {
+				char[] boundary = tango.text.Util.split(content_type, "; boundary=")[1];
+				Stdout.format("Boundary [[{}]]\n", boundary).flush;
 
+				File raw_body_file = new File("raw_body", File.ReadExisting);
+				char[] raw_body = "";
+				char[100] buf;
+				int len = 0;
+				while((len = raw_body_file.read(buf)) > 0) {
+					raw_body ~= buf[0 .. len];
+				}
+
+				// Add any params
+				foreach(char[] part ; tango.text.Util.split(raw_body, boundary)) {
+					if(tango.text.Util.locatePattern(part, "Content-Disposition: form-data; ", 0) == 0) {
+						char[] data = between("Content-Disposition: form-data; ", "\r\n");
+						foreach(char[] variable ; tango.text.Util.split(data, "; ")) {
+							char[] pair = tango.text.Util.split(variable, "=");
+							if(pair[0] == "name")
+								params[pair[1]] = pair[1];
+						}
+					}
+				}
+				//char[] meta = tango.text.Util.split(parts[1], "\r\n\r\n")[0];
+				//char[] file = tango.text.Util.split(parts[1], "\r\n\r\n")[1][0 .. length-2];
+			}
+		}
+*/
 		// Get the controller and action
 		char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
 		char[] controller = route.length > 1 ? route[1] : null;

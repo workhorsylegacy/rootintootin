@@ -1,6 +1,6 @@
 
-<form action="/files/update/<%=controller._file.id%>" class="edit_file" id="edit_file_<%=controller._file.id%>" method="post">
-	<h1>Editing File</h1>
+<form action="/files/create" class="new_file" id="new_file" enctype="multipart/form-data" method="post">
+	<h1>New File</h1>
 
 	<%= UI.errors_for(controller._file, "file") %>
 
@@ -10,7 +10,5 @@
 	<input name="commit" type="submit" value="Upload file" />
 </form>
 
-<a href="/files/show/<%=controller._file.id%>">Show</a> |
 <a href="/files">Back</a>
-
 
