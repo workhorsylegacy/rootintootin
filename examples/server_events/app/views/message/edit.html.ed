@@ -1,0 +1,18 @@
+
+<form action="/messages/update/<%=controller._message.id%>" class="edit_message" id="edit_message_<%=controller._message.id%>" method="post">
+	<h1>Editing Message</h1>
+
+	<%= UI.errors_for(controller._message, "message") %>
+
+	<p>
+		<label for="message_text">Text</label><br />
+		<input id="message_text" name="message[text]" type="text" value="<%=controller._message.text%>" />
+	</p>
+
+	<input id="message_submit" name="commit" type="submit" value="Update" />
+</form>
+
+<a href="/messages/show/<%=controller._message.id%>">Show</a> |
+<a href="/messages">Back</a>
+
+

@@ -3,8 +3,9 @@ import tango.text.Util;
 import tango.text.convert.Integer;
 import tango.text.convert.Float;
 
+
 public static char[] between(char[] value, char[] before, char[] after) {
-	return tango.text.Util.split(tango.text.Util.split(value, before)[1], after)[0];
+	return split(split(value, before)[1], after)[0];
 }
 
 // Add a to_s function for basic types

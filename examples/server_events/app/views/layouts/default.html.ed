@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+		<title>Server Event Example</title>
+	</head>
+	<body>
+		<script type="text/javascript">
+		// <![CDATA[
+		// FIXME: Move this to a js file when we have static content working.
+		function post_href(method) {
+			if (!confirm('Are you sure?'))
+				return;
+
+			var form = document.createElement('form');
+			form.style.display = 'none';
+			this.parentNode.appendChild(form);
+			form.method = 'POST';
+			form.action = this.href;
+
+			var input = document.createElement('input');
+			input.setAttribute('type', 'hidden');
+			input.setAttribute('name', '_method');
+			input.setAttribute('value', method);
+			form.appendChild(input);
+
+			form.submit();
+		}
+		// ]]>
+		</script>
+
+		<h1>content start</h1>
+		<%= yield %>
+		<h1>content end</h1>
+	</body>
+</html>
+

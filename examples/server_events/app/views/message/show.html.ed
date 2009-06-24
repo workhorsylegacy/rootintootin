@@ -1,0 +1,6 @@
+
+<p><b>Text:</b> <%=controller._message.text%></p>
+
+<a href="/messages/edit/<%=controller._message.id%>">Edit</a> | 
+<a href="/messages">Back</a>
+

@@ -1,0 +1,16 @@
+
+<form action="/messages/create" class="new_message" id="new_message" method="post">
+	<h1>New Message</h1>
+
+	<%= UI.errors_for(controller._message, "message") %>
+
+	<p>
+		<label for="message_text">Text</label><br />
+		<input id="message_text" name="message[text]" type="text" value="<%=controller._message.text%>" />
+	</p>
+
+	<input id="message_submit" name="commit" type="submit" value="Create" />
+</form>
+
+<a href="/messages">Back</a>
+

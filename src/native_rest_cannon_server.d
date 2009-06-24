@@ -129,11 +129,12 @@ public class Server {
 
 		// FIXME: Isn't this socket_set doing the same thing as the client_sockets array? Is it needed?
 		SocketSet socket_set = new SocketSet(max_connections + 1);
+		bool[] is_socket_event;
 		Socket[] client_sockets;
 		Stdout("Server running ...\n").flush;
 
 		while(true) {
-			// Get a socket set to hold all the client sockets while they wait to be processed
+			// Add all the waiting client sockets to the socket set
 			socket_set.reset();
 			socket_set.add(server);
 			foreach(Socket each; client_sockets) {
@@ -147,25 +148,47 @@ public class Server {
 					continue;
 				}
 
-				// Save the current socket
+				if(is_socket_event[i]) {
+					client_sockets[i].send("event?");
+					client_sockets[i].shutdown(SocketShutdown.BOTH);
+					client_sockets[i].detach();
+
+					if(i != client_sockets.length - 1)
+						client_sockets[i] = client_sockets[client_sockets.length - 1];
+						is_socket_event[i] = is_socket_event[is_socket_event.length - 1];
+					client_sockets = client_sockets[0 .. client_sockets.length - 1];
+					is_socket_event = is_socket_event[0 .. is_socket_event.length - 1];
+					continue;
+				}
+
+				// Reset the attributes
 				_has_rendered = false;
 				foreach(char[] key ; _cookies.keys)
 					_cookies.remove(key);
 				_client_socket = client_sockets[i];
 
+				// Process the request
 				try {
-					this.process_request(buffer, header_max_size);
+					is_socket_event[i] = this.process_request(buffer, header_max_size);
 				} catch(Exception e) {
 					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
 					this.render_text(msg, 500);
+					is_socket_event[i] = false;
 				}
 
-				// Remove this client from the socket set
+				// If this socket is an event, don't turn it off.
+				if(is_socket_event[i])
+					continue;
+
 				_client_socket.shutdown(SocketShutdown.BOTH);
 				_client_socket.detach();
+
+				// Remove this client from the client socket set
 				if(i != client_sockets.length - 1)
 					client_sockets[i] = client_sockets[client_sockets.length - 1];
+					is_socket_event[i] = is_socket_event[is_socket_event.length - 1];
 				client_sockets = client_sockets[0 .. client_sockets.length - 1];
+				is_socket_event = is_socket_event[0 .. is_socket_event.length - 1];
 			}
 
 //			if(client_sockets.length > 0) {
@@ -183,6 +206,7 @@ public class Server {
 //						assert(server.isAlive);
 				
 						client_sockets ~= pending_client;
+						is_socket_event ~= false;
 					} else {
 						pending_client = server.accept();
 //						Stdout.format("Rejected connection from {}. Too many connections.\n", pending_client.remoteAddress()).flush;
@@ -208,7 +232,7 @@ public class Server {
 		return 0;
 	}
 
-	private void process_request(char[] buffer, uint header_max_size) {
+	private char[][] get_raw_header(char[] buffer, uint header_max_size) {
 		// Get the http header
 		int buffer_length = _client_socket.receive(buffer);
 		//Stdout.format("GOT \"{}\": LENGTH: {}\n", buffer[0 .. buffer_length], buffer_length).flush;
@@ -216,7 +240,7 @@ public class Server {
 		// Show an error if the header was bad
 		if(Socket.ERROR == buffer_length) {
 			Stdout("Connection error.\n").flush;
-			return;
+			return null;
 		} else if(0 == buffer_length) {
 			try {
 				//if the connection closed due to an error, remoteAddress() could fail
@@ -224,13 +248,13 @@ public class Server {
 			} catch {
 				Stdout("Connection from unknown closed.\n").flush;
 			}
-			return;
+			return null;
 		}
 
 		// Show an 'HTTP 413 Request Entity Too Large' if the end of the header was not read
 		if(tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0) == buffer_length) {
 			this.render_text("The end of the HTTP header was not found when reading the first " ~ to_s(header_max_size) ~ " bytes.", 413);
-			return;
+			return null;
 		}
 
 		// Clone the buffer segments into the raw header and body
@@ -239,11 +263,20 @@ public class Server {
 		buffer_pair[0] = buffer[0 .. buffer_length][0 .. header_end];
 		buffer_pair[1] = buffer[0 .. buffer_length][header_end+4 .. length];
 
+		return buffer_pair ;
+	}
+
+	private bool process_request(char[] buffer, uint header_max_size) {
+		char[][] buffer_pair = this.get_raw_header(buffer, header_max_size);
+		if(buffer_pair == null)
+			return false;
+
+		int buffer_length = 0;
 		char[] raw_header = "" ~ buffer_pair[0];
 
 		// Get the header info
 		char[][] header_lines = tango.text.Util.splitLines(raw_header);
-		char[][] first_line = tango.text.Util.split(header_lines[0], " ");
+		char[][] first_line = split(header_lines[0], " ");
 		char[] method = first_line[0];
 		char[] uri = first_line[1];
 		char[] http_version = first_line[2];
@@ -256,7 +289,7 @@ public class Server {
 			// Show an 'HTTP 411 Length Required' error if there is no Content-Length
 			if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
 				this.render_text("Content-Length is required for HTTP POST and PUT.", 411);
-				return;
+				return false;
 			}
 
 			// Get the content length
@@ -293,7 +326,7 @@ public class Server {
 			// Break if we are at the end of the fields
 			if(line.length == 0) break;
 
-			char[][] pair = tango.text.Util.split(line, ": ");
+			char[][] pair = split(line, ": ");
 			if(pair.length == 2) {
 				fields[pair[0]] = pair[1];
 			}
@@ -301,10 +334,10 @@ public class Server {
 
 		// Get the cookies
 		if(("Cookie" in fields) != null) {
-			foreach(char[] cookie ; tango.text.Util.split(fields["Cookie"], "; ")) {
-				char[][] pair = tango.text.Util.split(cookie, "=");
+			foreach(char[] cookie ; split(fields["Cookie"], "; ")) {
+				char[][] pair = split(cookie, "=");
 				if(pair.length != 2) {
-					Stdout.format("Malformed cookie: {}", cookie).flush;
+					Stdout.format("Malformed cookie: {}\n", cookie).flush;
 				} else {
 					_cookies[pair[0]] = Helper.unescape_value(pair[1]);
 				}
@@ -322,7 +355,7 @@ public class Server {
 		// Get the HTTP GET params
 		char[][char[]] params;
 		if(tango.text.Util.contains(uri, '?')) {
-			foreach(char[] param ; tango.text.Util.split(tango.text.Util.split(uri, "?")[1], "&")) {
+			foreach(char[] param ; split(split(uri, "?")[1], "&")) {
 				char[][] pair = tango.text.Util.split(param, "=");
 				params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
 			}
@@ -339,8 +372,8 @@ public class Server {
 				while((len = raw_body_file.read(buf)) > 0) {
 					raw_body ~= buf[0 .. len];
 				}
-				foreach(char[] param ; tango.text.Util.split(raw_body, "&")) {
-					char[][] pair = tango.text.Util.split(param, "=");
+				foreach(char[] param ; split(raw_body, "&")) {
+					char[][] pair = split(param, "=");
 					if(pair.length == 2) {
 						params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
 					}
@@ -353,7 +386,7 @@ public class Server {
 		if((method == "POST" || method == "PUT") && ("Content-Type" in fields) != null) {
 			char[] content_type = fields["Content-Type"];
 			if(tango.text.Util.locatePattern(content_type, "multipart/form-data; boundary=", 0) == 0) {
-				char[] boundary = tango.text.Util.split(content_type, "; boundary=")[1];
+				char[] boundary = split(content_type, "; boundary=")[1];
 				Stdout.format("Boundary [[{}]]\n", boundary).flush;
 
 				File raw_body_file = new File("raw_body", File.ReadExisting);
@@ -365,27 +398,31 @@ public class Server {
 				}
 
 				// Add any params
-				foreach(char[] part ; tango.text.Util.split(raw_body, boundary)) {
+				foreach(char[] part ; split(raw_body, boundary)) {
 					if(tango.text.Util.locatePattern(part, "Content-Disposition: form-data; ", 0) == 0) {
 						char[] data = between("Content-Disposition: form-data; ", "\r\n");
-						foreach(char[] variable ; tango.text.Util.split(data, "; ")) {
-							char[] pair = tango.text.Util.split(variable, "=");
+						foreach(char[] variable ; split(data, "; ")) {
+							char[] pair = split(variable, "=");
 							if(pair[0] == "name")
 								params[pair[1]] = pair[1];
 						}
 					}
 				}
-				//char[] meta = tango.text.Util.split(parts[1], "\r\n\r\n")[0];
-				//char[] file = tango.text.Util.split(parts[1], "\r\n\r\n")[1][0 .. length-2];
+				//char[] meta = split(parts[1], "\r\n\r\n")[0];
+				//char[] file = split(parts[1], "\r\n\r\n")[1][0 .. length-2];
 			}
 		}
 */
 		// Get the controller and action
-		char[][] route = tango.text.Util.split(tango.text.Util.split(uri, "?")[0], "/");
+		char[][] route = split(split(uri, "?")[0], "/");
 		char[] controller = route.length > 1 ? route[1] : null;
 		char[] action = route.length > 2 ? route[2] : "index";
 		char[] id = route.length > 3 ? route[3] : null;
 		if(id != null) params["id"] = id;
+
+		if(uri == "/messages/set_server_event?names=on_create") {
+			return true;
+		}
 
 		// Assemble the request object
 		_request = new Request(method, uri, http_version, controller, action, params, _cookies);
@@ -422,6 +459,8 @@ public class Server {
 		Stdout.format("\tAction Name: {}\n", action).flush;
 		Stdout.format("\tID: {}\n", id).flush;
 		//*/
+
+		return false;
 	}
 }
 
