@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 
-../../src/build `pwd`
+# ignore all warnings
+python2.6 -W ignore::DeprecationWarning ../../src/build `pwd`
+
+# full python 3.0 warning mode
+#python2.6 -3 ../../src/build `pwd`

@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 
-../../src/gen `pwd` $@
+# ignore all warnings
+python2.6 -W ignore::DeprecationWarning ../../src/gen `pwd` $@
+
+# full python 3.0 warning mode
+#python2.6 -3 ../../src/gen `pwd` $@

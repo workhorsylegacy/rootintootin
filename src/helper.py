@@ -1,8 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 
 import os, sys
 import commands
 import platform
+
+def exec_file(file, globals, locals):
+	with open(file, "r") as fh:
+		exec(fh.read()+"\n", globals, locals)
 
 class Helper(object):
 	def require_dependencies(other_globals):

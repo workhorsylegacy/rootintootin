@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 
 import os, sys, re
 from helper import *
@@ -98,7 +98,7 @@ class Generator(object):
 		db_name = self._database_configuration['name']
 		try:
 			cursor.execute("create database " + db_name)
-			print "Created the database " + self._database_configuration['name'] + "."
+			print "Created the database '" + self._database_configuration['name'] + "'."
 		except MySQLdb.ProgrammingError:
 			print "Database '" + self._database_configuration['name'] + "' already exists."
 		cursor.close()
@@ -112,7 +112,7 @@ class Generator(object):
 		db_name = self._database_configuration['name']
 		try:
 			cursor.execute("drop database " + db_name)
-			print "Dropped the database " + self._database_configuration['name'] + "."
+			print "Dropped the database '" + self._database_configuration['name'] + "'."
 		except MySQLdb.OperationalError:
 			print "Database '" + self._database_configuration['name'] + "' does not exists."
 		cursor.close()
@@ -172,12 +172,12 @@ class Generator(object):
 
 			# Run the migration
 			class_name = camelize(migration_file[5:-3])
-			execfile('db/migrate/' + migration_file)
+			exec_file('db/migrate/' + migration_file, globals(), locals())
 			migration_instance = locals()[class_name]()
 			try:
 				migration_instance.up(self)
 				self.add_schema_version(version)
-			except Exception, err:
+			except Exception as err:
 				print "Broke on migration file: '" + migration_file + "'."
 				print err.message
 				return
@@ -213,7 +213,7 @@ class Generator(object):
 #private
 
 	def load_configuration(self):
-		execfile('config/config.py')
+		exec_file('config/config.py', globals(), locals())
 		self._database_configuration = locals()['database_configuration']
 		self._server_configuration = locals()['server_configuration']
 
