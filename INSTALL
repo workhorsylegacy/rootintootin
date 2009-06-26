@@ -1,5 +1,5 @@
 1. Install the ldc compiler and tango libraries from this guide:
-http://www.dsource.org/projects/ldc/wiki/WikiStart#Ubuntuldcandldcdailypackages
+http://www.dsource.org/projects/ldc/wiki/BuildInstructionsUbuntu
 
 2. Install mysql and development files:
 sudo apt-get install mysql-client mysql-server libmysqlclient15-dev python-mysqldb python-pexpect build-essential bzr ldc-daily
