@@ -187,7 +187,7 @@ def combine_code_files(routes, table_map, reference_map):
 	# Write the main function
 	out_file.write(
 	"\n\nint main() {\n" +
-	"	Server server = new Server();\n" +
+	"	Server server = new Server();\n" + 
 	"	char[" + str(header_max_size) + "] buffer;\n\n" + 
 	"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" + 
 	"				buffer, " + str(header_max_size) + ", \n" + 

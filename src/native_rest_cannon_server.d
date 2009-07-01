@@ -5,6 +5,8 @@ import tango.text.convert.Integer;
 import tango.text.Util;
 import tango.stdc.stringz;
 import tango.io.device.File;
+
+import tango.core.Thread;
 import tango.math.random.engines.Twister;
 
 import tango.io.Stdout;
@@ -26,11 +28,17 @@ import native_rest_cannon;
 public class Server {
 	private bool _has_rendered = false;
 	private Request _request = null;
-	private Socket _client_socket = null;
+	private SocketConduit _client_socket = null;
+	private SocketConduit[] _client_sockets;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
 	private char[] _salt;
+
+	private ushort _port;
+	private uint _max_connections;
+	private char[] _buffer = null;
+	private uint _header_max_size;
 	private RunnerBase _runner = null;
 
 	public this() {
@@ -55,18 +63,16 @@ public class Server {
 		"Content-Length: 0" ~
 		"\r\n";
 
-		_client_socket.send(header);
+		_client_socket.output.write(header);
 	}
 
-	public void render_text(char[] text, ushort status_code = cast(ushort)-1) {
+	public void render_text(char[] text, ushort status_code = 200) {
 		// If we have already rendered, show an error
 		if(_has_rendered) {
 			throw new Exception("Something has already been rendered.");
 		}
 
-		// Get the status code. Use 200 as default
-		if(status_code == cast(ushort)-1)
-			status_code = 200;
+		// Get the status code.
 		char[] status = Helper.get_verbose_status_code(status_code);
 
 		// If there is no session add one to the cookies
@@ -106,7 +112,7 @@ public class Server {
 		"\r\n",
 		text];
 
-		_client_socket.send(tango.text.Util.join(reply, ""));
+		_client_socket.output.write(tango.text.Util.join(reply, ""));
 	}
 
 	public void start(ushort port, uint max_connections, 
@@ -114,147 +120,111 @@ public class Server {
 						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
 						RunnerBase runner) {
 
+		this._port = port;
+		this._max_connections = max_connections;
+		this._buffer = buffer;
+		this._header_max_size = header_max_size;
 		this._runner = runner;
 
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
 
-		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
-		Socket server = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-		server.blocking = false;
-		server.bind(new InternetAddress(port));
-		uint[1] opt = 1;
-		server.setOption(SocketOptionLevel.SOCKET, SocketOption.SO_REUSEADDR, opt);
-		server.listen(max_connections);
+		// Create a thread that accepts all the clients
+		Thread request_accepter_thread = new Thread(&begin_request_accepter);
 
-		// FIXME: Isn't this socket_set doing the same thing as the client_sockets array? Is it needed?
-		SocketSet socket_set = new SocketSet(max_connections + 1);
-		bool[] is_socket_event;
-		Socket[] client_sockets;
+		// Create a thread that responds to normal requests
+		//FIXME: Change this thread to a fiber. That way it can get notified
+		// by the accept loop when it has work to do.
+		Thread normal_responder_thread = new Thread(&begin_normal_responder);
+
+		request_accepter_thread.start();
+		normal_responder_thread.start();
+
 		Stdout("Server running ...\n").flush;
+		request_accepter_thread.join();
+		normal_responder_thread.join();
+	}
+
+	private void begin_request_accepter() {
+		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
+		ServerSocket server = new ServerSocket(new InternetAddress(this._port), this._max_connections, true);
 
 		while(true) {
-			// Add all the waiting client sockets to the socket set
-			socket_set.reset();
-			socket_set.add(server);
-			foreach(Socket each; client_sockets) {
-				socket_set.add(each);
+			// Accept client requests
+			SocketConduit pending_client;
+			try {
+				if(this._client_sockets.length < this._max_connections) {
+					pending_client = server.accept();
+					//Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
+					this._client_sockets ~= pending_client;
+				} else {
+					pending_client = server.accept();
+					pending_client.output.write("503: Service Unavailable - Too many requests in the queue.");
+					pending_client.close();
+				}
+			} catch(Exception e) {
+				Stdout.format("Error accepting: {}\n", e).flush;
+				if(pending_client && pending_client.isAlive) {
+					pending_client.close();
+				}
 			}
-			Socket.select(socket_set, null, null);
+		}
+	}
 
+	private void begin_normal_responder() {
+		while(true) {
+			// FIXME: Remove this when we convert to fiber 
+			Thread.sleep(0.250);
 			// Reply to clients
-			for(size_t i=0; i<client_sockets.length; i++) {
-				if(socket_set.isSet(client_sockets[i]) == false) {
-					continue;
-				}
-
-				if(is_socket_event[i]) {
-					client_sockets[i].send("event?");
-					client_sockets[i].shutdown(SocketShutdown.BOTH);
-					client_sockets[i].detach();
-
-					if(i != client_sockets.length - 1)
-						client_sockets[i] = client_sockets[client_sockets.length - 1];
-						is_socket_event[i] = is_socket_event[is_socket_event.length - 1];
-					client_sockets = client_sockets[0 .. client_sockets.length - 1];
-					is_socket_event = is_socket_event[0 .. is_socket_event.length - 1];
-					continue;
-				}
-
+			// FIXME: The _client_sockets array needs to be synchronized and copied
+			// because it is changed by the accept thread.
+			for(size_t i=0; i<this._client_sockets.length; i++) {
 				// Reset the attributes
 				_has_rendered = false;
 				foreach(char[] key ; _cookies.keys)
 					_cookies.remove(key);
-				_client_socket = client_sockets[i];
+				_client_socket = this._client_sockets[i];
 
 				// Process the request
 				try {
-					is_socket_event[i] = this.process_request(buffer, header_max_size);
+					this.process_request(this._buffer, this._header_max_size);
 				} catch(Exception e) {
 					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
 					this.render_text(msg, 500);
-					is_socket_event[i] = false;
 				}
 
-				// If this socket is an event, don't turn it off.
-				if(is_socket_event[i])
-					continue;
-
-				_client_socket.shutdown(SocketShutdown.BOTH);
-				_client_socket.detach();
+				_client_socket.close();
 
 				// Remove this client from the client socket set
-				if(i != client_sockets.length - 1)
-					client_sockets[i] = client_sockets[client_sockets.length - 1];
-					is_socket_event[i] = is_socket_event[is_socket_event.length - 1];
-				client_sockets = client_sockets[0 .. client_sockets.length - 1];
-				is_socket_event = is_socket_event[0 .. is_socket_event.length - 1];
-			}
-
-//			if(client_sockets.length > 0) {
-//				Stdout.format("\tTotal connections: {}\n", client_sockets.length).flush;
-//			}
-
-			// Accept client requests
-			if(socket_set.isSet(server)) {
-				Socket pending_client;
-				try {
-					if(client_sockets.length < max_connections) {
-						pending_client = server.accept();
-//						Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
-//						assert(pending_client.isAlive);
-//						assert(server.isAlive);
-				
-						client_sockets ~= pending_client;
-						is_socket_event ~= false;
-					} else {
-						pending_client = server.accept();
-//						Stdout.format("Rejected connection from {}. Too many connections.\n", pending_client.remoteAddress()).flush;
-//						assert(pending_client.isAlive);
-
-						pending_client.send("503: Service Unavailable - Too many requests in the queue.");
-						pending_client.shutdown(SocketShutdown.BOTH);
-						pending_client.detach();
-//						assert(!pending_client.isAlive);
-//						assert(server.isAlive);
-					}
-				} catch(Exception e) {
-					Stdout.format("Error accepting: {}\n", e).flush;
-			
-					if(pending_client && pending_client.isAlive) {
-						pending_client.shutdown(SocketShutdown.BOTH);
-						pending_client.detach();
-					}
-				}
+				if(i != this._client_sockets.length - 1)
+					this._client_sockets[i] = this._client_sockets[this._client_sockets.length - 1];
+				this._client_sockets = this._client_sockets[0 .. this._client_sockets.length - 1];
 			}
 		}
-
-		return 0;
 	}
 
-	private char[][] get_raw_header(char[] buffer, uint header_max_size) {
+	private void process_request(char[] buffer, uint header_max_size) {
 		// Get the http header
-		int buffer_length = _client_socket.receive(buffer);
-		//Stdout.format("GOT \"{}\": LENGTH: {}\n", buffer[0 .. buffer_length], buffer_length).flush;
+		int buffer_length = _client_socket.input.read(buffer);
 
 		// Show an error if the header was bad
 		if(Socket.ERROR == buffer_length) {
 			Stdout("Connection error.\n").flush;
-			return null;
+			return;
 		} else if(0 == buffer_length) {
 			try {
 				//if the connection closed due to an error, remoteAddress() could fail
-				Stdout.format("Connection from {} closed.\n", _client_socket.remoteAddress()).flush;
+				//Stdout.format("Connection from {} closed.\n", _client_socket.remoteAddress()).flush;
 			} catch {
 				Stdout("Connection from unknown closed.\n").flush;
 			}
-			return null;
+			return;
 		}
 
 		// Show an 'HTTP 413 Request Entity Too Large' if the end of the header was not read
 		if(tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0) == buffer_length) {
 			this.render_text("The end of the HTTP header was not found when reading the first " ~ to_s(header_max_size) ~ " bytes.", 413);
-			return null;
+			return;
 		}
 
 		// Clone the buffer segments into the raw header and body
@@ -262,16 +232,6 @@ public class Server {
 		int header_end = tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0);
 		buffer_pair[0] = buffer[0 .. buffer_length][0 .. header_end];
 		buffer_pair[1] = buffer[0 .. buffer_length][header_end+4 .. length];
-
-		return buffer_pair ;
-	}
-
-	private bool process_request(char[] buffer, uint header_max_size) {
-		char[][] buffer_pair = this.get_raw_header(buffer, header_max_size);
-		if(buffer_pair == null)
-			return false;
-
-		int buffer_length = 0;
 		char[] raw_header = "" ~ buffer_pair[0];
 
 		// Get the header info
@@ -289,7 +249,7 @@ public class Server {
 			// Show an 'HTTP 411 Length Required' error if there is no Content-Length
 			if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
 				this.render_text("Content-Length is required for HTTP POST and PUT.", 411);
-				return false;
+				return;
 			}
 
 			// Get the content length
@@ -308,7 +268,7 @@ public class Server {
 				// Write the remaining body into the file
 				while(remaining_length > 0) {
 					// FIXME: check for errors after receive like above
-					buffer_length = _client_socket.receive(buffer);
+					buffer_length = _client_socket.input.read(buffer);
 					if(buffer_length > 0) {
 						body_file.output.write(buffer[0 .. buffer_length]);
 					}
@@ -420,10 +380,6 @@ public class Server {
 		char[] id = route.length > 3 ? route[3] : null;
 		if(id != null) params["id"] = id;
 
-		if(uri == "/messages/set_server_event?names=on_create") {
-			return true;
-		}
-
 		// Assemble the request object
 		_request = new Request(method, uri, http_version, controller, action, params, _cookies);
 
@@ -460,7 +416,7 @@ public class Server {
 		Stdout.format("\tID: {}\n", id).flush;
 		//*/
 
-		return false;
+		return;
 	}
 }
 
