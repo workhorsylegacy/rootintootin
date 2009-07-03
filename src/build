@@ -568,12 +568,16 @@ combine_code_files(routes, table_map, reference_map)
 # Compile the application into an executable
 result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
-result += pexpect.run("ar -r db.a db.o")
+result += pexpect.run("ar rcs db.a db.o")
 command = "ldc -g -of run " + \
 			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d ui.d run.d db.d " + \
 			"db.a -L=\"-lmysqlclient\""
 result += pexpect.run(command)
-print result
+
+if len(result) != 0:
+	print result
+else:
+	print "Build successful."
 
 
 
