@@ -7,6 +7,8 @@ import tango.stdc.stringz;
 import tango.io.device.File;
 
 import tango.core.Thread;
+import tango.core.sync.Mutex;
+import tango.core.sync.Semaphore;
 import tango.math.random.engines.Twister;
 
 import tango.io.Stdout;
@@ -30,6 +32,8 @@ public class Server {
 	private Request _request = null;
 	private SocketConduit _client_socket = null;
 	private SocketConduit[] _client_sockets;
+	private Mutex _client_sockets_mutex = null;
+	private Semaphore _normal_responder_semaphore = null;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
@@ -47,6 +51,9 @@ public class Server {
 		random.seed(Clock.now.span.millis);
 		this._salt = to_s(random.next());
 		delete random;
+
+		this._client_sockets_mutex = new Mutex();
+		this._normal_responder_semaphore = new Semaphore();
 	}
 
 	public void redirect_to(char[] url) {
@@ -130,35 +137,40 @@ public class Server {
 		db_connect(db_host, db_user, db_password, db_name);
 
 		// Create a thread that accepts all the clients
-		Thread request_accepter_thread = new Thread(&begin_request_accepter);
+		Thread request_acceptor_thread = new Thread(&begin_request_acceptor);
 
 		// Create a thread that responds to normal requests
-		//FIXME: Change this thread to a fiber. That way it can get notified
-		// by the accept loop when it has work to do.
 		Thread normal_responder_thread = new Thread(&begin_normal_responder);
 
-		request_accepter_thread.start();
+		request_acceptor_thread.start();
 		normal_responder_thread.start();
 
 		Stdout("Server running ...\n").flush;
-		request_accepter_thread.join();
+		request_acceptor_thread.join();
 		normal_responder_thread.join();
 	}
 
-	private void begin_request_accepter() {
+	private void begin_request_acceptor() {
 		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
 		ServerSocket server = new ServerSocket(new InternetAddress(this._port), this._max_connections, true);
+		SocketConduit pending_client = null;
+		bool has_more_clients = false;
 
 		while(true) {
+			pending_client = null;
+			has_more_clients = false;
+
 			// Accept client requests
-			SocketConduit pending_client;
 			try {
+				pending_client = server.accept();
+				//Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
+
 				if(this._client_sockets.length < this._max_connections) {
-					pending_client = server.accept();
-					//Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
-					this._client_sockets ~= pending_client;
+					synchronized(this._client_sockets_mutex) {
+						this._client_sockets ~= pending_client;
+					}
+					has_more_clients = true;
 				} else {
-					pending_client = server.accept();
 					pending_client.output.write("503: Service Unavailable - Too many requests in the queue.");
 					pending_client.close();
 				}
@@ -168,22 +180,33 @@ public class Server {
 					pending_client.close();
 				}
 			}
+
+			// Signal that there are more clients, but only if there any any.
+			if(has_more_clients) {
+				this._normal_responder_semaphore.notify();
+			}
 		}
 	}
 
 	private void begin_normal_responder() {
 		while(true) {
-			// FIXME: Remove this when we convert to fiber 
-			Thread.sleep(0.250);
-			// Reply to clients
-			// FIXME: The _client_sockets array needs to be synchronized and copied
-			// because it is changed by the accept thread.
-			for(size_t i=0; i<this._client_sockets.length; i++) {
+			// Wait for the signal that says there are more clients
+			this._normal_responder_semaphore.wait();
+
+			// Safely make a copy of all the clients
+			SocketConduit[] copy_client_sockets = null;
+			synchronized(this._client_sockets_mutex) {
+				copy_client_sockets = new SocketConduit[this._client_sockets.length];
+				copy_client_sockets[] = this._client_sockets[];
+			}
+
+			// Respond to all the clients
+			for(size_t i=0; i<copy_client_sockets.length; i++) {
 				// Reset the attributes
 				_has_rendered = false;
 				foreach(char[] key ; _cookies.keys)
 					_cookies.remove(key);
-				_client_socket = this._client_sockets[i];
+				_client_socket = copy_client_sockets[i];
 
 				// Process the request
 				try {
@@ -194,11 +217,15 @@ public class Server {
 				}
 
 				_client_socket.close();
+			}
 
-				// Remove this client from the client socket set
-				if(i != this._client_sockets.length - 1)
-					this._client_sockets[i] = this._client_sockets[this._client_sockets.length - 1];
-				this._client_sockets = this._client_sockets[0 .. this._client_sockets.length - 1];
+			// Remove all the clients from the client socket set
+			synchronized(this._client_sockets_mutex) {
+				for(size_t i=0; i<this._client_sockets.length; i++) {
+					if(i != this._client_sockets.length - 1)
+						this._client_sockets[i] = this._client_sockets[this._client_sockets.length - 1];
+					this._client_sockets = this._client_sockets[0 .. this._client_sockets.length - 1];
+				}
 			}
 		}
 	}
