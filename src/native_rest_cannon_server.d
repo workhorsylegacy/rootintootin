@@ -12,9 +12,8 @@ import tango.core.sync.Semaphore;
 import tango.math.random.engines.Twister;
 
 import tango.io.Stdout;
-import tango.net.Socket;
-import tango.net.ServerSocket;
-import tango.net.SocketConduit;
+import tango.net.device.Socket;
+import tango.net.InternetAddress;
 
 import tango.text.Regex;
 import tango.time.chrono.Gregorian;
@@ -26,12 +25,13 @@ import helper;
 import db;
 import native_rest_cannon;
 
+const int SOCKET_ERROR = -1;
 
 public class Server {
 	private bool _has_rendered = false;
 	private Request _request = null;
-	private SocketConduit _client_socket = null;
-	private SocketConduit[] _client_sockets;
+	private Socket _client_socket = null;
+	private Socket[] _client_sockets;
 	private Mutex _client_sockets_mutex = null;
 	private Semaphore _normal_responder_semaphore = null;
 	private int _session_id = 0;
@@ -152,8 +152,11 @@ public class Server {
 
 	private void begin_request_acceptor() {
 		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
-		ServerSocket server = new ServerSocket(new InternetAddress(this._port), this._max_connections, true);
-		SocketConduit pending_client = null;
+		tango.net.device.Socket.ServerSocket server = new tango.net.device.Socket.ServerSocket(
+													new InternetAddress(this._port), 
+													this._max_connections, 
+													true);
+		Socket pending_client = null;
 		bool has_more_clients = false;
 
 		while(true) {
@@ -194,9 +197,9 @@ public class Server {
 			this._normal_responder_semaphore.wait();
 
 			// Safely make a copy of all the clients
-			SocketConduit[] copy_client_sockets = null;
+			Socket[] copy_client_sockets = null;
 			synchronized(this._client_sockets_mutex) {
-				copy_client_sockets = new SocketConduit[this._client_sockets.length];
+				copy_client_sockets = new Socket[this._client_sockets.length];
 				copy_client_sockets[] = this._client_sockets[];
 			}
 
@@ -235,7 +238,7 @@ public class Server {
 		int buffer_length = _client_socket.input.read(buffer);
 
 		// Show an error if the header was bad
-		if(Socket.ERROR == buffer_length) {
+		if(SOCKET_ERROR == buffer_length) {
 			Stdout("Connection error.\n").flush;
 			return;
 		} else if(0 == buffer_length) {

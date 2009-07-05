@@ -264,21 +264,20 @@ public template ModelBaseMixin(T, char[] model_name) {
 public class RenderViewException : Exception {
 	private char[] _view_name = null;
 
-	public this(char[] view_name, char[] file="", long line=-1) {
-		super("A vew needs to be rendred.", file, line);
+	public this(char[] view_name, char[] file="", size_t line=0) {
+		super("render_view was called manually.", file, line);
 		_view_name = view_name;
 	}
 
 	public char[] view_name() {
 		return _view_name;
 	}
-
 }
 
 public class RedirectToException : Exception {
 	private char[] _url = null;
 
-	public this(char[] url, char[] file="", long line=-1) {
+	public this(char[] url, char[] file="", size_t line=0) {
 		super("A redirect needs to be made.", file, line);
 		_url = url;
 	}
