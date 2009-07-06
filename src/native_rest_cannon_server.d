@@ -426,25 +426,22 @@ public class Server {
 		}
 		*/
 
-		// Run the action
-		char[] response = null;
-		try {
-			response = _runner.run_action(_request);
-			if(response != null) {
-				this.render_text(response);
-			}
-		} catch(RedirectToException e) {
-			this.redirect_to(e.url);
-		} catch(RenderViewException e) {
-			response = _runner.render_view(_request.controller, e.view_name);
-			this.render_text(response, 200);
-		}
-
 		Stdout("Route :\n").flush;
 		Stdout.format("\tController Name: {}\n", controller).flush;
 		Stdout.format("\tAction Name: {}\n", action).flush;
 		Stdout.format("\tID: {}\n", id).flush;
-		//*/
+
+		// Run the action
+		char[] response = null;
+		response = _runner.run_action(_request);
+		if(_request.response_type == ResponseType.normal && response != null) {
+			this.render_text(response);
+		} else if(_request.response_type == ResponseType.redirect_to) {
+			this.redirect_to(_request.redirect_to_url);
+		} else if(_request.response_type == ResponseType.render_view) {
+			response = _runner.render_view(_request.controller, _request.render_view_name);
+			this.render_text(response, 200);
+		}
 
 		return;
 	}

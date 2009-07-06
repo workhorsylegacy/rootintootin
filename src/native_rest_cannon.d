@@ -15,14 +15,24 @@ import language_helper;
 import db;
 import helper;
 
+public enum ResponseType {
+	normal,
+	render_view, 
+	redirect_to
+}
+
 public class Request {
-	private char[] _method;
-	private char[] _uri;
-	private char[] _http_version;
-	private char[] _controller;
-	private char[] _action;
+	private char[] _method = null;
+	private char[] _uri = null;
+	private char[] _http_version = null;
+	private char[] _controller = null;
+	private char[] _action = null;
 	private char[][char[]] _params;
 	private char[][char[]] _cookies;
+
+	private ResponseType _response_type;
+	private char[] _redirect_to_url = null;
+	private char[] _render_view_name = null;
 
 	public this(char[] method, char[] uri, char[] http_version, char[] controller, char[] action, char[][char[]] params, char[][char[]] cookies) {
 		_method = method;
@@ -45,6 +55,13 @@ public class Request {
 	public char[] action() { return _action; }
 	public char[][char[]] params() { return _params; }
 	public char[][char[]] cookies() { return _cookies; }
+	public ResponseType response_type() { return _response_type; }
+	public char[] redirect_to_url() { return _redirect_to_url; }
+	public char[] render_view_name() { return _render_view_name; }
+
+	public void response_type(ResponseType value) { _response_type = value; }
+	public void redirect_to_url(char[] value) { _redirect_to_url = value; }
+	public void render_view_name(char[] value) { _render_view_name = value; }
 }
 
 public class SqlError : Exception {
@@ -261,32 +278,6 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 }
 
-public class RenderViewException : Exception {
-	private char[] _view_name = null;
-
-	public this(char[] view_name, char[] file="", size_t line=0) {
-		super("render_view was called manually.", file, line);
-		_view_name = view_name;
-	}
-
-	public char[] view_name() {
-		return _view_name;
-	}
-}
-
-public class RedirectToException : Exception {
-	private char[] _url = null;
-
-	public this(char[] url, char[] file="", size_t line=0) {
-		super("A redirect needs to be made.", file, line);
-		_url = url;
-	}
-
-	public char[] url() {
-		return _url;
-	}
-}
-
 public template ControllerBaseMixin(T) {
 	private Request _request = null;
 
@@ -295,11 +286,13 @@ public template ControllerBaseMixin(T) {
 	}
 
 	public void render_view(char[] name) {
-		throw new RenderViewException(name);
+		this._request.response_type = ResponseType.render_view;
+		this._request.render_view_name = name;
 	}
 
 	public void redirect_to(char[] url) {
-		throw new RedirectToException(url);
+		this._request.response_type = ResponseType.redirect_to;
+		this._request.redirect_to_url = url;
 	}
 }
 
