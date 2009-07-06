@@ -6,8 +6,8 @@ sudo apt-get install mysql-client mysql-server libmysqlclient15-dev python-mysql
 
 3. Download the code:
 cd ~
-bzr branch lp:native-rest-cannon
-cd native-rest-cannon/examples/users
+bzr branch lp:rester
+cd rester/examples/users
 
 4. Change the site's database user and port
 ./gen configure database user:root password:password

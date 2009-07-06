@@ -1,6 +1,6 @@
 
 import language_helper;
-import native_rest_cannon;
+import rester;
 
 public class UI {
 	// FIXME: This should not need the named passed in.

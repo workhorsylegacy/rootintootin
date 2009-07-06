@@ -23,7 +23,7 @@ import tango.time.Clock;
 import language_helper;
 import helper;
 import db;
-import native_rest_cannon;
+import rester;
 
 const int SOCKET_ERROR = -1;
 
@@ -107,7 +107,7 @@ public class Server {
 		char[][] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
 		"Date: ", to_s(date.day), to_s(date.month), to_s(date.year), "\r\n", 
-		"Server: Native_Rest_Cannon_0.1\r\n", 
+		"Server: Rester_0.1\r\n", 
 		set_cookies, 
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",

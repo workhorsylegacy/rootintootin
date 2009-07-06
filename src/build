@@ -33,8 +33,8 @@ def combine_code_files(routes, table_map, reference_map):
 		"\n" +
 		"import language_helper;\n" +
 		"import helper;\n" +
-		"import native_rest_cannon;\n" +
-		"import native_rest_cannon_server;\n" +
+		"import rester;\n" +
+		"import rester_server;\n" +
 		"import ui;\n\n"
 	);
 
@@ -570,7 +570,7 @@ result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
 command = "ldc -g -of run " + \
-			"language_helper.d helper.d native_rest_cannon.d native_rest_cannon_server.d ui.d run.d db.d " + \
+			"language_helper.d helper.d rester.d rester_server.d ui.d run.d db.d " + \
 			"db.a -L=\"-lmysqlclient\""
 result += pexpect.run(command)
 
