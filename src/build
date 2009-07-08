@@ -177,6 +177,9 @@ def combine_code_files(routes, table_map, reference_map):
 	out_file.write("}\n")
 
 	port = globals()['server_configuration']['port']
+	event_port = None
+	if globals()['server_configuration'].has_key('event_port'):
+		event_port = globals()['server_configuration']['event_port']
 	max_connections = globals()['server_configuration']['max_connections']
 	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
@@ -185,18 +188,33 @@ def combine_code_files(routes, table_map, reference_map):
 	db_name = globals()['database_configuration']['name']
 
 	# Write the main function
-	out_file.write(
-	"\n\nint main() {\n" +
-	"	Server server = new Server();\n" + 
-	"	char[" + str(header_max_size) + "] buffer;\n\n" + 
-	"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" + 
-	"				buffer, " + str(header_max_size) + ", \n" + 
-	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
-	"				\"" + db_password + "\", \"" + db_name + "\",\n" +
-	"				new Runner());\n" +
-	"\n" +
-	"	return 0;\n" +
-	"}\n")
+	if event_port:
+		out_file.write(
+		"\n\nint main() {\n" +
+		"	Server server = new Server();\n" + 
+		"	char[" + str(header_max_size) + "] buffer;\n" + 
+		"	char[" + str(header_max_size) + "] event_buffer;\n\n" + 
+		"	server.start(" + str(port) + ", " + str(event_port) + ", " + str(max_connections) + ", \n" + 
+		"				buffer, event_buffer, " + str(header_max_size) + ", \n" + 
+		"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
+		"				\"" + db_password + "\", \"" + db_name + "\",\n" +
+		"				new Runner());\n" +
+		"\n" +
+		"	return 0;\n" +
+		"}\n")
+	else:
+		out_file.write(
+		"\n\nint main() {\n" +
+		"	Server server = new Server();\n" + 
+		"	char[" + str(header_max_size) + "] buffer;\n\n" + 
+		"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" + 
+		"				buffer, " + str(header_max_size) + ", \n" + 
+		"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
+		"				\"" + db_password + "\", \"" + db_name + "\",\n" +
+		"				new Runner());\n" +
+		"\n" +
+		"	return 0;\n" +
+		"}\n")
 
 
 def sql_type_to_d_type(sql_type):

@@ -31,17 +31,20 @@ public class Server {
 	private bool _has_rendered = false;
 	private Request _request = null;
 	private Socket _client_socket = null;
+	private Socket _event_socket = null;
 	private Socket[] _client_sockets;
-	private Mutex _client_sockets_mutex = null;
-	private Semaphore _normal_responder_semaphore = null;
+	private Socket[] _event_sockets;
+	private Mutex _event_sockets_mutex;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
 	private char[] _salt;
 
 	private ushort _port;
+	private ushort _event_port;
 	private uint _max_connections;
 	private char[] _buffer = null;
+	private char[] _event_buffer = null;
 	private uint _header_max_size;
 	private RunnerBase _runner = null;
 
@@ -52,8 +55,7 @@ public class Server {
 		this._salt = to_s(random.next());
 		delete random;
 
-		this._client_sockets_mutex = new Mutex();
-		this._normal_responder_semaphore = new Semaphore();
+		this._event_sockets_mutex = new Mutex();
 	}
 
 	public void redirect_to(char[] url) {
@@ -122,46 +124,82 @@ public class Server {
 		_client_socket.output.write(tango.text.Util.join(reply, ""));
 	}
 
+	// Start without events
 	public void start(ushort port, uint max_connections, 
 						char[] buffer, uint header_max_size, 
 						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
 						RunnerBase runner) {
 
+		this.start(port, 0, max_connections, 
+					buffer, null, header_max_size, 
+					db_host, db_user, db_password, db_name, 
+					runner);
+	}
+
+	// Start with events
+	public void start(ushort port, ushort event_port, uint max_connections, 
+						char[] buffer, char[] event_buffer, uint header_max_size, 
+						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
+						RunnerBase runner) {
+
 		this._port = port;
+		this._event_port = event_port;
 		this._max_connections = max_connections;
 		this._buffer = buffer;
+		this._event_buffer = event_buffer;
 		this._header_max_size = header_max_size;
 		this._runner = runner;
 
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
 
-		// Create a thread that accepts all the clients
-		Thread request_acceptor_thread = new Thread(&begin_request_acceptor);
-
 		// Create a thread that responds to normal requests
-		Thread normal_responder_thread = new Thread(&begin_normal_responder);
+		ThreadGroup t = new ThreadGroup();
+		t.create(&begin_normal_responder);
 
-		request_acceptor_thread.start();
-		normal_responder_thread.start();
+		// Create event threads if desired
+		if(this._port > 0) {
+			t.create(&begin_event_acceptor);
+			t.create(&begin_event_responder);
+		}
 
 		Stdout("Server running ...\n").flush;
-		request_acceptor_thread.join();
-		normal_responder_thread.join();
+		t.joinAll();
 	}
 
-	private void begin_request_acceptor() {
+	private void begin_normal_responder() {
 		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
 		tango.net.device.Socket.ServerSocket server = new tango.net.device.Socket.ServerSocket(
 													new InternetAddress(this._port), 
 													this._max_connections, 
 													true);
 		Socket pending_client = null;
-		bool has_more_clients = false;
 
 		while(true) {
 			pending_client = null;
-			has_more_clients = false;
+
+			// Respond to all the clients
+			for(size_t i=0; i<this._client_sockets.length; i++) {
+				// Reset the attributes
+				_has_rendered = false;
+				foreach(char[] key ; _cookies.keys)
+					_cookies.remove(key);
+				_client_socket = this._client_sockets[i];
+
+				// Process the request
+				try {
+					this.process_request(this._buffer, this._header_max_size);
+				} catch(Exception e) {
+					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
+					this.render_text(msg, 500);
+				}
+
+				// Close the client and remove
+				_client_socket.close();
+				if(i != this._client_sockets.length - 1)
+					this._client_sockets[i] = this._client_sockets[this._client_sockets.length - 1];
+				this._client_sockets = this._client_sockets[0 .. this._client_sockets.length - 1];
+			}
 
 			// Accept client requests
 			try {
@@ -169,10 +207,7 @@ public class Server {
 				//Stdout.format("Connection from {} established.\n", pending_client.remoteAddress()).flush;
 
 				if(this._client_sockets.length < this._max_connections) {
-					synchronized(this._client_sockets_mutex) {
-						this._client_sockets ~= pending_client;
-					}
-					has_more_clients = true;
+					this._client_sockets ~= pending_client;
 				} else {
 					pending_client.output.write("503: Service Unavailable - Too many requests in the queue.");
 					pending_client.close();
@@ -183,51 +218,66 @@ public class Server {
 					pending_client.close();
 				}
 			}
+		}
+	}
 
-			// Signal that there are more clients, but only if there any any.
-			if(has_more_clients) {
-				this._normal_responder_semaphore.notify();
+	private void begin_event_acceptor() {
+		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
+		tango.net.device.Socket.ServerSocket server = new tango.net.device.Socket.ServerSocket(
+													new InternetAddress(this._event_port), 
+													this._max_connections, 
+													true);
+		Socket pending_event = null;
+
+		while(true) {
+			pending_event = null;
+
+			// Accept event requests
+			try {
+				pending_event = server.accept();
+				//Stdout.format("Connection from {} established.\n", pending_event.remoteAddress()).flush;
+
+				if(this._event_sockets.length < this._max_connections) {
+					synchronized(this._event_sockets_mutex) {
+						this._event_sockets ~= pending_event;
+					}
+				} else {
+					pending_event.output.write("503: Service Unavailable - Too many requests in the queue.");
+					pending_event.close();
+				}
+			} catch(Exception e) {
+				Stdout.format("Error accepting: {}\n", e).flush;
+				if(pending_event && pending_event.isAlive) {
+					pending_event.close();
+				}
 			}
 		}
 	}
 
-	private void begin_normal_responder() {
+	private void begin_event_responder() {
 		while(true) {
-			// Wait for the signal that says there are more clients
-			this._normal_responder_semaphore.wait();
+			// FIXME: Replace this sleep with event triggers
+			Thread.sleep(5);
 
-			// Safely make a copy of all the clients
-			Socket[] copy_client_sockets = null;
-			synchronized(this._client_sockets_mutex) {
-				copy_client_sockets = new Socket[this._client_sockets.length];
-				copy_client_sockets[] = this._client_sockets[];
-			}
+			// Respond to all the events
+			synchronized(this._event_sockets_mutex) {
+				for(size_t i=0; i<this._event_sockets.length; i++) {
+					// Reset the attributes
+					_event_socket = this._event_sockets[i];
 
-			// Respond to all the clients
-			for(size_t i=0; i<copy_client_sockets.length; i++) {
-				// Reset the attributes
-				_has_rendered = false;
-				foreach(char[] key ; _cookies.keys)
-					_cookies.remove(key);
-				_client_socket = copy_client_sockets[i];
+					// Process the request
+					try {
+						_event_socket.output.write("event");
+					} catch(Exception e) {
+						char[] msg = "500: Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
+						_event_socket.output.write(msg);
+					}
 
-				// Process the request
-				try {
-					this.process_request(this._buffer, this._header_max_size);
-				} catch(Exception e) {
-					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
-					this.render_text(msg, 500);
-				}
-
-				_client_socket.close();
-			}
-
-			// Remove all the clients from the client socket set
-			synchronized(this._client_sockets_mutex) {
-				for(size_t i=0; i<this._client_sockets.length; i++) {
-					if(i != this._client_sockets.length - 1)
-						this._client_sockets[i] = this._client_sockets[this._client_sockets.length - 1];
-					this._client_sockets = this._client_sockets[0 .. this._client_sockets.length - 1];
+					// Close the event and remove
+					_event_socket.close();
+					if(i != this._event_sockets.length - 1)
+						this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
+					this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
 				}
 			}
 		}
