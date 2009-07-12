@@ -12,6 +12,7 @@ import tango.core.sync.Semaphore;
 import tango.math.random.engines.Twister;
 
 import tango.io.Stdout;
+import tango.net.device.Berkeley;
 import tango.net.device.Socket;
 import tango.net.InternetAddress;
 
@@ -33,7 +34,8 @@ public class Server {
 	private Socket _client_socket = null;
 	private Socket _event_socket = null;
 	private Socket[] _client_sockets;
-	private Socket[] _event_sockets;
+	private Berkeley _event_server;
+	private Berkeley[] _event_sockets;
 	private Mutex _event_sockets_mutex;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
@@ -158,9 +160,9 @@ public class Server {
 		t.create(&begin_normal_responder);
 
 		// Create event threads if desired
-		if(this._port > 0) {
+		if(this._event_port > 0) {
 			t.create(&begin_event_acceptor);
-			t.create(&begin_event_responder);
+//			t.create(&begin_event_responder);
 		}
 
 		Stdout("Server running ...\n").flush;
@@ -221,20 +223,56 @@ public class Server {
 		}
 	}
 
+	// FIXME: Right now this accepts and responds to events. We need to move 
+	// the response part into the begin_event_responder thread.
 	private void begin_event_acceptor() {
 		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
-		tango.net.device.Socket.ServerSocket server = new tango.net.device.Socket.ServerSocket(
-													new InternetAddress(this._event_port), 
-													this._max_connections, 
-													true);
-		Socket pending_event = null;
+		this._event_server = Berkeley();
+		this._event_server.open(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+		this._event_server.blocking = false;
+		this._event_server.addressReuse(true);
+		try {
+			this._event_server.bind(new InternetAddress(this._event_port));
+		} catch(Exception e) {
+			Stdout.format("Event processing socket could not bind to port {}\n", this._event_port).flush;
+			return;
+		}
+		this._event_server.listen(this._max_connections);
+
+		SocketSet socket_set = new SocketSet(this._max_connections + 1);
+		Berkeley pending_event;
 
 		while(true) {
-			pending_event = null;
+			// Get a socket set to hold all the client sockets while they wait to be processed
+			socket_set.reset();
+			socket_set.add(this._event_server.handle);
+			foreach(Berkeley each; this._event_sockets) {
+				socket_set.add(each.handle);
+			}
+			SocketSet.select(socket_set, null, null);
+
+			// Reply to clients
+			for(size_t i=0; i<this._event_sockets.length; i++) {
+				if(socket_set.isSet(this._event_sockets[i].handle) == false) {
+					continue;
+				}
+
+				// FIXME: Change this to process the event
+				this._event_sockets[i].send("example event: blah");
+
+				// Remove this client from the socket set
+				this._event_sockets[i].shutdown(SocketShutdown.BOTH);
+				this._event_sockets[i].detach();
+				if(i != this._event_sockets.length - 1)
+					this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
+				this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
+			}
 
 			// Accept event requests
+			pending_event = Berkeley();
 			try {
-				pending_event = server.accept();
+				this._event_server.accept(pending_event);
+				Stdout.format("Connection from {} established.\n", "??").flush;
 				//Stdout.format("Connection from {} established.\n", pending_event.remoteAddress()).flush;
 
 				if(this._event_sockets.length < this._max_connections) {
@@ -242,18 +280,21 @@ public class Server {
 						this._event_sockets ~= pending_event;
 					}
 				} else {
-					pending_event.output.write("503: Service Unavailable - Too many requests in the queue.");
-					pending_event.close();
+					pending_event.send("503: Service Unavailable - Too many requests in the queue.");
+					pending_event.shutdown(SocketShutdown.BOTH);
+					pending_event.detach();
 				}
 			} catch(Exception e) {
 				Stdout.format("Error accepting: {}\n", e).flush;
-				if(pending_event && pending_event.isAlive) {
-					pending_event.close();
+				if(pending_event.isAlive) {
+					pending_event.shutdown(SocketShutdown.BOTH);
+					pending_event.detach();
 				}
 			}
 		}
 	}
 
+/*
 	private void begin_event_responder() {
 		while(true) {
 			// FIXME: Replace this sleep with event triggers
@@ -282,7 +323,7 @@ public class Server {
 			}
 		}
 	}
-
+*/
 	private void process_request(char[] buffer, uint header_max_size) {
 		// Get the http header
 		int buffer_length = _client_socket.input.read(buffer);
