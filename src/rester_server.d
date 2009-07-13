@@ -269,26 +269,27 @@ public class Server {
 			}
 
 			// Accept event requests
-			pending_event = Berkeley();
-			try {
-				this._event_server.accept(pending_event);
-				Stdout.format("Connection from {} established.\n", "??").flush;
-				//Stdout.format("Connection from {} established.\n", pending_event.remoteAddress()).flush;
+			if(socket_set.isSet(this._event_server.handle)) {
+				pending_event = Berkeley();
+				try {
+					this._event_server.accept(pending_event);
+					Stdout.format("Connection from {} established.\n", pending_event.remoteAddress).flush;
 
-				if(this._event_sockets.length < this._max_connections) {
-					synchronized(this._event_sockets_mutex) {
-						this._event_sockets ~= pending_event;
+					if(this._event_sockets.length < this._max_connections) {
+						//synchronized(this._event_sockets_mutex) {
+							this._event_sockets ~= pending_event;
+						//}
+					} else {
+						pending_event.send("503: Service Unavailable - Too many requests in the queue.");
+						pending_event.shutdown(SocketShutdown.BOTH);
+						pending_event.detach();
 					}
-				} else {
-					pending_event.send("503: Service Unavailable - Too many requests in the queue.");
-					pending_event.shutdown(SocketShutdown.BOTH);
-					pending_event.detach();
-				}
-			} catch(Exception e) {
-				Stdout.format("Error accepting: {}\n", e).flush;
-				if(pending_event.isAlive) {
-					pending_event.shutdown(SocketShutdown.BOTH);
-					pending_event.detach();
+				} catch(Exception e) {
+					Stdout.format("Error accepting: {}\n", e).flush;
+					if(pending_event.isAlive) {
+						pending_event.shutdown(SocketShutdown.BOTH);
+						pending_event.detach();
+					}
 				}
 			}
 		}
