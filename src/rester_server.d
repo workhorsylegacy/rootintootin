@@ -35,6 +35,7 @@ public class Server {
 	private Socket _event_socket = null;
 	private Socket[] _client_sockets;
 	private Berkeley _event_server;
+	private SocketSet _event_socket_set;
 	private Berkeley[] _event_sockets;
 	private Mutex _event_sockets_mutex;
 	private int _session_id = 0;
@@ -162,7 +163,7 @@ public class Server {
 		// Create event threads if desired
 		if(this._event_port > 0) {
 			t.create(&begin_event_acceptor);
-//			t.create(&begin_event_responder);
+			t.create(&begin_event_responder);
 		}
 
 		Stdout("Server running ...\n").flush;
@@ -223,13 +224,11 @@ public class Server {
 		}
 	}
 
-	// FIXME: Right now this accepts and responds to events. We need to move 
-	// the response part into the begin_event_responder thread.
 	private void begin_event_acceptor() {
 		// Create a socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
 		this._event_server = Berkeley();
 		this._event_server.open(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-		this._event_server.blocking = false;
+		//this._event_server.blocking = false;
 		this._event_server.addressReuse(true);
 		try {
 			this._event_server.bind(new InternetAddress(this._event_port));
@@ -239,92 +238,117 @@ public class Server {
 		}
 		this._event_server.listen(this._max_connections);
 
-		SocketSet socket_set = new SocketSet(this._max_connections + 1);
 		Berkeley pending_event;
 
 		while(true) {
-			// Get a socket set to hold all the client sockets while they wait to be processed
-			socket_set.reset();
-			socket_set.add(this._event_server.handle);
-			foreach(Berkeley each; this._event_sockets) {
-				socket_set.add(each.handle);
-			}
-			SocketSet.select(socket_set, null, null);
-
-			// Reply to clients
-			for(size_t i=0; i<this._event_sockets.length; i++) {
-				if(socket_set.isSet(this._event_sockets[i].handle) == false) {
-					continue;
-				}
-
-				// FIXME: Change this to process the event
-				this._event_sockets[i].send("example event: blah");
-
-				// Remove this client from the socket set
-				this._event_sockets[i].shutdown(SocketShutdown.BOTH);
-				this._event_sockets[i].detach();
-				if(i != this._event_sockets.length - 1)
-					this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
-				this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
-			}
-
 			// Accept event requests
-			if(socket_set.isSet(this._event_server.handle)) {
-				pending_event = Berkeley();
-				try {
-					this._event_server.accept(pending_event);
-					Stdout.format("Connection from {} established.\n", pending_event.remoteAddress).flush;
+			pending_event = Berkeley();
+			try {
+				this._event_server.accept(pending_event);
+				Stdout.format("Connection from {} established.\n", pending_event.remoteAddress).flush;
 
-					if(this._event_sockets.length < this._max_connections) {
-						//synchronized(this._event_sockets_mutex) {
-							this._event_sockets ~= pending_event;
-						//}
-					} else {
-						pending_event.send("503: Service Unavailable - Too many requests in the queue.");
-						pending_event.shutdown(SocketShutdown.BOTH);
-						pending_event.detach();
+				if(this._event_sockets.length < this._max_connections) {
+					synchronized(this._event_sockets_mutex) {
+						this._event_sockets ~= pending_event;
 					}
-				} catch(Exception e) {
-					Stdout.format("Error accepting: {}\n", e).flush;
-					if(pending_event.isAlive) {
-						pending_event.shutdown(SocketShutdown.BOTH);
-						pending_event.detach();
-					}
+				} else {
+					pending_event.send("503: Service Unavailable - Too many requests in the queue.");
+					pending_event.shutdown(SocketShutdown.BOTH);
+					pending_event.detach();
+				}
+			} catch(Exception e) {
+				Stdout.format("Error accepting: {}\n", e).flush;
+				if(pending_event.isAlive) {
+					pending_event.shutdown(SocketShutdown.BOTH);
+					pending_event.detach();
 				}
 			}
 		}
 	}
 
-/*
 	private void begin_event_responder() {
+		this._event_socket_set = new SocketSet(this._max_connections);
+
 		while(true) {
 			// FIXME: Replace this sleep with event triggers
-			Thread.sleep(5);
+			Thread.sleep(10);
+			Stdout("\n\n\ndoing events\n").flush;
 
-			// Respond to all the events
-			synchronized(this._event_sockets_mutex) {
-				for(size_t i=0; i<this._event_sockets.length; i++) {
-					// Reset the attributes
-					_event_socket = this._event_sockets[i];
-
-					// Process the request
-					try {
-						_event_socket.output.write("event");
-					} catch(Exception e) {
-						char[] msg = "500: Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
-						_event_socket.output.write(msg);
+			while(this._event_sockets.length > 0) {
+				// Read the requests
+				synchronized(this._event_sockets_mutex) {
+					this._event_socket_set.reset();
+					foreach(Berkeley socket; this._event_sockets) {
+						this._event_socket_set.add(socket.handle);
 					}
+					SocketSet.select(this._event_socket_set, null, null, 100000);
 
-					// Close the event and remove
-					_event_socket.close();
-					if(i != this._event_sockets.length - 1)
-						this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
-					this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
+					for(size_t i=0; i<this._event_sockets.length; i++) {
+						if(this._event_socket_set.isSet(this._event_sockets[i].handle) == false) {
+							continue;
+						}
+
+						// FIXME: Change this to read the event parameters
+						int len;
+						char[1024 * 8] buffer;
+						Stdout("[[").flush;
+						len = this._event_sockets[i].receive(buffer);
+						Stdout.format("Read: {}", buffer[0 .. len]).flush;
+						Stdout("]]\n").flush;
+					}
+				}
+
+				// Write the responses
+				synchronized(this._event_sockets_mutex) {
+					this._event_socket_set.reset();
+					foreach(Berkeley socket; this._event_sockets) {
+						this._event_socket_set.add(socket.handle);
+					}
+					SocketSet.select(null, this._event_socket_set, null, 100000);
+
+					for(size_t i=0; i<this._event_sockets.length; i++) {
+						if(this._event_socket_set.isSet(this._event_sockets[i].handle) == false) {
+							continue;
+						}
+
+						// FIXME: Change this fire events
+						this._event_sockets[i].send("example event: blah");
+						Stdout.format("Write: {}", "example event: blah").flush;
+
+						// Remove this client from the socket set
+						this._event_sockets[i].shutdown(SocketShutdown.BOTH);
+						this._event_sockets[i].detach();
+						if(i != this._event_sockets.length - 1)
+							this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
+						this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
+					}
+				}
+
+				// Close errors
+				synchronized(this._event_sockets_mutex) {
+					this._event_socket_set.reset();
+					foreach(Berkeley socket; this._event_sockets) {
+						this._event_socket_set.add(socket.handle);
+					}
+					SocketSet.select(null, null, this._event_socket_set, 100000);
+
+					for(size_t i=0; i<this._event_sockets.length; i++) {
+						if(this._event_socket_set.isSet(this._event_sockets[i].handle) == false) {
+							continue;
+						}
+
+						// Remove this client from the socket set
+						this._event_sockets[i].shutdown(SocketShutdown.BOTH);
+						this._event_sockets[i].detach();
+						if(i != this._event_sockets.length - 1)
+							this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
+						this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
+					}
 				}
 			}
 		}
 	}
-*/
+
 	private void process_request(char[] buffer, uint header_max_size) {
 		// Get the http header
 		int buffer_length = _client_socket.input.read(buffer);
