@@ -9,6 +9,14 @@ public static char[] between(char[] value, char[] before, char[] after) {
 }
 
 // Add a to_s function for basic types
+public static char[] to_s(short value) {
+	return tango.text.convert.Integer.toString(value);
+}
+
+public static char[] to_s(ushort value) {
+	return tango.text.convert.Integer.toString(value);
+}
+
 public static char[] to_s(int value) {
 	return tango.text.convert.Integer.toString(value);
 }

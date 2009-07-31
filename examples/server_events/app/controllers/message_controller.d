@@ -24,6 +24,7 @@ public class MessageController {
 
 		if(_message.save()) {
 			redirect_to("/messages/show/" ~ to_s(_message.id));
+			trigger_event("on_create");
 		} else {
 			render_view("new");
 		}
@@ -49,6 +50,10 @@ public class MessageController {
 		_message.destroy();
 
 		redirect_to("/messages/index");
+	}
+
+	public void on_create() {
+		render_text(_message.text);
 	}
 }
 

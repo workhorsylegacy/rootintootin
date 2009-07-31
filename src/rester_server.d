@@ -38,6 +38,7 @@ public class Server {
 	private SocketSet _event_socket_set;
 	private Berkeley[] _event_sockets;
 	private Mutex _event_sockets_mutex;
+	private Semaphore _event_semaphore;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
@@ -59,6 +60,7 @@ public class Server {
 		delete random;
 
 		this._event_sockets_mutex = new Mutex();
+		this._event_semaphore = new Semaphore();
 	}
 
 	public void redirect_to(char[] url) {
@@ -270,8 +272,8 @@ public class Server {
 		this._event_socket_set = new SocketSet(this._max_connections);
 
 		while(true) {
-			// FIXME: Replace this sleep with event triggers
-			Thread.sleep(10);
+			// Wait for events to be triggered
+			_event_semaphore.wait();
 			Stdout("\n\n\ndoing events\n").flush;
 
 			while(this._event_sockets.length > 0) {
@@ -557,6 +559,13 @@ public class Server {
 		} else if(_request.response_type == ResponseType.render_view) {
 			response = _runner.render_view(_request.controller, _request.render_view_name);
 			this.render_text(response, 200);
+		} else if(_request.response_type == ResponseType.render_text) {
+			this.render_text(_request.render_text_text, 200);
+		}
+
+		// Trigger any events
+		if(_request.events_to_trigger.length > 0) {
+			_event_semaphore.notify();
 		}
 
 		return;

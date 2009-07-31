@@ -9,7 +9,7 @@ routes = {'message' : { 'member' : { 'show' : 'get',
 					,
 					'collection' : { 'index' : 'get' }
 					,
-					'event' : { 'on_create' : 'get' }
+					'event' : [ 'on_create' ]
 					}
 		}
 

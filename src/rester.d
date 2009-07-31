@@ -18,6 +18,7 @@ import helper;
 public enum ResponseType {
 	normal,
 	render_view, 
+	render_text, 
 	redirect_to
 }
 
@@ -33,6 +34,8 @@ public class Request {
 	private ResponseType _response_type;
 	private char[] _redirect_to_url = null;
 	private char[] _render_view_name = null;
+	private char[] _render_text_text = null;
+	public char[][] events_to_trigger;
 
 	public this(char[] method, char[] uri, char[] http_version, char[] controller, char[] action, char[][char[]] params, char[][char[]] cookies) {
 		_method = method;
@@ -55,13 +58,16 @@ public class Request {
 	public char[] action() { return _action; }
 	public char[][char[]] params() { return _params; }
 	public char[][char[]] cookies() { return _cookies; }
+
 	public ResponseType response_type() { return _response_type; }
 	public char[] redirect_to_url() { return _redirect_to_url; }
 	public char[] render_view_name() { return _render_view_name; }
+	public char[] render_text_text() { return _render_text_text; }
 
 	public void response_type(ResponseType value) { _response_type = value; }
 	public void redirect_to_url(char[] value) { _redirect_to_url = value; }
 	public void render_view_name(char[] value) { _render_view_name = value; }
+	public void render_text_text(char[] value) { _render_text_text = value; }
 }
 
 public class SqlError : Exception {
@@ -290,9 +296,18 @@ public template ControllerBaseMixin(T) {
 		this._request.render_view_name = name;
 	}
 
+	public void render_text(char[] text) {
+		this._request.response_type = ResponseType.render_text;
+		this._request.render_text_text = text;
+	}
+
 	public void redirect_to(char[] url) {
 		this._request.response_type = ResponseType.redirect_to;
 		this._request.redirect_to_url = url;
+	}
+
+	public void trigger_event(char[] event_name) {
+		this._request.events_to_trigger ~= event_name;
 	}
 }
 
