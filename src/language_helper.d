@@ -100,3 +100,20 @@ public class AutoStringArray {
 	public void opCatAssign(char value) { _value ~= to_s(value); }
 }
 
+// Add array helpers
+template Array(T) {
+	// Remove an item from the array
+	void remove(ref T array, size_t i) {
+		// Get the length
+		size_t len = array.length;
+
+		// If we are not removing from the end, move 
+		// the last element to the location of the removed.
+		if(i != len - 1)
+			array[i] = array[len - 1];
+
+		// Decrease the length by one
+		array = array[0 .. len - 1];
+	}
+}
+

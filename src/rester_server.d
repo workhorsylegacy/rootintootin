@@ -35,10 +35,11 @@ public class Server {
 	private Socket _event_socket = null;
 	private Socket[] _client_sockets;
 	private Berkeley _event_server;
-	private SocketSet _event_socket_set;
 	private Berkeley[] _event_sockets;
 	private Mutex _event_sockets_mutex;
 	private Semaphore _event_semaphore;
+	private char[][] _event_headers;
+	private char[][] _events_to_trigger;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[][char[]] _cookies;
@@ -201,9 +202,7 @@ public class Server {
 
 				// Close the client and remove
 				_client_socket.close();
-				if(i != this._client_sockets.length - 1)
-					this._client_sockets[i] = this._client_sockets[this._client_sockets.length - 1];
-				this._client_sockets = this._client_sockets[0 .. this._client_sockets.length - 1];
+				Array!(Socket[]).remove(this._client_sockets, i);
 			}
 
 			// Accept client requests
@@ -252,6 +251,27 @@ public class Server {
 				if(this._event_sockets.length < this._max_connections) {
 					synchronized(this._event_sockets_mutex) {
 						this._event_sockets ~= pending_event;
+
+						// FIXME: This duplicates code in process_request
+						char[1024 * 8] buffer;
+						int len = pending_event.receive(buffer);
+						int header_end = tango.text.Util.locatePattern(buffer[0 .. len], "\r\n\r\n", 0);
+
+						// Get the header info
+						char[] header = buffer[0 .. header_end].dup;
+						char[][] header_lines = tango.text.Util.splitLines(header);
+						char[][] first_line = split(header_lines[0], " ");
+						char[] method = first_line[0];
+						char[] uri = first_line[1];
+						char[] http_version = first_line[2];
+
+						// Get the controller and action
+						char[][] route = split(split(uri, "?")[0], "/");
+						char[] controller = route.length > 1 ? route[1] : null;
+						char[] action = route.length > 2 ? route[2] : "index";
+						char[] event = controller ~ ':' ~ action;
+
+						this._event_headers ~= event;
 					}
 				} else {
 					pending_event.send("503: Service Unavailable - Too many requests in the queue.");
@@ -269,85 +289,81 @@ public class Server {
 	}
 
 	private void begin_event_responder() {
-		this._event_socket_set = new SocketSet(this._max_connections);
+		SocketSet write_socket_set = new SocketSet(this._max_connections);
+		SocketSet error_socket_set = new SocketSet(this._max_connections);
 
 		while(true) {
 			// Wait for events to be triggered
 			_event_semaphore.wait();
 			Stdout("\n\n\ndoing events\n").flush;
 
-			while(this._event_sockets.length > 0) {
-				// Read the requests
-				synchronized(this._event_sockets_mutex) {
-					this._event_socket_set.reset();
-					foreach(Berkeley socket; this._event_sockets) {
-						this._event_socket_set.add(socket.handle);
-					}
-					SocketSet.select(this._event_socket_set, null, null, 100000);
-
-					for(size_t i=0; i<this._event_sockets.length; i++) {
-						if(this._event_socket_set.isSet(this._event_sockets[i].handle) == false) {
-							continue;
+			// Get only the sockets waiting for events that were triggered
+			Berkeley[] sockets_with_events, copy_sockets_with_events;
+			synchronized(this._event_sockets_mutex) {
+				for(size_t i=0; i<this._events_to_trigger.length; i++) {
+					for(size_t j=0; j<this._event_sockets.length; j++) {
+						if(this._events_to_trigger[i] == this._event_headers[j]) {
+							sockets_with_events ~= this._event_sockets[j];
+							break;
 						}
-
-						// FIXME: Change this to read the event parameters
-						int len;
-						char[1024 * 8] buffer;
-						Stdout("[[").flush;
-						len = this._event_sockets[i].receive(buffer);
-						Stdout.format("Read: {}", buffer[0 .. len]).flush;
-						Stdout("]]\n").flush;
-					}
-				}
-
-				// Write the responses
-				synchronized(this._event_sockets_mutex) {
-					this._event_socket_set.reset();
-					foreach(Berkeley socket; this._event_sockets) {
-						this._event_socket_set.add(socket.handle);
-					}
-					SocketSet.select(null, this._event_socket_set, null, 100000);
-
-					for(size_t i=0; i<this._event_sockets.length; i++) {
-						if(this._event_socket_set.isSet(this._event_sockets[i].handle) == false) {
-							continue;
-						}
-
-						// FIXME: Change this fire events
-						this._event_sockets[i].send("example event: blah");
-						Stdout.format("Write: {}", "example event: blah").flush;
-
-						// Remove this client from the socket set
-						this._event_sockets[i].shutdown(SocketShutdown.BOTH);
-						this._event_sockets[i].detach();
-						if(i != this._event_sockets.length - 1)
-							this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
-						this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
-					}
-				}
-
-				// Close errors
-				synchronized(this._event_sockets_mutex) {
-					this._event_socket_set.reset();
-					foreach(Berkeley socket; this._event_sockets) {
-						this._event_socket_set.add(socket.handle);
-					}
-					SocketSet.select(null, null, this._event_socket_set, 100000);
-
-					for(size_t i=0; i<this._event_sockets.length; i++) {
-						if(this._event_socket_set.isSet(this._event_sockets[i].handle) == false) {
-							continue;
-						}
-
-						// Remove this client from the socket set
-						this._event_sockets[i].shutdown(SocketShutdown.BOTH);
-						this._event_sockets[i].detach();
-						if(i != this._event_sockets.length - 1)
-							this._event_sockets[i] = this._event_sockets[this._event_sockets.length - 1];
-						this._event_sockets = this._event_sockets[0 .. this._event_sockets.length - 1];
 					}
 				}
 			}
+			copy_sockets_with_events = sockets_with_events.dup;
+
+
+			while(sockets_with_events.length > 0) {
+				// Determine which sockets are writeable and have errored
+				write_socket_set.reset();
+				error_socket_set.reset();
+				foreach(Berkeley socket; sockets_with_events) {
+					write_socket_set.add(socket.handle);
+					error_socket_set.add(socket.handle);
+				}
+				SocketSet.select(null, write_socket_set, error_socket_set, 100000);
+
+				// Write the responses
+				for(size_t i=0; i<sockets_with_events.length; i++) {
+					if(write_socket_set.isSet(sockets_with_events[i].handle) == false) {
+						continue;
+					}
+
+					// FIXME: Change this to fire events
+					sockets_with_events[i].send("example event: blah");
+
+					// Remove this client from the socket set
+					sockets_with_events[i].shutdown(SocketShutdown.BOTH);
+					sockets_with_events[i].detach();
+					Array!(Berkeley[]).remove(sockets_with_events, i);
+				}
+
+				// Close errors
+				for(size_t i=0; i<sockets_with_events.length; i++) {
+					if(error_socket_set.isSet(sockets_with_events[i].handle) == false) {
+						continue;
+					}
+
+					// Remove this client from the socket set
+					sockets_with_events[i].shutdown(SocketShutdown.BOTH);
+					sockets_with_events[i].detach();
+					Array!(Berkeley[]).remove(sockets_with_events, i);
+				}
+			}
+
+			// Remove the sockets that fired
+			synchronized(this._event_sockets_mutex) {
+				for(size_t i=0; i<copy_sockets_with_events.length; i++) {
+					for(size_t j=0; j<this._event_sockets.length; j++) {
+						if(copy_sockets_with_events[i] == this._event_sockets[j]) {
+							Array!(Berkeley[]).remove(this._event_sockets, j);
+							Array!(char[][]).remove(this._event_headers, j);
+							break;
+						}
+					}
+				}
+			}
+
+			this._events_to_trigger = [];
 		}
 	}
 
@@ -565,6 +581,9 @@ public class Server {
 
 		// Trigger any events
 		if(_request.events_to_trigger.length > 0) {
+			foreach(char[] event ; _request.events_to_trigger) {
+				this._events_to_trigger ~= controller ~ ':' ~ event;
+			}
 			_event_semaphore.notify();
 		}
 
