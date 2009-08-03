@@ -304,13 +304,11 @@ public class Server {
 					for(size_t j=0; j<this._event_sockets.length; j++) {
 						if(this._events_to_trigger[i] == this._event_headers[j]) {
 							sockets_with_events ~= this._event_sockets[j];
-							break;
 						}
 					}
 				}
 			}
 			copy_sockets_with_events = sockets_with_events.dup;
-
 
 			while(sockets_with_events.length > 0) {
 				// Determine which sockets are writeable and have errored
@@ -328,8 +326,17 @@ public class Server {
 						continue;
 					}
 
-					// FIXME: Change this to fire events
-					sockets_with_events[i].send("example event: blah");
+					// FIXME: This should render an action
+					char[] data = "example event: blah";
+					char[] response = 
+					"HTTP/1.1 200 OK\r\n" ~ 
+					"Server: Rester_0.1\r\n" ~ 
+					"Status: 200 OK\r\n" ~ 
+					"Content-Type: text/html; charset=utf-8\r\n" ~ 
+					"Content-Length: " ~ to_s(data.length) ~ "\r\n" ~ 
+					"\r\n" ~ 
+					data;
+					sockets_with_events[i].send(response);
 
 					// Remove this client from the socket set
 					sockets_with_events[i].shutdown(SocketShutdown.BOTH);
