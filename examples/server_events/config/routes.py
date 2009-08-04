@@ -5,11 +5,10 @@ routes = {'message' : { 'member' : { 'show' : 'get',
 								'create' : 'post',
 								'edit' : 'get',
 								'update' : 'put',
-								'destroy' : 'delete' }
+								'destroy' : 'delete',
+								'on_create' : 'get' }
 					,
 					'collection' : { 'index' : 'get' }
-					,
-					'event' : [ 'on_create' ]
 					}
 		}
 

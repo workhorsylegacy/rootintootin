@@ -53,7 +53,7 @@ public class MessageController {
 	}
 
 	public void on_create() {
-		render_text(_message.text);
+		_messages = Message.find_all();
 	}
 }
 

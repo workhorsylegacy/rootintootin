@@ -1,5 +1,6 @@
 
 import tango.text.Util;
+import tango.text.Ascii;
 import tango.text.convert.Integer;
 import tango.text.convert.Float;
 
@@ -98,6 +99,15 @@ public class AutoStringArray {
 	public void opCatAssign(double value) { _value ~= to_s(value); }
 	public void opCatAssign(bool value) { _value ~= to_s(value); }
 	public void opCatAssign(char value) { _value ~= to_s(value); }
+}
+
+// Add string helpers
+public char[] capitalize(char[] value) {
+	if(value.length == 0) return value;
+
+	char[] first = value[0 .. 1].dup;
+	toUpper(first);
+	return first ~ value[1 .. length];
 }
 
 // Add array helpers

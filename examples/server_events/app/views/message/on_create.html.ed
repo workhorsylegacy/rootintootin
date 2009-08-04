@@ -1,0 +1,16 @@
+<h1>On Create messages</h1>
+
+<table>
+	<tr>
+		<th>Text</th>
+	</tr>
+
+<% foreach(Message message ; controller._messages) { %>
+	<tr>
+		<td><%= message.text %></td>
+		<td><a href="/messages/show/<%=message.id%>">Show</a></td>
+	</tr>
+<% } %>
+</table>
+
+

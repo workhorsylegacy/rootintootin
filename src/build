@@ -193,12 +193,14 @@ def combine_code_files(routes, table_map, reference_map):
 		"\n\nint main() {\n" +
 		"	Server server = new Server();\n" + 
 		"	char[" + str(header_max_size) + "] buffer;\n" + 
-		"	char[" + str(header_max_size) + "] event_buffer;\n\n" + 
+		"	char[" + str(header_max_size) + "] event_buffer;\n" + 
+		"	RunnerBase runner = new Runner();\n" + 
+		"	RunnerBase event_runner = new Runner();\n\n" + 
 		"	server.start(" + str(port) + ", " + str(event_port) + ", " + str(max_connections) + ", \n" + 
 		"				buffer, event_buffer, " + str(header_max_size) + ", \n" + 
 		"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 		"				\"" + db_password + "\", \"" + db_name + "\",\n" +
-		"				new Runner());\n" +
+		"				runner, event_runner);\n" +
 		"\n" +
 		"	return 0;\n" +
 		"}\n")

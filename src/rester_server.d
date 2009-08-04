@@ -29,8 +29,6 @@ import rester;
 const int SOCKET_ERROR = -1;
 
 public class Server {
-	private bool _has_rendered = false;
-	private Request _request = null;
 	private Socket _client_socket = null;
 	private Socket _event_socket = null;
 	private Socket[] _client_sockets;
@@ -38,11 +36,10 @@ public class Server {
 	private Berkeley[] _event_sockets;
 	private Mutex _event_sockets_mutex;
 	private Semaphore _event_semaphore;
-	private char[][] _event_headers;
+	private Request[] _event_requests;
 	private char[][] _events_to_trigger;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
-	private char[][char[]] _cookies;
 	private char[] _salt;
 
 	private ushort _port;
@@ -52,6 +49,7 @@ public class Server {
 	private char[] _event_buffer = null;
 	private uint _header_max_size;
 	private RunnerBase _runner = null;
+	private RunnerBase _event_runner = null;
 
 	public this() {
 		// Get a random salt for salting sessions
@@ -64,9 +62,9 @@ public class Server {
 		this._event_semaphore = new Semaphore();
 	}
 
-	public void redirect_to(char[] url) {
+	public void redirect_to(Request request, char[] url) {
 		// If we have already rendered, show an error
-		if(_has_rendered) {
+		if(request.has_rendered) {
 			throw new Exception("Something has already been rendered.");
 		}
 
@@ -81,9 +79,22 @@ public class Server {
 		_client_socket.output.write(header);
 	}
 
-	public void render_text(char[] text, ushort status_code = 200) {
+	public void render_text(Socket socket, Request request, char[] text, ushort status_code = 200) {
+		socket.output.write(generate_text(request, text, status_code));
+	}
+
+	public void render_text(Berkeley socket, Request request, char[] text, ushort status_code = 200) {
+		socket.send(generate_text(request, text, status_code));
+	}
+
+	public char[] generate_text(Request request, char[] text, ushort status_code = 200) {
+		// Use a blank request if there was none
+		if(request is null) {
+			request = Request.new_blank();
+		}
+
 		// If we have already rendered, show an error
-		if(_has_rendered) {
+		if(request.has_rendered) {
 			throw new Exception("Something has already been rendered.");
 		}
 
@@ -92,19 +103,19 @@ public class Server {
 
 		// If there is no session add one to the cookies
 		char[] set_cookies = "";
-		if(("_appname_session" in _cookies) == null || (_cookies["_appname_session"] in _sessions) == null) {
+		if(("_appname_session" in request._cookies) == null || (request._cookies["_appname_session"] in _sessions) == null) {
 			char[] hashed_session_id = Helper.hash_and_base64(to_s(_session_id), _salt);
-			_cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
+			request._cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
 			_sessions[hashed_session_id] = [];
 			Stdout.format("\nCreated session number '{}' '{}'\n", _session_id, hashed_session_id).flush;
 			_session_id++;
 		} else {
-			Stdout.format("Using existing session '{}'\n", _cookies["_appname_session"]).flush;
+			Stdout.format("Using existing session '{}'\n", request._cookies["_appname_session"]).flush;
 		}
 
 		// Get all the new cookie values to send
 		// FIXME: This is sending all cookies. It should only send the ones that have changed
-		foreach(char[] name, char[] value ; _cookies) {
+		foreach(char[] name, char[] value ; request._cookies) {
 			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ Helper.escape_value(value) ~ "\r\n";
 		}
 
@@ -127,7 +138,7 @@ public class Server {
 		"\r\n",
 		text];
 
-		_client_socket.output.write(tango.text.Util.join(reply, ""));
+		return tango.text.Util.join(reply, "");
 	}
 
 	// Start without events
@@ -139,14 +150,14 @@ public class Server {
 		this.start(port, 0, max_connections, 
 					buffer, null, header_max_size, 
 					db_host, db_user, db_password, db_name, 
-					runner);
+					runner, null);
 	}
 
 	// Start with events
 	public void start(ushort port, ushort event_port, uint max_connections, 
 						char[] buffer, char[] event_buffer, uint header_max_size, 
 						char[] db_host, char[] db_user, char[] db_password, char[] db_name, 
-						RunnerBase runner) {
+						RunnerBase runner, RunnerBase event_runner) {
 
 		this._port = port;
 		this._event_port = event_port;
@@ -155,6 +166,7 @@ public class Server {
 		this._event_buffer = event_buffer;
 		this._header_max_size = header_max_size;
 		this._runner = runner;
+		this._event_runner = event_runner;
 
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
@@ -187,17 +199,15 @@ public class Server {
 			// Respond to all the clients
 			for(size_t i=0; i<this._client_sockets.length; i++) {
 				// Reset the attributes
-				_has_rendered = false;
-				foreach(char[] key ; _cookies.keys)
-					_cookies.remove(key);
 				_client_socket = this._client_sockets[i];
 
 				// Process the request
+				Request request = null;
 				try {
-					this.process_request(this._buffer, this._header_max_size);
+					request = this.process_request(_client_socket, this._buffer, this._header_max_size);
 				} catch(Exception e) {
 					char[] msg = "Error: file " ~ e.file ~ ", Line " ~ to_s(e.line) ~ ", msg '" ~ e.msg ~ "'";
-					this.render_text(msg, 500);
+					this.render_text(_client_socket, request, msg, 500);
 				}
 
 				// Close the client and remove
@@ -269,9 +279,10 @@ public class Server {
 						char[][] route = split(split(uri, "?")[0], "/");
 						char[] controller = route.length > 1 ? route[1] : null;
 						char[] action = route.length > 2 ? route[2] : "index";
-						char[] event = controller ~ ':' ~ action;
 
-						this._event_headers ~= event;
+						char[][char[]] params, cookies;
+						Request request = new Request(method, uri, http_version, controller, action, params, cookies);
+						this._event_requests ~= request;
 					}
 				} else {
 					pending_event.send("503: Service Unavailable - Too many requests in the queue.");
@@ -299,11 +310,13 @@ public class Server {
 
 			// Get only the sockets waiting for events that were triggered
 			Berkeley[] sockets_with_events, copy_sockets_with_events;
+			Request[] requests_with_events;
 			synchronized(this._event_sockets_mutex) {
 				for(size_t i=0; i<this._events_to_trigger.length; i++) {
 					for(size_t j=0; j<this._event_sockets.length; j++) {
-						if(this._events_to_trigger[i] == this._event_headers[j]) {
+						if(this._events_to_trigger[i] == this._event_requests[j].controller ~ ':' ~ this._event_requests[j].action) {
 							sockets_with_events ~= this._event_sockets[j];
+							requests_with_events ~= this._event_requests[j];
 						}
 					}
 				}
@@ -326,17 +339,20 @@ public class Server {
 						continue;
 					}
 
-					// FIXME: This should render an action
-					char[] data = "example event: blah";
-					char[] response = 
-					"HTTP/1.1 200 OK\r\n" ~ 
-					"Server: Rester_0.1\r\n" ~ 
-					"Status: 200 OK\r\n" ~ 
-					"Content-Type: text/html; charset=utf-8\r\n" ~ 
-					"Content-Length: " ~ to_s(data.length) ~ "\r\n" ~ 
-					"\r\n" ~ 
-					data;
-					sockets_with_events[i].send(response);
+					// Run the action
+					Request request = requests_with_events[i];
+					char[] response = _event_runner.run_action(request);
+
+					if(request.response_type == ResponseType.normal && response != null) {
+						this.render_text(sockets_with_events[i], request, response);
+//					} else if(request.response_type == ResponseType.redirect_to) {
+//						this.redirect_to(sockets_with_events[i], request.redirect_to_url);
+					} else if(request.response_type == ResponseType.render_view) {
+						response = _event_runner.render_view(request.controller, request.render_view_name);
+						this.render_text(sockets_with_events[i], request, response, 200);
+					} else if(request.response_type == ResponseType.render_text) {
+						this.render_text(sockets_with_events[i], request, request.render_text_text, 200);
+					}
 
 					// Remove this client from the socket set
 					sockets_with_events[i].shutdown(SocketShutdown.BOTH);
@@ -363,8 +379,7 @@ public class Server {
 					for(size_t j=0; j<this._event_sockets.length; j++) {
 						if(copy_sockets_with_events[i] == this._event_sockets[j]) {
 							Array!(Berkeley[]).remove(this._event_sockets, j);
-							Array!(char[][]).remove(this._event_headers, j);
-							break;
+							Array!(Request[]).remove(this._event_requests, j);
 						}
 					}
 				}
@@ -374,14 +389,15 @@ public class Server {
 		}
 	}
 
-	private void process_request(char[] buffer, uint header_max_size) {
+	private Request process_request(Socket socket, char[] buffer, uint header_max_size) {
+		Request request = Request.new_blank();
 		// Get the http header
 		int buffer_length = _client_socket.input.read(buffer);
 
 		// Show an error if the header was bad
 		if(SOCKET_ERROR == buffer_length) {
 			Stdout("Connection error.\n").flush;
-			return;
+			return request;
 		} else if(0 == buffer_length) {
 			try {
 				//if the connection closed due to an error, remoteAddress() could fail
@@ -389,13 +405,13 @@ public class Server {
 			} catch {
 				Stdout("Connection from unknown closed.\n").flush;
 			}
-			return;
+			return request;
 		}
 
 		// Show an 'HTTP 413 Request Entity Too Large' if the end of the header was not read
 		if(tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0) == buffer_length) {
-			this.render_text("The end of the HTTP header was not found when reading the first " ~ to_s(header_max_size) ~ " bytes.", 413);
-			return;
+			this.render_text(socket, request, "The end of the HTTP header was not found when reading the first " ~ to_s(header_max_size) ~ " bytes.", 413);
+			return request;
 		}
 
 		// Clone the buffer segments into the raw header and body
@@ -408,19 +424,19 @@ public class Server {
 		// Get the header info
 		char[][] header_lines = tango.text.Util.splitLines(raw_header);
 		char[][] first_line = split(header_lines[0], " ");
-		char[] method = first_line[0];
-		char[] uri = first_line[1];
-		char[] http_version = first_line[2];
+		request.method = first_line[0];
+		request.uri = first_line[1];
+		request.http_version = first_line[2];
 
 		// Get the content length and body
 		int content_length = 0;
 		File body_file = null;
 
-		if(method == "POST" || method == "PUT") {
+		if(request.method == "POST" || request.method == "PUT") {
 			// Show an 'HTTP 411 Length Required' error if there is no Content-Length
 			if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
-				this.render_text("Content-Length is required for HTTP POST and PUT.", 411);
-				return;
+				this.render_text(socket, request, "Content-Length is required for HTTP POST and PUT.", 411);
+				return request;
 			}
 
 			// Get the content length
@@ -470,31 +486,30 @@ public class Server {
 				if(pair.length != 2) {
 					Stdout.format("Malformed cookie: {}\n", cookie).flush;
 				} else {
-					_cookies[pair[0]] = Helper.unescape_value(pair[1]);
+					request._cookies[pair[0]] = Helper.unescape_value(pair[1]);
 				}
 			}
 		}
 
 		// Make sure the session id is one we created
-		if(("_appname_session" in _cookies) != null) {
-			char[] hashed_session_id = _cookies["_appname_session"];
+		if(("_appname_session" in request._cookies) != null) {
+			char[] hashed_session_id = request._cookies["_appname_session"];
 			if((hashed_session_id in _sessions) == null) {
 				Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
 			}
 		}
 
 		// Get the HTTP GET params
-		char[][char[]] params;
-		if(tango.text.Util.contains(uri, '?')) {
-			foreach(char[] param ; split(split(uri, "?")[1], "&")) {
+		if(tango.text.Util.contains(request.uri, '?')) {
+			foreach(char[] param ; split(split(request.uri, "?")[1], "&")) {
 				char[][] pair = tango.text.Util.split(param, "=");
-				params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+				request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
 			}
 		}
 
 		// Get the params from a url encoded body
 		// FIXME: This will put the whole post body into ram. It should put the params into a file
-		if((method == "POST" || method == "PUT") && ("Content-Type" in fields) != null) {
+		if((request.method == "POST" || request.method == "PUT") && ("Content-Type" in fields) != null) {
 			if(fields["Content-Type"] == "application/x-www-form-urlencoded") {
 				File raw_body_file = new File("raw_body", File.ReadExisting);
 				char[] raw_body = "";
@@ -506,7 +521,7 @@ public class Server {
 				foreach(char[] param ; split(raw_body, "&")) {
 					char[][] pair = split(param, "=");
 					if(pair.length == 2) {
-						params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+						request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
 					}
 				}
 			}
@@ -535,7 +550,7 @@ public class Server {
 						foreach(char[] variable ; split(data, "; ")) {
 							char[] pair = split(variable, "=");
 							if(pair[0] == "name")
-								params[pair[1]] = pair[1];
+								request._params[pair[1]] = pair[1];
 						}
 					}
 				}
@@ -545,19 +560,16 @@ public class Server {
 		}
 */
 		// Get the controller and action
-		char[][] route = split(split(uri, "?")[0], "/");
-		char[] controller = route.length > 1 ? route[1] : null;
-		char[] action = route.length > 2 ? route[2] : "index";
-		char[] id = route.length > 3 ? route[3] : null;
-		if(id != null) params["id"] = id;
-
-		// Assemble the request object
-		_request = new Request(method, uri, http_version, controller, action, params, _cookies);
+		char[][] route = split(split(request.uri, "?")[0], "/");
+		request.controller = route.length > 1 ? route[1] : null;
+		request.action = route.length > 2 ? route[2] : "index";
+		request.id = route.length > 3 ? route[3] : null;
+		if(request.id != null) request._params["id"] = request.id;
 
 		// FIXME: this prints out all the values we care about
 		/*
-		Stdout.format("Total params: {}\n", params.length).flush;
-		foreach(char[] name, char[] value ; params) {
+		Stdout.format("Total params: {}\n", request._params.length).flush;
+		foreach(char[] name, char[] value ; request._params) {
 			Stdout.format("\t{} => {}\n", name, value).flush;
 		}
 
@@ -568,33 +580,33 @@ public class Server {
 		*/
 
 		Stdout("Route :\n").flush;
-		Stdout.format("\tController Name: {}\n", controller).flush;
-		Stdout.format("\tAction Name: {}\n", action).flush;
-		Stdout.format("\tID: {}\n", id).flush;
+		Stdout.format("\tController Name: {}\n", request.controller).flush;
+		Stdout.format("\tAction Name: {}\n", request.action).flush;
+		Stdout.format("\tID: {}\n", request.id).flush;
 
 		// Run the action
 		char[] response = null;
-		response = _runner.run_action(_request);
-		if(_request.response_type == ResponseType.normal && response != null) {
-			this.render_text(response);
-		} else if(_request.response_type == ResponseType.redirect_to) {
-			this.redirect_to(_request.redirect_to_url);
-		} else if(_request.response_type == ResponseType.render_view) {
-			response = _runner.render_view(_request.controller, _request.render_view_name);
-			this.render_text(response, 200);
-		} else if(_request.response_type == ResponseType.render_text) {
-			this.render_text(_request.render_text_text, 200);
+		response = _runner.run_action(request);
+		if(request.response_type == ResponseType.normal && response != null) {
+			this.render_text(socket, request, response);
+		} else if(request.response_type == ResponseType.redirect_to) {
+			this.redirect_to(request, request.redirect_to_url);
+		} else if(request.response_type == ResponseType.render_view) {
+			response = _runner.render_view(request.controller, request.render_view_name);
+			this.render_text(socket, request, response, 200);
+		} else if(request.response_type == ResponseType.render_text) {
+			this.render_text(socket, request, request.render_text_text, 200);
 		}
 
 		// Trigger any events
-		if(_request.events_to_trigger.length > 0) {
-			foreach(char[] event ; _request.events_to_trigger) {
-				this._events_to_trigger ~= controller ~ ':' ~ event;
+		if(request.events_to_trigger.length > 0) {
+			foreach(char[] event ; request.events_to_trigger) {
+				this._events_to_trigger ~= request.controller ~ ':' ~ event;
 			}
 			_event_semaphore.notify();
 		}
 
-		return;
+		return request;
 	}
 }
 

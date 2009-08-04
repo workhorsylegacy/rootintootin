@@ -23,13 +23,15 @@ public enum ResponseType {
 }
 
 public class Request {
+	private bool _has_rendered = false;
 	private char[] _method = null;
 	private char[] _uri = null;
 	private char[] _http_version = null;
 	private char[] _controller = null;
 	private char[] _action = null;
-	private char[][char[]] _params;
-	private char[][char[]] _cookies;
+	private char[] _id = null;
+	public char[][char[]] _params;
+	public char[][char[]] _cookies;
 
 	private ResponseType _response_type;
 	private char[] _redirect_to_url = null;
@@ -42,32 +44,41 @@ public class Request {
 		_uri = uri;
 		_http_version = http_version;
 		_controller = controller;
-		if(action == "new") {
-			_action = "New";
-		} else {
-			_action = action;
-		}
+		this.action = action;
 		_params = params;
 		_cookies = cookies;
 	}
 
+	public bool has_rendered() { return _has_rendered; }
 	public char[] method() { return _method; }
 	public char[] uri() { return _uri; }
 	public char[] http_version() { return _http_version; }
 	public char[] controller() { return _controller; }
 	public char[] action() { return _action; }
+	public char[] id() { return _id; }
 	public char[][char[]] params() { return _params; }
-	public char[][char[]] cookies() { return _cookies; }
 
 	public ResponseType response_type() { return _response_type; }
 	public char[] redirect_to_url() { return _redirect_to_url; }
 	public char[] render_view_name() { return _render_view_name; }
 	public char[] render_text_text() { return _render_text_text; }
 
+	public void has_rendered(bool value) { _has_rendered = value; }
+	public void method(char[] value) { _method = value; }
+	public void controller(char[] value) { _controller = value; }
+	public void action(char[] value) { _action = (value=="new" ? capitalize(value) : value); }
+	public void id(char[] value) { _id = value; }
+	public void uri(char[] value) { _uri = value; }
+	public void http_version(char[] value) { _http_version = value; }
 	public void response_type(ResponseType value) { _response_type = value; }
 	public void redirect_to_url(char[] value) { _redirect_to_url = value; }
 	public void render_view_name(char[] value) { _render_view_name = value; }
 	public void render_text_text(char[] value) { _render_text_text = value; }
+
+	public static Request new_blank() {
+		char[][char[]] params, cookies;
+		return new Request("", "", "", "", "", params, cookies);
+	}
 }
 
 public class SqlError : Exception {
