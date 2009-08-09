@@ -297,6 +297,11 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 public template ControllerBaseMixin(T) {
 	private Request _request = null;
+	private bool _use_layout = true;
+
+	public bool use_layout() {
+		return _use_layout;
+	}
 
 	public this(Request request) {
 		_request = request;

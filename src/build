@@ -483,7 +483,12 @@ def generate_views(routes):
 
 			# Print the closing of the function
 			output.append(
-			"\n	return DefaultLayout.render(tango.text.Util.join(builder.value, \"\")); \n" +
+			"\n" +
+			"	if(controller.use_layout) {\n" + 
+			"		return DefaultLayout.render(tango.text.Util.join(builder.value, \"\")); \n" + 
+			"	} else {\n" + 
+			"		return tango.text.Util.join(builder.value, \"\"); \n" + 
+			"	}\n"
 			"}\n" +
 			"}\n")
 

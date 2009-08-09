@@ -53,6 +53,7 @@ public class MessageController {
 	}
 
 	public void on_create() {
+		_use_layout = false;
 		_messages = Message.find_all();
 	}
 }

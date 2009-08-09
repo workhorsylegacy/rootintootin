@@ -1,5 +1,3 @@
-<h1>On Create messages</h1>
-
 <table>
 	<tr>
 		<th>Text</th>
@@ -9,6 +7,8 @@
 	<tr>
 		<td><%= message.text %></td>
 		<td><a href="/messages/show/<%=message.id%>">Show</a></td>
+		<td><a href="/messages/edit/<%=message.id%>">Edit</a></td>
+		<td><a href="/messages/destroy/<%=message.id%>" onclick="post_href('delete'); return false;">Destroy</a></td>
 	</tr>
 <% } %>
 </table>

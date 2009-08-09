@@ -19,10 +19,21 @@
 
 		<script type="text/javascript">
 		// <![CDATA[
-			alert("starting");
-			cs_xhr("http://localhost:3000/glossasy.json", "pie", function(response, status) {
-				$('#content').text("Status: " + status + ", response: " + response);
-			});
+			function start_on_create() {
+				setTimeout(on_create(), 0);
+			}
+
+			function on_create() {
+				cs_xhr("http://localhost:2346/messages/on_create", "", function(response, status) {
+					if(status == 200) {
+						$('#content').html(response);
+						start_on_create();
+					} else {
+						$('#content').html("<p style='color: red'>Lost connection to the server</p>" + $('#content').html());
+					}
+				});
+			}
+			start_on_create();
 		// ]]>
 		</script>
 
