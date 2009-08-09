@@ -5,6 +5,7 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 		<title>Server Event Example</title>
+		<script src="/jquery.js" type="text/javascript"></script>
 	</head>
 	<body>
 		<script type="text/javascript">
@@ -27,6 +28,17 @@
 			form.appendChild(input);
 
 			form.submit();
+		}
+
+		function cs_xhr(url, data, callback) {
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", url, true);
+			xhr.onreadystatechange = function() {
+				if(xhr.readyState == 4) {
+					callback(xhr.responseText, xhr.status);
+				}
+			}
+			xhr.send(data);
 		}
 		// ]]>
 		</script>

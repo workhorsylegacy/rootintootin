@@ -131,6 +131,7 @@ public class Server {
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
+		"Access-Control-Allow-Origin: *\r\n",
 		"Cache-Control: private, max-age=0\r\n",
 		"Content-Type: text/html; charset=utf-8\r\n",
 		"Content-Length: ", to_s(text.length), "\r\n",
@@ -583,6 +584,48 @@ public class Server {
 		Stdout.format("\tController Name: {}\n", request.controller).flush;
 		Stdout.format("\tAction Name: {}\n", request.action).flush;
 		Stdout.format("\tID: {}\n", request.id).flush;
+
+		// Send a basic options header for access control
+		// See: https://developer.mozilla.org/En/HTTP_Access_Control
+		if(request.method == "OPTIONS") {
+			char[] response =
+			"HTTP/1.1 200 OK\r\n" ~ 
+			"Server: Rester_0.1\r\n" ~ 
+			"Status: 200 OK\r\n" ~ 
+			"Access-Control-Allow-Origin: *\r\n" ~ 
+			"Content-Length: 0\r\n" ~  
+			"\r\n";
+
+			socket.output.write(response);
+			return request;
+		}
+
+		// Send any files
+		// FIXME: Make this only work on existing files
+		// FIXME: Make this only work on files inside public
+		if(request.controller == "jquery.js" || request.controller == "favicon.ico" || request.controller == "glossasy.json") {
+			char[] content_type = "";
+			switch(request.controller) {
+				case "jquery.js" : content_type = "application/javascript"; break;
+				case "favicon.ico" : content_type = "image/vnd.microsoft.icon"; break;
+				case "glossasy.json" : content_type = "application/json"; break;
+			}
+			File file = new File("public/" ~ request.controller, File.ReadExisting);
+			char[1024 * 200] buf;
+			int len = file.read(buf);
+
+			socket.output.write(
+			"HTTP/1.1 200 OK\r\n" ~ 
+			"Status: 200\r\n" ~ 
+			"Access-Control-Allow-Origin: *\r\n" ~ 
+			"Content-Type: " ~ content_type ~ "\r\n" ~ 
+			"Content-Length: " ~ to_s(len) ~ "\r\n" ~ 
+			"\r\n");
+
+			socket.output.write(buf[0 .. len]);
+			file.close();
+			return request;
+		}
 
 		// Run the action
 		char[] response = null;
