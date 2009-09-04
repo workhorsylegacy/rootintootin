@@ -24,11 +24,14 @@
 			}
 
 			function on_create() {
-				cs_xhr("http://localhost:2346/messages/on_create", "", function(response, status) {
-					if(status == 200) {
+				$.ajax({
+					type: "GET", 
+					url: "http://localhost:2346/messages/on_create", 
+					data: "", //"name=John&location=Boston",
+					success: function(msg) {
 						$('#content').html(response);
-						start_on_create();
-					} else {
+					},
+					error: function(msg) {
 						$('#content').html("<p style='color: red'>Lost connection to the server</p>" + $('#content').html());
 					}
 				});
