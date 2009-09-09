@@ -48,9 +48,11 @@ public class UserController {
 
 	public void destroy() {
 		_user = User.find(to_ulong(_request.params["id"]));
-		_user.destroy();
-
-		redirect_to("/users/index");
+		if(_user.destroy()) {
+			redirect_to("/users/index");
+		} else {
+			render_view("index");
+		}
 	}
 }
 

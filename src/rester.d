@@ -289,9 +289,14 @@ public template ModelBaseMixin(T, char[] model_name) {
 		query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 		// Run the query
-		db.db_update_query(query);
+		db.query_result result;
+		db.db_delete_query(query, result);
 
-		return true;
+		if(result == db.query_result.success) {
+			return true;
+		} else if(result == db.query_result.foreign_key_constraint_failed) {
+			return false;
+		}
 	}
 }
 

@@ -53,9 +53,11 @@ public class CommentController {
 
 	public void destroy() {
 		_comment = Comment.find(to_ulong(_request.params["id"]));
-		_comment.destroy();
-
-		redirect_to("/comments/index");
+		if(_comment.destroy()) {
+			redirect_to("/comments/index");
+		} else {
+			render_view("index");
+		}
 	}
 }
 

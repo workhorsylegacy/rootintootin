@@ -2,6 +2,8 @@
 
 
 #include <mysql/mysql.h>
+#include <mysql/errmsg.h>
+#include <mysql/mysqld_error.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +11,13 @@
 MYSQL mysql;
 MYSQL_RES *res;
 MYSQL_ROW row;
+
+enum query_result { 
+	query_result_unknown, 
+	query_result_success, 
+	query_result_foreign_key_constraint_failed
+};
+
 
 void c_db_connect(char* server, char* user_name, char* password, char* database) {
 	mysql_init(&mysql);
@@ -34,6 +43,24 @@ unsigned long long c_db_insert_query_with_result_id(char* query) {
 	mysql_free_result(res);
 
 	return id;
+}
+
+void c_db_delete_query(char* query, enum query_result *result) {
+	*result = query_result_unknown;
+
+	// Run the query and get the result
+	int status = mysql_real_query(&mysql, query, (unsigned int)strlen(query));
+	if(status == 0) {
+		*result = query_result_success;
+	} else if(status != 0 && mysql_errno(&mysql) == ER_ROW_IS_REFERENCED_2) {
+		printf("errno: %d\n", ER_ROW_IS_REFERENCED_2);
+		fflush(stdout);
+		*result = query_result_foreign_key_constraint_failed;
+	}
+	res = mysql_store_result(&mysql);
+
+	// Free the resources for the result
+	mysql_free_result(res);
 }
 
 // Runs the query and returns nothing
