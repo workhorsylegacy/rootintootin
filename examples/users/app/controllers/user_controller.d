@@ -1,8 +1,6 @@
 
 
-public class UserController {
-	mixin ControllerBaseMixin!(UserController);
-
+public class UserController : ControllerBase {
 	public User[] _users;
 	public User _user;
 
@@ -24,6 +22,7 @@ public class UserController {
 		_user.email = _request.params["user[email]"];
 
 		if(_user.save()) {
+			flash_notice("The user was saved.");
 			redirect_to("/users/show/" ~ to_s(_user.id));
 		} else {
 			render_view("new");
@@ -40,6 +39,7 @@ public class UserController {
 		_user.email = _request.params["user[email]"];
 
 		if(_user.save()) {
+			flash_notice("The user was updated.");
 			redirect_to("/users/show/" ~ to_s(_user.id));
 		} else {
 			render_view("edit");
@@ -51,6 +51,7 @@ public class UserController {
 		if(_user.destroy()) {
 			redirect_to("/users/index");
 		} else {
+			flash_error(_user.errors()[0]);
 			render_view("index");
 		}
 	}

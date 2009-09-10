@@ -1,8 +1,6 @@
 
 
-public class FileController {
-	mixin ControllerBaseMixin!(FileController);
-
+public class FileController : ControllerBase {
 	public File[] _files;
 	public File _file;
 

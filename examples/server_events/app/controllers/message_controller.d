@@ -1,8 +1,6 @@
 
 
-public class MessageController {
-	mixin ControllerBaseMixin!(MessageController);
-
+public class MessageController : ControllerBase {
 	public Message[] _messages;
 	public Message _message;
 

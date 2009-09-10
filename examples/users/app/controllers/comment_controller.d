@@ -1,8 +1,6 @@
 
 
-public class CommentController {
-	mixin ControllerBaseMixin!(CommentController);
-
+public class CommentController : ControllerBase {
 	public Comment[] _comments;
 	public User[] _users;
 	public Comment _comment;
@@ -27,6 +25,7 @@ public class CommentController {
 		_comment.parent = User.find(to_ulong(_request.params["comment[user]"]));
 
 		if(_comment.save()) {
+			flash_notice("The comment was created.");
 			redirect_to("/comments/show/" ~ to_s(_comment.id));
 		} else {
 			render_view("new");
@@ -45,6 +44,7 @@ public class CommentController {
 		_comment.parent = User.find(to_ulong(_request.params["comment[user]"]));
 
 		if(_comment.save()) {
+			flash_notice("The comment was updated.");
 			redirect_to("/comments/show/" ~ to_s(_comment.id));
 		} else {
 			render_view("edit");
@@ -56,6 +56,7 @@ public class CommentController {
 		if(_comment.destroy()) {
 			redirect_to("/comments/index");
 		} else {
+			flash_error(_comment.errors()[0]);
 			render_view("index");
 		}
 	}

@@ -295,22 +295,24 @@ public template ModelBaseMixin(T, char[] model_name) {
 		if(result == db.query_result.success) {
 			return true;
 		} else if(result == db.query_result.foreign_key_constraint_failed) {
+			this._errors ~= "Failed to delete because of foreign key constraints.";
 			return false;
 		}
 	}
 }
 
-public template ControllerBaseMixin(T) {
-	private Request _request = null;
-	private bool _use_layout = true;
+public class ControllerBase {
+	protected Request _request = null;
+	protected bool _use_layout = true;
+	protected char[] _flash_notice = null;
+	protected char[] _flash_error = null;
 
-	public bool use_layout() {
-		return _use_layout;
-	}
-
-	public this(Request request) {
-		_request = request;
-	}
+	public void flash_error(char[] value) { this._flash_error = value; }
+	public void flash_notice(char[] value) { this._flash_notice = value; }
+	public char[] flash_error() { return this._flash_error; }
+	public char[] flash_notice() { return this._flash_notice; }
+	public bool use_layout() { return _use_layout; }
+	public void request(Request value) { this._request = value; }
 
 	public void render_view(char[] name) {
 		this._request.response_type = ResponseType.render_view;

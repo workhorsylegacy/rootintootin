@@ -142,7 +142,8 @@ def combine_code_files(routes, table_map, reference_map):
 	for controller, actions in routes.items():
 		out_file.write(
 		"	if(request.controller == \"" + controller + "s\") {\n" +
-		"		this._" + controller + "_controller = new " + controller.capitalize() + "Controller(request);\n" +
+		"		this._" + controller + "_controller = new " + controller.capitalize() + "Controller();\n" +
+		"		this._" + controller + "_controller.request = request;\n" +
 		"\n"
 		)
 
@@ -485,7 +486,7 @@ def generate_views(routes):
 			output.append(
 			"\n" +
 			"	if(controller.use_layout) {\n" + 
-			"		return DefaultLayout.render(tango.text.Util.join(builder.value, \"\")); \n" + 
+			"		return DefaultLayout.render(controller, tango.text.Util.join(builder.value, \"\")); \n" + 
 			"	} else {\n" + 
 			"		return tango.text.Util.join(builder.value, \"\"); \n" + 
 			"	}\n"
@@ -515,7 +516,7 @@ def generate_layouts():
 		output = []
 		output.append(
 		"public class " + layout.capitalize() + "Layout { \n" +
-		"public static char[] render(char[] yield) { \n" +
+		"public static char[] render(ControllerBase controller, char[] yield) { \n" +
 		"	// Generate the layout as an array of strings\n" +
 		"	AutoStringArray builder = new AutoStringArray();")
 
