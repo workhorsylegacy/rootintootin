@@ -1,0 +1,59 @@
+#!/usr/bin/env python2.6
+# -*- coding: UTF-8 -*-
+
+import sys, os
+import shutil
+import commands
+from lib_rester import *
+
+
+# Find the path to rester, and the path called from
+pwd = commands.getoutput('pwd') + '/'
+rester_dir = os.path.dirname(os.sys.path[0]) + '/'
+
+# Determine what we are going to do
+mode = ""
+if len(sys.argv) == 5:
+	mode = "new"
+else:
+	mode = "help"
+
+# Show the help
+if mode == "help":
+	print "Creates a new empty Rester project in the current directory:"
+	print"example:"
+	print "./rester name:test_app port:2345 db_user:root db_password:password"
+	exit()
+
+# Create a new empty project in the current directory
+if mode == "new":
+	# Get the arguments
+	name, port, db_password, db_user = None, None, None, None
+	for arg in sys.argv[1:]:
+		if arg.startswith('name:'):
+			name = arg.lower().split('name:')[1]
+		elif arg.startswith('port:'):
+			port = arg.lower().split('port:')[1]
+		elif arg.startswith('db_user:'):
+			db_user = arg.lower().split('db_user:')[1]
+		elif arg.startswith('db_password:'):
+			db_password = arg.lower().split('db_password:')[1]
+
+	# Make sure there is no existing directory
+	if os.path.isdir(pwd + name):
+		print "Error: The directory '" + pwd + name + "' already exists. Exiting ..."
+		exit()
+
+	# Create the project
+	shutil.copytree(rester_dir + 'src/empty_project', pwd + name)
+	os.chdir(name)
+
+	# Update the configuration files and create the database
+	generator = Generator()
+	generator.configure_database(['user:'+db_user, 'password:'+db_password, 'name:'+name+'_development'])
+	generator.configure_server(['port:'+port])
+	generator.drop_database()
+	generator.create_database()
+
+
+

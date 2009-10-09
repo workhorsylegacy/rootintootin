@@ -1,47 +1,13 @@
 #!/usr/bin/env python2.6
 
-import os, sys, re
-from helper import *
+import os, sys
+import commands, pexpect
+import platform
+import MySQLdb
 
-# Make sure the first arg is a path
-if len(sys.argv) < 2:
-	print "usage: ./gen 'working directory' [params, ...]"
-	exit(1)
-elif not os.path.exists(sys.argv[1]):
-	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
-	exit(1)
-
-Helper.require_dependencies(globals())
-
-# Move the path to the location of the current file
-os.chdir(os.sys.path[0])
-
-#import Inflector
-
-def pluralize(value):
-	if value.endswith('s'):
-		return value
-	else:
-		return value + 's'
-
-def camelize(word):
-	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
-
-
-def migration_type_to_sql_type(migration_type):
-	type_map = {'binary' : 'blob',
-				'boolean' : 'tinyint(1)',
-				'date' : 'date',
-				'datetime' : 'datetime',
-				'decimal' : 'datetime',
-				'float' : 'float',
-				'integer' : 'int(11)',
-				'string' : 'varchar(255)',
-				'text' : 'text',
-				'time' : 'time',
-				'timestamp' : 'datetime' }
-
-	return type_map[migration_type]
+def exec_file(file, globals, locals):
+	with open(file, "r") as fh:
+		exec(fh.read()+"\n", globals, locals)
 
 class Generator(object):
 	def __init__(self):
@@ -62,7 +28,7 @@ class Generator(object):
 				query += "`" + field_name + "_id` int not null, "
 				query += "foreign key(`" + field_name + "_id`) references `" + pluralize(field_name) + "`(`id`), "
 			else:
-				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
+				query += "`" + field_name + "` " + self.migration_type_to_sql_type(field_type) + ", "
 		query = str.rstrip(query, ', ')
 		query += ") ENGINE=innoDB;"
 
@@ -193,8 +159,6 @@ class Generator(object):
 				self._database_configuration['password'] = value
 			elif key == 'name':
 				self._database_configuration['name'] = value
-			elif key == 'user':
-				self._database_configuration['user'] = value
 
 		self.save_configuration()
 
@@ -270,51 +234,19 @@ class Generator(object):
 		self._db.query(query)
 		self._db.commit()
 
+	def migration_type_to_sql_type(self, migration_type):
+		type_map = {'binary' : 'blob',
+					'boolean' : 'tinyint(1)',
+					'date' : 'date',
+					'datetime' : 'datetime',
+					'decimal' : 'datetime',
+					'float' : 'float',
+					'integer' : 'int(11)',
+					'string' : 'varchar(255)',
+					'text' : 'text',
+					'time' : 'time',
+					'timestamp' : 'datetime' }
 
-os.chdir(sys.argv[1])
-generator = Generator()
+		return type_map[migration_type]
 
-# create database
-if str.join(' ', sys.argv[2:]) == "create database":
-	generator.create_database()
 
-# drop database
-if str.join(' ', sys.argv[2:]) == "drop database":
-	generator.drop_database()
-
-# create migration [name] [field:type] ...
-if str.join(' ', sys.argv[2:4]) == "create migration":
-	model_name = sys.argv[4]
-	generator.create_migration(model_name, sys.argv[4:])
-
-# create controller [name]
-if str.join(' ', sys.argv[2:]) == "create controller":
-	print "Not implemented."
-
-# migrate
-if str.join(' ', sys.argv[2:]) == "migrate":
-	generator.migrate()
-
-# configure database
-if str.join(' ', sys.argv[2:4]) == "configure database":
-	generator.configure_database(sys.argv[4:])
-
-# configure server
-if str.join(' ', sys.argv[2:4]) == "configure server":
-	generator.configure_server(sys.argv[4:])
-
-# Nothing
-if str.join(' ', sys.argv[2:]) == "":
-	print "FIXME: This should be updated to show the manual. Exiting ..."
-
-'''
-create model [name] [field:type] ...
-drop model [name]
-rename model [name] to [name]
-alter model [name] name_of_migration
-
-add field [field:type] to [name]
-remove field [field] from [name]
-rename field [field] to [field] from [name]
-alter field [field] from [name] name_of_migration
-'''

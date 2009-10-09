@@ -1,0 +1,76 @@
+#!/usr/bin/env python2.6
+
+import os, sys, re
+from lib_rester import *
+
+# Make sure the first arg is a path
+if len(sys.argv) < 2:
+	print "usage: ./gen 'working directory' [params, ...]"
+	exit(1)
+elif not os.path.exists(sys.argv[1]):
+	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
+	exit(1)
+
+
+# Move the path to the location of the current file
+os.chdir(os.sys.path[0])
+
+#import Inflector
+
+def pluralize(value):
+	if value.endswith('s'):
+		return value
+	else:
+		return value + 's'
+
+def camelize(word):
+	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
+
+
+os.chdir(sys.argv[1])
+generator = Generator()
+
+# create database
+if str.join(' ', sys.argv[2:]) == "create database":
+	generator.create_database()
+
+# drop database
+if str.join(' ', sys.argv[2:]) == "drop database":
+	generator.drop_database()
+
+# create migration [name] [field:type] ...
+if str.join(' ', sys.argv[2:4]) == "create migration":
+	model_name = sys.argv[4]
+	generator.create_migration(model_name, sys.argv[4:])
+
+# create controller [name]
+if str.join(' ', sys.argv[2:]) == "create controller":
+	print "Not implemented."
+
+# migrate
+if str.join(' ', sys.argv[2:]) == "migrate":
+	generator.migrate()
+
+# configure database
+if str.join(' ', sys.argv[2:4]) == "configure database":
+	generator.configure_database(sys.argv[4:])
+
+# configure server
+if str.join(' ', sys.argv[2:4]) == "configure server":
+	generator.configure_server(sys.argv[4:])
+
+# Nothing
+if str.join(' ', sys.argv[2:]) == "":
+	print "FIXME: This should be updated to show the manual. Exiting ..."
+
+'''
+create model [name] [field:type] ...
+drop model [name]
+rename model [name] to [name]
+alter model [name] name_of_migration
+
+add field [field:type] to [name]
+remove field [field] from [name]
+rename field [field] to [field] from [name]
+alter field [field] from [name] name_of_migration
+'''

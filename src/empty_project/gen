@@ -1,0 +1,18 @@
+#!/usr/bin/env python2.6
+
+import commands, sys
+
+rester_path = None
+for entry in commands.getoutput("echo ${PATH}").split(':'):
+	if entry.count('/rester/') > 0:
+		rester_path = entry
+
+if not rester_path:
+	print "Please add rester to your path: PATH=\"$HOME/Desktop/rester/src:${PATH}\""
+	exit()
+
+# ignore all warnings
+print commands.getoutput("python2.6 -W ignore::DeprecationWarning " + rester_path + "/rester_gen `pwd` " + str.join(' ', sys.argv))
+
+# full python 3.0 warning mode
+print commands.getoutput("python2.6 -3 " + rester_path + "/rester_gen `pwd`" + str.join(' ', sys.argv))
