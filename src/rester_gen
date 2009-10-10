@@ -23,33 +23,43 @@ if str.join(' ', sys.argv[2:]) == "create database":
 	generator.create_database()
 
 # drop database
-if str.join(' ', sys.argv[2:]) == "drop database":
+elif str.join(' ', sys.argv[2:]) == "drop database":
 	generator.drop_database()
 
 # create migration [name] [field:type] ...
-if str.join(' ', sys.argv[2:4]) == "create migration":
+elif str.join(' ', sys.argv[2:4]) == "create migration":
 	model_name = sys.argv[4]
 	generator.create_migration(model_name, sys.argv[5:])
 
 # create controller [name]
-if str.join(' ', sys.argv[2:]) == "create controller":
+elif str.join(' ', sys.argv[2:]) == "create controller":
 	print "Not implemented."
 
 # migrate
-if str.join(' ', sys.argv[2:]) == "migrate":
+elif str.join(' ', sys.argv[2:]) == "migrate":
 	generator.migrate()
 
-# configure database
-if str.join(' ', sys.argv[2:4]) == "configure database":
+# configure database [user:root] [password:password] \
+#						[host:location] [name:db_name]
+elif str.join(' ', sys.argv[2:4]) == "configure database":
 	generator.configure_database(sys.argv[4:])
 
-# configure server
-if str.join(' ', sys.argv[2:4]) == "configure server":
+# configure server [port:number] [max_connections:number] \
+#					[header_max_size:number]
+elif str.join(' ', sys.argv[2:4]) == "configure server":
 	generator.configure_server(sys.argv[4:])
 
 # Nothing
-if str.join(' ', sys.argv[2:]) == "":
-	print "FIXME: This should be updated to show the manual. Exiting ..."
+else:
+	print "The gen script generates code, databases, and config files:"
+	print ""
+	print "./gen create controller [name]"
+	print "./gen create migration [name] [field:type] ..."
+	print "./gen migrate"
+	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
+	print "./gen configure server [port:number] [max_connections:number] [header_max_size:number]"
+	print "./gen create database"
+	print "./gen drop database"
 
 '''
 create model [name] [field:type] ...
