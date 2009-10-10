@@ -9,6 +9,16 @@ def exec_file(file, globals, locals):
 	with open(file, "r") as fh:
 		exec(fh.read()+"\n", globals, locals)
 
+def pluralize(value):
+	if value.endswith('s'):
+		return value
+	else:
+		return value + 's'
+
+def camelize(word):
+	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
+
+
 class Generator(object):
 	def __init__(self):
 		self._db = None

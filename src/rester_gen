@@ -3,6 +3,9 @@
 import os, sys, re
 from lib_rester import *
 
+# Remove the first arg
+sys.argv = sys.argv[1:]
+
 # Make sure the first arg is a path
 if len(sys.argv) < 2:
 	print "usage: ./gen 'working directory' [params, ...]"
@@ -11,23 +14,8 @@ elif not os.path.exists(sys.argv[1]):
 	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
 	exit(1)
 
-
-# Move the path to the location of the current file
-os.chdir(os.sys.path[0])
-
-#import Inflector
-
-def pluralize(value):
-	if value.endswith('s'):
-		return value
-	else:
-		return value + 's'
-
-def camelize(word):
-	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
-
-
-os.chdir(sys.argv[1])
+# Move the path to the location of the original caller script
+os.chdir(sys.argv[0])
 generator = Generator()
 
 # create database
@@ -41,7 +29,7 @@ if str.join(' ', sys.argv[2:]) == "drop database":
 # create migration [name] [field:type] ...
 if str.join(' ', sys.argv[2:4]) == "create migration":
 	model_name = sys.argv[4]
-	generator.create_migration(model_name, sys.argv[4:])
+	generator.create_migration(model_name, sys.argv[5:])
 
 # create controller [name]
 if str.join(' ', sys.argv[2:]) == "create controller":
