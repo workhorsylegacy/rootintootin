@@ -1,7 +1,15 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python2.6
 
-# ignore all warnings
-python2.6 -W ignore::DeprecationWarning ../../src/build `pwd`
+import commands
 
-# full python 3.0 warning mode
-#python2.6 -3 ../../src/build `pwd`
+rester_path = None
+for entry in commands.getoutput("echo ${PATH}").split(':'):
+	if entry.count('/rester/') > 0:
+		rester_path = entry
+
+if not rester_path:
+	print "Please add rester to your path. See the README for details."
+	exit()
+
+print commands.getoutput(rester_path + "/rester_build `pwd`")
+
