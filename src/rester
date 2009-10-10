@@ -22,7 +22,7 @@ else:
 if mode == "help":
 	print "Creates a new empty Rester project in the current directory:"
 	print"example:"
-	print "./rester name:test_app port:2345 db_user:root db_password:password"
+	print "rester name:test_app port:2345 db_user:root db_password:password"
 	exit()
 
 # Create a new empty project in the current directory
