@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.6
 
-import os, sys
+import os, sys, re
 import commands, pexpect
 import platform
 import MySQLdb
