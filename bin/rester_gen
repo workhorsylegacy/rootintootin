@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+
+# ignore all warnings
+REAL_SCRIPT=`dirname $BASH_SOURCE`/../src/rester_gen
+python2.6 -W ignore::DeprecationWarning $REAL_SCRIPT $@
+
+# full python 3.0 warning mode
+#python2.6 -3 $REAL_SCRIPT $@
+

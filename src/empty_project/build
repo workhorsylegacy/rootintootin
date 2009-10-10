@@ -8,11 +8,8 @@ for entry in commands.getoutput("echo ${PATH}").split(':'):
 		rester_path = entry
 
 if not rester_path:
-	print "Please add rester to your path: PATH=\"$HOME/Desktop/rester/src:${PATH}\""
+	print "Please add rester to your path. See the README for details."
 	exit()
 
-# ignore all warnings
-print commands.getoutput("python2.6 -W ignore::DeprecationWarning " + rester_path + "/rester_build `pwd`")
+print commands.getoutput(rester_path + "/rester_build `pwd`")
 
-# full python 3.0 warning mode
-#print commands.getoutput("python2.6 -3 " + rester_path + "/rester_build `pwd`")
