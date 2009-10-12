@@ -31,9 +31,13 @@ elif str.join(' ', sys.argv[2:4]) == "create migration":
 	model_name = sys.argv[4]
 	generator.create_migration(model_name, sys.argv[5:])
 
-# create controller [name]
-elif str.join(' ', sys.argv[2:]) == "create controller":
-	print "Not implemented."
+# create scaffold [name] [field:type] ...
+elif str.join(' ', sys.argv[2:4]) == "create scaffold":
+	controller_name = sys.argv[4]
+	generator.create_scaffold(controller_name, sys.argv[5:])
+	generator.create_model(controller_name, sys.argv[5:])
+	generator.create_migration(controller_name, sys.argv[5:])
+	generator.configure_routes(controller_name, sys.argv[4:])
 
 # migrate
 elif str.join(' ', sys.argv[2:]) == "migrate":
@@ -53,8 +57,8 @@ elif str.join(' ', sys.argv[2:4]) == "configure server":
 else:
 	print "The gen script generates code, databases, and config files:"
 	print ""
-	print "./gen create controller [name]"
 	print "./gen create migration [name] [field:type] ..."
+	print "./gen create scaffold [name] [field:type] ..."
 	print "./gen migrate"
 	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
 	print "./gen configure server [port:number] [max_connections:number] [header_max_size:number]"

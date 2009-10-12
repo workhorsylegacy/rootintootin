@@ -86,6 +86,22 @@ public static bool to_bool(char[] value) {
 	return value == "true";
 }
 
+// Add alternate named methods
+public static int to_integer(char[] value) { return to_int(value); }
+public static int to_boolean(char[] value) { return to_bool(value); }
+public static char[] to_string(short value) { return to_s(value); }
+public static char[] to_string(ushort value) { return to_s(value); }
+public static char[] to_string(int value) { return to_s(value); }
+public static char[] to_string(uint value) { return to_s(value); }
+public static char[] to_string(long value) { return to_s(value); }
+public static char[] to_string(ulong value) { return to_s(value); }
+public static char[] to_string(float value) { return to_s(value); }
+public static char[] to_string(double value) { return to_s(value); }
+public static char[] to_string(bool value) { return to_s(value); }
+public static char[] to_string(char[] value) { return to_s(value); }
+public static char[] to_string(char value) { return to_s(value); }
+
+
 // Can collect strings by auto converting any type you try to add
 public class AutoStringArray {
 	private char[][] _value;

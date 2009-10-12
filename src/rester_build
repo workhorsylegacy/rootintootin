@@ -217,38 +217,6 @@ def combine_code_files(routes, table_map, reference_map):
 		"	return 0;\n" +
 		"}\n")
 
-
-def sql_type_to_d_type(sql_type):
-	type_map = { 'tinyint(1)' : 'bool',
-				 'varchar(255)' : 'char[]',
-				 'datetime' : 'char[]',
-				 'int(11)' : 'ulong',
-				 'text' : 'char[]' }
-
-	return type_map[sql_type]
-
-def convert_string_to_d_type(d_type, d_string_variable_name):
-	cast_map = { 'int' : 'to_int(#)',
-				'long' : 'to_long(#)',
-				'ulong' : 'to_ulong(#)',
-				'float' : 'to_float(#)',
-				'bool' : 'to_bool(#)',
-				'char' : '#',
-				'char[]' : 'to_s(#)' }
-
-	return cast_map[d_type].replace('#', d_string_variable_name)
-
-def convert_d_type_to_string(d_type, d_string_variable_name):
-	cast_map = { 'int' : 'to_s(#)',
-				'long' : 'to_s(#)',
-				'ulong' : 'to_s(#)',
-				'float' : 'to_s(#)',
-				'bool' : 'to_s(#)',
-				'char' : '#',
-				'char[]' : 'to_s(#)' }
-
-	return cast_map[d_type].replace('#', d_string_variable_name)
-
 def model_generated_properties_class(model_name, model_map, reference_map):
 	# Add class opening
 	properties = "public class " + model_name.capitalize() + "ModelBase : ModelBase {\n"

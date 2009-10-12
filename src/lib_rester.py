@@ -18,6 +18,54 @@ def pluralize(value):
 def camelize(word):
 	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
 
+def sql_type_to_d_type(sql_type):
+	type_map = { 'tinyint(1)' : 'bool',
+				 'varchar(255)' : 'char[]',
+				 'datetime' : 'char[]',
+				 'int(11)' : 'ulong',
+				 'text' : 'char[]' }
+
+	return type_map[sql_type]
+
+def migration_type_to_sql_type(migration_type):
+	type_map = {'binary' : 'blob',
+				'boolean' : 'tinyint(1)',
+				'date' : 'date',
+				'datetime' : 'datetime',
+				'decimal' : 'datetime',
+				'float' : 'float',
+				'integer' : 'int(11)',
+				'string' : 'varchar(255)',
+				'text' : 'text',
+				'time' : 'time',
+				'timestamp' : 'datetime' }
+
+	return type_map[migration_type]
+
+def migration_type_to_d_type(migration_type):
+	return sql_type_to_d_type(migration_type_to_sql_type(migration_type))
+
+def convert_string_to_d_type(d_type, d_string_variable_name):
+	cast_map = { 'int' : 'to_int(#)',
+				'long' : 'to_long(#)',
+				'ulong' : 'to_ulong(#)',
+				'float' : 'to_float(#)',
+				'bool' : 'to_bool(#)',
+				'char' : '#',
+				'char[]' : 'to_s(#)' }
+
+	return cast_map[d_type].replace('#', d_string_variable_name)
+
+def convert_d_type_to_string(d_type, d_string_variable_name):
+	cast_map = { 'int' : 'to_s(#)',
+				'long' : 'to_s(#)',
+				'ulong' : 'to_s(#)',
+				'float' : 'to_s(#)',
+				'bool' : 'to_s(#)',
+				'char' : '#',
+				'char[]' : 'to_s(#)' }
+
+	return cast_map[d_type].replace('#', d_string_variable_name)
 
 class Generator(object):
 	def __init__(self):
@@ -38,7 +86,7 @@ class Generator(object):
 				query += "`" + field_name + "_id` int not null, "
 				query += "foreign key(`" + field_name + "_id`) references `" + pluralize(field_name) + "`(`id`), "
 			else:
-				query += "`" + field_name + "` " + self.migration_type_to_sql_type(field_type) + ", "
+				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
 		query = str.rstrip(query, ', ')
 		query += ") ENGINE=innoDB;"
 
@@ -100,10 +148,10 @@ class Generator(object):
 		last_version = self.get_schema_version()
 		version = str(last_version + 1).rjust(4, '0')
 
-		f = open('db/migrate/' + version + '_create_' + model_name + '.py', 'w')
+		f = open('db/migrate/' + version + '_create_' + pluralize(model_name) + '.py', 'w')
 
 		f.write(
-			"class Create" + model_name.capitalize() + ":\n" +
+			"class Create" + pluralize(model_name.capitalize()) + ":\n" +
 			"	def up(self, generator):\n" +
 			"		generator.create_table('" + pluralize(model_name) + "', {\n"
 		)
@@ -117,6 +165,124 @@ class Generator(object):
 			"		generator.drop_table('" + pluralize(model_name) + "')\n" +
 			"\n\n"
 		)
+
+	def create_model(self, model_name, pairs):
+		f = open('app/models/' + model_name + '.d', 'w')
+
+		f.write(
+			"\n\n" + 
+			"public class " + model_name.capitalize() + " : " + model_name.capitalize() + "ModelBase {\n\n" + 
+			"}\n\n"
+		)
+
+		f.close()
+
+	def create_scaffold(self, controller_name, pairs):
+		f = open('app/controllers/' + controller_name + '_controller.d', 'w')
+
+		# Add the class opening
+		f.write(
+			"\n\n" + 
+			"public class " + controller_name.capitalize() + "Controller : ControllerBase {\n"
+		)
+
+		# Add each property
+		f.write(
+			"	public " + controller_name.capitalize() + "[] _" + controller_name + "s;\n" + 
+			"	public " + controller_name.capitalize() + " _" + controller_name + ";\n" + 
+			"\n"
+		)
+
+		# Add the index action
+		f.write(
+			"	public void index() {\n" + 
+			"		_" + controller_name + "s = " + controller_name.capitalize() + ".find_all();\n" + 
+			"	}\n\n"
+		)
+
+		# Add the show action
+		f.write(
+			"	public void show() {\n" + 
+			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n" + 
+			"	}\n\n"
+		)
+
+		# Add the new action
+		f.write(
+			"	public void New() {\n" + 
+			"		_" + controller_name + " = new " + controller_name.capitalize() + "();\n" + 
+			"	}\n\n"
+		)
+
+		# Add the create action
+		f.write(
+			"	public void create() {\n" + 
+			"		_" + controller_name + " = new " + controller_name.capitalize() + "();\n"
+		)
+		for field in pairs:
+			field_name, field_type = field.split(':')
+			f.write("\t\t_" + controller_name + "." + field_name + " = to_" + field_type + "(_request.params[\"" + controller_name + "[" + field_name + "]\"]);\n")
+		f.write(
+			"\n" + 
+			"		if(_" + controller_name + ".save()) {\n" + 
+			"			flash_notice(\"The " + controller_name + " was saved.\");\n" + 
+			"			redirect_to(\"/" + controller_name + "s/show/\" ~ to_s(_" + controller_name + ".id));\n" + 
+			"		} else {\n" + 
+			"			render_view(\"new\");\n" + 
+			"		}\n" + 
+			"	}\n\n"
+		)
+
+		# Add the edit action
+		f.write(
+			"	public void edit() {\n" + 
+			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n" + 
+			"	}\n\n"
+		)
+
+		# Add the create update
+		f.write(
+			"	public void update() {\n" + 
+			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n"
+		)
+		for field in pairs:
+			field_name, field_type = field.split(':')
+			f.write("\t\t_" + controller_name + "." + field_name + " = to_" + field_type + "(_request.params[\"" + controller_name + "[" + field_name + "]\"]);\n")
+		f.write(
+			"\n" + 
+			"		if(_" + controller_name + ".save()) {\n" + 
+			"			flash_notice(\"The " + controller_name + " was updated.\");\n" + 
+			"			redirect_to(\"/" + controller_name + "s/show/\" ~ to_s(_" + controller_name + ".id));\n" + 
+			"		} else {\n" + 
+			"			render_view(\"edit\");\n" + 
+			"		}\n" + 
+			"	}\n\n"
+		)
+
+		# Add the destroy event
+		f.write(
+			"	public void destroy() {\n" + 
+			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n" + 
+			"		if(_" + controller_name + ".destroy()) {\n" + 
+			"			redirect_to(\"/" + controller_name + "s/index\");\n" + 
+			"		} else {\n" + 
+			"			flash_error(_" + controller_name + ".errors()[0]);\n" + 
+			"			render_view(\"index\");\n" + 
+			"		}\n" + 
+			"	}\n"
+		)
+
+		# End the class
+		f.write("}\n\n")
+
+		f.close()
+
+		# Create the views
+		os.mkdir('app/views/' + controller_name)
+		for name in ['index', 'edit', 'new', 'show']:
+			f = open('app/views/' + controller_name + '/' + name + '.html.ed', 'w')
+			f.write(controller_name + ': ' + name)
+			f.close()
 
 	def migrate(self):
 		self.connect_to_database()
@@ -184,6 +350,25 @@ class Generator(object):
 
 		self.save_configuration()
 
+	def configure_routes(self, model_name, pairs):
+		f = open('config/routes.py', 'w')
+
+		f.write(
+			"routes = {'" + model_name + "' : { 'member' : { 'show' : 'get',\n" + 
+			"								'new' : 'get',\n" + 
+			"								'create' : 'post',\n" + 
+			"								'edit' : 'get',\n" + 
+			"								'update' : 'put',\n" + 
+			"								'destroy' : 'delete' }\n" + 
+			"					,\n" + 
+			"					'collection' : { 'index' : 'get' }\n" + 
+			"					}\n" + 
+			"}"
+		)
+
+		f.close()
+
+
 #private
 
 	def load_configuration(self):
@@ -243,20 +428,5 @@ class Generator(object):
 
 		self._db.query(query)
 		self._db.commit()
-
-	def migration_type_to_sql_type(self, migration_type):
-		type_map = {'binary' : 'blob',
-					'boolean' : 'tinyint(1)',
-					'date' : 'date',
-					'datetime' : 'datetime',
-					'decimal' : 'datetime',
-					'float' : 'float',
-					'integer' : 'int(11)',
-					'string' : 'varchar(255)',
-					'text' : 'text',
-					'time' : 'time',
-					'timestamp' : 'datetime' }
-
-		return type_map[migration_type]
 
 
