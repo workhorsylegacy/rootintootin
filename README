@@ -43,9 +43,11 @@ cd ~/Desktop/examples/users
 ./run
 
 
-7. In your web browser navigate to http://localhost:2345/users and you should see a basic CRUD example.
+7. In your web browser navigate to http://localhost:2345/users and you should 
+see a basic CRUD example.
 
 
-8. Now look at the code and start hacking. I will add more formal documentation when things are a little more fleshed out.
+8. Now look at the code and start hacking. I will add more formal documentation 
+when things are a little more fleshed out.
 
 
