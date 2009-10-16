@@ -171,7 +171,8 @@ class Generator(object):
 
 		f.write(
 			"\n\n" + 
-			"public class " + model_name.capitalize() + " : " + model_name.capitalize() + "ModelBase {\n\n" + 
+			"import " + model_name + "_base;\n\n" +
+			"public class " + model_name.capitalize() + " : " + model_name.capitalize() + "Base {\n\n" + 
 			"}\n\n"
 		)
 
@@ -183,6 +184,8 @@ class Generator(object):
 		# Add the class opening
 		f.write(
 			"\n\n" + 
+			"import rester;\n" + 
+			"import " + controller_name + ";\n\n" + 
 			"public class " + controller_name.capitalize() + "Controller : ControllerBase {\n"
 		)
 

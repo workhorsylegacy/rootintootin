@@ -186,7 +186,7 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 			properties += "import " + entry + "_base;\n"
 	properties += "\n"
 
-	properties += "public class " + model_name.capitalize() + "ModelBase : ModelBase {\n"
+	properties += "public class " + model_name.capitalize() + "Base : ModelBase {\n"
 	properties += "	mixin ModelBaseMixin!(" + model_name.capitalize() + ", \"" + model_name + "\");\n\n"
 
 	# Add a list of all field names
@@ -234,13 +234,13 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 		for has_many in has_manys:
 			if has_many[:-1] == model_name:
 				properties += \
-						"	protected " + table_name.capitalize() + "ModelBase _" + table_name + " = null;\n" + \
+						"	protected " + table_name.capitalize() + "Base _" + table_name + " = null;\n" + \
 						"\n" + \
-						"	public void parent(" + table_name.capitalize() + "ModelBase value) {\n" + \
+						"	public void parent(" + table_name.capitalize() + "Base value) {\n" + \
 						"		ensure_was_pulled_from_database();\n" + \
 						"		_" + table_name + " = value;\n" + \
 						"	}\n" + \
-						"	public " + table_name.capitalize() + "ModelBase parent() {\n" + \
+						"	public " + table_name.capitalize() + "Base parent() {\n" + \
 						"		ensure_was_pulled_from_database();\n" + \
 						"		return _" + table_name + ";\n" + \
 						"	}\n"
@@ -252,14 +252,14 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 			has_many = has_many[:-1]
 			properties += \
 					"	protected class " + has_many.capitalize() + "s {\n" + \
-					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "ModelBase, \n" + \
-					"								" + has_many.capitalize() + "ModelBase);\n" + \
+					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "Base, \n" + \
+					"								" + has_many.capitalize() + "Base);\n" + \
 					"	}\n" + \
 					"\n" + \
 					"	protected " + has_many.capitalize() + "s _" + has_many + "s;\n\n" + \
 					"	public void after_this() {\n" + \
 					"		_" + has_many + "s = new " + has_many.capitalize() + "s(\n" + \
- 					"		" + has_many.capitalize() + "ModelBase.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
+ 					"		" + has_many.capitalize() + "Base.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
 					"		);\n" + \
 					"	}\n\n" + \
 					"	public void " + has_many + "s(" + has_many.capitalize() + "s value) {\n" + \
