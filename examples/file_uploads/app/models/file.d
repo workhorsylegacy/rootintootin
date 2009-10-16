@@ -1,5 +1,7 @@
 
 
+import file_base;
+
 public class File : FileModelBase {
 	void reset_validation_errors() {
 		if(this._name.length == 0)
