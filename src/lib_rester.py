@@ -5,6 +5,8 @@ import commands, pexpect
 import platform
 import MySQLdb
 
+rester_path = os.path.dirname(os.sys.path[0]) + '/'
+
 def exec_file(file, globals, locals):
 	with open(file, "r") as fh:
 		exec(fh.read()+"\n", globals, locals)
@@ -280,12 +282,41 @@ class Generator(object):
 
 		f.close()
 
-		# Create the views
-		os.mkdir('app/views/' + controller_name)
-		for name in ['index', 'edit', 'new', 'show']:
-			f = open('app/views/' + controller_name + '/' + name + '.html.ed', 'w')
-			f.write(controller_name + ': ' + name)
-			f.close()
+		# Add the views
+		if not os.path.isdir('app/views/' + controller_name):
+			os.mkdir('app/views/' + controller_name)
+		params = {
+			'model_name' : controller_name,
+			'pairs' : pairs
+		}
+
+		with open('app/views/' + controller_name + '/index.html.ed', 'w') as view_file:
+			from mako.template import Template
+			from mako.lookup import TemplateLookup
+			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
+			template = lookup.get_template("index.html.ed.py")
+			view_file.write(template.render(**params).replace("@@", "%"))
+
+		with open('app/views/' + controller_name + '/edit.html.ed', 'w') as view_file:
+			from mako.template import Template
+			from mako.lookup import TemplateLookup
+			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
+			template = lookup.get_template("edit.html.ed.py")
+			view_file.write(template.render(**params).replace("@@", "%"))
+
+		with open('app/views/' + controller_name + '/new.html.ed', 'w') as view_file:
+			from mako.template import Template
+			from mako.lookup import TemplateLookup
+			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
+			template = lookup.get_template("new.html.ed.py")
+			view_file.write(template.render(**params).replace("@@", "%"))
+
+		with open('app/views/' + controller_name + '/show.html.ed', 'w') as view_file:
+			from mako.template import Template
+			from mako.lookup import TemplateLookup
+			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
+			template = lookup.get_template("show.html.ed.py")
+			view_file.write(template.render(**params).replace("@@", "%"))
 
 	def migrate(self):
 		self.connect_to_database()

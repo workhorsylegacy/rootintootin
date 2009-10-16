@@ -11,11 +11,11 @@ http://www.dsource.org/projects/ldc/wiki/BuildInstructionsUbuntu
 2. Install the dependencies for your distro:
 # ubuntu
 sudo apt-get install mysql-client mysql-server libmysqlclient15-dev \
-python-mysqldb python-pexpect build-essential bzr ldc-daily
+python-mysqldb python-pexpect python-mako build-essential bzr ldc-daily
 
 # fedora
 sudo yum groupinstall "Development Tools"
-sudo yum install mysql mysql-server MySQL-python pexpect bzr ldc
+sudo yum install mysql mysql-server MySQL-python pexpect python-mako bzr ldc
 
 
 3. Move to your install location, download the code, add path to bashrc:
