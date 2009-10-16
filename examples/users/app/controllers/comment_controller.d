@@ -1,4 +1,7 @@
 
+import rester;
+import comment;
+import user;
 
 public class CommentController : ControllerBase {
 	public Comment[] _comments;

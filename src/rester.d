@@ -11,7 +11,7 @@ import tango.io.Stdout;
 import tango.time.chrono.Gregorian;
 import tango.time.WallClock;
 
-import language_helper;
+public import language_helper;
 import db;
 import helper;
 
@@ -135,12 +135,14 @@ public template ModelBaseMixin(T, char[] model_name) {
 	static char[] _table_name = model_name ~ "s";
 	static char[] _model_name = model_name;
 
-	private bool _was_pulled_from_database = true;
+	// FIXME: This should be private
+	public bool _was_pulled_from_database = true;
 
 	public void after_this() {
 	}
 
-	private void ensure_was_pulled_from_database() {
+	// FIXME: This should be private
+	public void ensure_was_pulled_from_database() {
 		// Just return if is was already pulled
 		if(_was_pulled_from_database == true) 
 			return;

@@ -14,7 +14,20 @@ elif not os.path.exists(sys.argv[1]):
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
-def combine_code_files(routes, table_map, reference_map):
+def generate_run(routes, table_map, reference_map):
+	# Get the names of all the controllers
+	controller_names = []
+	for entry in os.listdir('app/controllers/'):
+		if entry.endswith('.d'):
+			controller_names.append(str.split(entry, '_controller.d')[0])
+
+	# Get the names of all the views
+	view_names = []
+	for controller_name in controller_names:
+		for entry in os.listdir('app/views/' + controller_name):
+			if entry.endswith('.html.ed'):
+				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
+
 	# Open the output file
 	out_file = open('run.d', 'w')
 
@@ -34,69 +47,15 @@ def combine_code_files(routes, table_map, reference_map):
 		"import rester;\n" +
 		"import rester_server;\n" +
 		"import ui;\n\n"
-	);
+	)
 
-	# Write the generated model base classes into the file
-	for model in os.listdir('app/models/'):
-		if not model.endswith('.d'):
-			continue
+	for controller_name in controller_names:
+		out_file.write("import " + controller_name + "_controller;\n")
+	out_file.write("\n")
 
-		model_name = str.split(model, '.')[0]
-		model_map = table_map[model_name + 's']
-
-		out_file.write("\n\n")
-		out_file.write(model_generated_properties_class(model_name, model_map, reference_map))
-		out_file.write("\n\n")
-
-	# Write the models into the file
-	for model in os.listdir('app/models/'):
-		if not model.endswith('.d'):
-			continue
-
-		model_name = str.split(model, '.')[0]
-		model_map = table_map[model_name + 's']
-
-		f = open('app/models/' + model, 'r')
-		out_file.write("\n\n")
-		out_file.write(f.read())
-		out_file.write("\n\n")
-		f.close()
-
-	# Write the controllers into the file
-	for controller, actions in routes.items():
-		f = open('app/controllers/' + controller + '_controller.d', 'r')
-		out_file.write("\n\n")
-		out_file.write(f.read())
-		out_file.write("\n\n")
-		f.close()
-
-	# Write the layouts into the file
-	for layout in os.listdir('app/views/layouts/'):
-		if not layout.endswith('.d'):
-			continue
-		layout = layout[0:-2]
-
-		f = open('app/views/layouts/' + layout + '.d', 'r')
-		out_file.write("\n\n")
-		out_file.write(f.read())
-		out_file.write("\n\n")
-		f.close()
-
-	# Write the views into the file
-	for controller, actions in routes.items():
-		all_actions = {}
-		all_actions.update(actions['member'])
-		all_actions.update(actions['collection'])
-		for member, http_method in all_actions.items():
-			if not os.path.exists('app/views/' + controller + '/' + member + '.d'):
-				continue
-
-			f = open('app/views/' + controller + '/' + member + '.d', 'r')
-			out_file.write("\n\n")
-			out_file.write(f.read())
-			out_file.write("\n\n")
-			f.close()
-
+	for view_name in view_names:
+		out_file.write("import " + view_name + ";\n")
+	out_file.write("\n")
 
 	# Write the runner class
 	out_file.write(
@@ -217,19 +176,27 @@ def combine_code_files(routes, table_map, reference_map):
 		"	return 0;\n" +
 		"}\n")
 
-def model_generated_properties_class(model_name, model_map, reference_map):
+def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	# Add class opening
-	properties = "public class " + model_name.capitalize() + "ModelBase : ModelBase {\n"
+	properties = "import rester;\n"
+
+	for entry in model_names:
+		properties += "import " + entry + ";\n"
+		if model_name != entry:
+			properties += "import " + entry + "_base;\n"
+	properties += "\n"
+
+	properties += "public class " + model_name.capitalize() + "ModelBase : ModelBase {\n"
 	properties += "	mixin ModelBaseMixin!(" + model_name.capitalize() + ", \"" + model_name + "\");\n\n"
 
 	# Add a list of all field names
-	properties += "	private static char[][] _field_names = ["
+	properties += "	protected static char[][] _field_names = ["
 	for field, values in model_map.items():
 		properties += "\"" + field + "\", ";
 	properties += "];\n\n";
 
 	# Add a list of the unique field names
-	properties += "	private static char[][] _unique_field_names = ["
+	properties += "	protected static char[][] _unique_field_names = ["
 	for field, values in model_map.items():
 		if field == "id":
 			continue
@@ -239,7 +206,7 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 	# Add all the fields
 	for field, values in model_map.items():
 		if not field.endswith('_id'):
-			properties += "	private " + sql_type_to_d_type(values['type']) + " _" + field + ";\n"
+			properties += "	protected " + sql_type_to_d_type(values['type']) + " _" + field + ";\n"
 
 	# Add the field properties
 	for field, values in model_map.items():
@@ -267,7 +234,7 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 		for has_many in has_manys:
 			if has_many[:-1] == model_name:
 				properties += \
-						"	private " + table_name.capitalize() + "ModelBase _" + table_name + " = null;\n" + \
+						"	protected " + table_name.capitalize() + "ModelBase _" + table_name + " = null;\n" + \
 						"\n" + \
 						"	public void parent(" + table_name.capitalize() + "ModelBase value) {\n" + \
 						"		ensure_was_pulled_from_database();\n" + \
@@ -284,12 +251,12 @@ def model_generated_properties_class(model_name, model_map, reference_map):
 		for has_many in reference_map[table_name]:
 			has_many = has_many[:-1]
 			properties += \
-					"	private class " + has_many.capitalize() + "s {\n" + \
+					"	protected class " + has_many.capitalize() + "s {\n" + \
 					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "ModelBase, \n" + \
 					"								" + has_many.capitalize() + "ModelBase);\n" + \
 					"	}\n" + \
 					"\n" + \
-					"	private " + has_many.capitalize() + "s _" + has_many + "s;\n\n" + \
+					"	protected " + has_many.capitalize() + "s _" + has_many + "s;\n\n" + \
 					"	public void after_this() {\n" + \
 					"		_" + has_many + "s = new " + has_many.capitalize() + "s(\n" + \
  					"		" + has_many.capitalize() + "ModelBase.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
@@ -421,9 +388,49 @@ def generate_models():
 
 		cursor.close()
 
+	# Get the names of all the models
+	model_names = []
+	for entry in os.listdir('app/models/'):
+		if entry.endswith('.d'):
+			model_names.append(str.split(entry, '.')[0])
+
+	# Write the generated model base classes into the files
+	for model_name in model_names:
+		model_map = table_map[model_name + 's']
+
+		with open(model_name + '_base.d', 'w') as f:
+			f.write("\n\n")
+			f.write(model_generated_properties_class(model_name, model_map, reference_map, model_names))
+			f.write("\n\n")
+
+		with open('app/models/' + model_name + '.d', 'r') as f_in:
+			with open(model_name + '.d', 'w') as f_out:
+				f_out.write(f_in.read())
+
 	return table_map, reference_map
 
+def generate_controllers():
+	for controller in os.listdir('app/controllers/'):
+		if not controller.endswith('.d'):
+			continue
+
+		with open('app/controllers/' + controller, 'r') as f_in:
+			with open(controller, 'w') as f_out:
+				f_out.write(f_in.read())
+
 def generate_views(routes):
+	# Get the names of all the models
+	model_names = []
+	for entry in os.listdir('app/models/'):
+		if entry.endswith('.d'):
+			model_names.append(str.split(entry, '.')[0])
+
+	# Get the names of all the controllers
+	controller_names = []
+	for entry in os.listdir('app/controllers/'):
+		if entry.endswith('.d'):
+			controller_names.append(str.split(entry, '.')[0])
+
 	for controller, actions in routes.items():
 		all_actions = {}
 		all_actions.update(actions['member'])
@@ -441,6 +448,17 @@ def generate_views(routes):
 			# Print the openining of the function
 			output = []
 			output.append(
+			"import rester;\n" +
+			"import ui;\n")
+
+			for model_name in model_names:
+				output.append("import " + model_name + ";\n")
+
+			for controller_name in controller_names:
+				output.append("import " + controller_name + ";\n")
+
+			output.append(
+			"import view_layouts_default;\n\n" +
 			"public class " + controller.capitalize() + member.capitalize() + "View { \n" +
 			"public static char[] render(" + controller.capitalize() + "Controller controller, out int[int] line_translations) { \n" +
 			"	// Generate the view as an array of strings\n" +
@@ -460,12 +478,10 @@ def generate_views(routes):
 			"}\n")
 
 			# Save the output as a D file
-			out_file = open('app/views/' + controller + '/' + member + '.d', 'w')
+			out_file = open('view_' + controller + '_' + member + '.d', 'w')
 			for fragment in output:
 				out_file.write(fragment)
 			out_file.close()
-
-
 
 def generate_layouts():
 	for layout in os.listdir('app/views/layouts/'):
@@ -481,6 +497,8 @@ def generate_layouts():
 		# Print the openining of the function
 		output = []
 		output.append(
+		"import rester;\n" +
+		"import ui;\n" +
 		"public class " + layout.capitalize() + "Layout { \n" +
 		"public static char[] render(ControllerBase controller, char[] yield) { \n" +
 		"	// Generate the layout as an array of strings\n" +
@@ -495,10 +513,44 @@ def generate_layouts():
 		"}\n")
 
 		# Save the output as a D file
-		out_file = open('app/views/layouts/' + layout + '.d', 'w')
+		out_file = open('view_layouts_' + layout + '.d', 'w')
 		for fragment in output:
 			out_file.write(fragment)
 		out_file.close()
+
+def get_link_files():
+	files = []
+
+	# Get the names of all the models
+	model_names = []
+	for entry in os.listdir('app/models/'):
+		if entry.endswith('.d'):
+			model_names.append(str.split(entry, '.')[0])
+
+	# Get the names of all the controllers
+	controller_names = []
+	for entry in os.listdir('app/controllers/'):
+		if entry.endswith('.d'):
+			controller_names.append(str.split(entry, '_controller.d')[0])
+
+	# Get the names of all the views
+	view_names = []
+	for controller_name in controller_names:
+		for entry in os.listdir('app/views/' + controller_name):
+			if entry.endswith('.html.ed'):
+				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
+
+	for model_name in model_names:
+		files.append(model_name + '_base.d')
+	for model_name in model_names:
+		files.append(model_name + '.d')
+	for controller_name in controller_names:
+		files.append(controller_name + '_controller.d')
+	for view_name in view_names:
+		files.append(view_name + '.d')
+	files.append('view_layouts_default.d')
+
+	return files
 
 def process_template_body(body, output):
 	while len(body) > 0:
@@ -552,18 +604,22 @@ exec_file("config/routes.py", globals(), locals())
 exec_file("config/config.py", globals(), locals())
 
 # Do code generation
+table_map, reference_map = generate_models()
+generate_controllers()
 generate_layouts()
 generate_views(routes)
-table_map, reference_map = generate_models()
-combine_code_files(routes, table_map, reference_map)
+generate_run(routes, table_map, reference_map)
 
 # Compile the application into an executable
+additional_imports = get_link_files()
 result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
 command = "ldc -g -of run " + \
-			"language_helper.d helper.d rester.d rester_server.d ui.d run.d db.d " + \
-			"db.a -L=\"-lmysqlclient\""
+			"language_helper.d helper.d rester.d rester_server.d ui.d run.d " + \
+			"db.d db.a " + \
+			str.join(' ', additional_imports) + \
+			" -L=\"-lmysqlclient\""
 result += pexpect.run(command)
 
 if len(result) != 0:

@@ -1,4 +1,5 @@
 
+import user_base;
 
 public class User : UserModelBase {
 	void reset_validation_errors() {
