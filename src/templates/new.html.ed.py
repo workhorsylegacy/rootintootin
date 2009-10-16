@@ -12,7 +12,7 @@
 % for field in pairs:
 <% field_name, field_type = field.split(':') %>
 	<p>
-		<label for="${model_name}_${field_name}">${model_name.capitalize()}</label><br />
+		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="text" value="<@@=controller._${model_name}.${field_name}@@>" />
 	</p>
 % endfor
