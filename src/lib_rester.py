@@ -290,33 +290,25 @@ class Generator(object):
 			'pairs' : pairs
 		}
 
-		with open('app/views/' + controller_name + '/index.html.ed', 'w') as view_file:
-			from mako.template import Template
-			from mako.lookup import TemplateLookup
-			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
-			template = lookup.get_template("index.html.ed.py")
-			view_file.write(template.render(**params).replace("@@", "%"))
+		self.generate_template(
+			params, 
+			rester_path + 'src/templates/index.html.ed.py', 
+			'app/views/' + controller_name + '/index.html.ed')
 
-		with open('app/views/' + controller_name + '/edit.html.ed', 'w') as view_file:
-			from mako.template import Template
-			from mako.lookup import TemplateLookup
-			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
-			template = lookup.get_template("edit.html.ed.py")
-			view_file.write(template.render(**params).replace("@@", "%"))
+		self.generate_template(
+			params, 
+			rester_path + 'src/templates/edit.html.ed.py', 
+			'app/views/' + controller_name + '/edit.html.ed')
 
-		with open('app/views/' + controller_name + '/new.html.ed', 'w') as view_file:
-			from mako.template import Template
-			from mako.lookup import TemplateLookup
-			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
-			template = lookup.get_template("new.html.ed.py")
-			view_file.write(template.render(**params).replace("@@", "%"))
+		self.generate_template(
+			params, 
+			rester_path + 'src/templates/new.html.ed.py', 
+			'app/views/' + controller_name + '/new.html.ed')
 
-		with open('app/views/' + controller_name + '/show.html.ed', 'w') as view_file:
-			from mako.template import Template
-			from mako.lookup import TemplateLookup
-			lookup = TemplateLookup(directories=[rester_path + 'src/templates/'], output_encoding='utf-8')
-			template = lookup.get_template("show.html.ed.py")
-			view_file.write(template.render(**params).replace("@@", "%"))
+		self.generate_template(
+			params, 
+			rester_path + 'src/templates/show.html.ed.py', 
+			'app/views/' + controller_name + '/show.html.ed')
 
 	def migrate(self):
 		self.connect_to_database()
@@ -462,5 +454,24 @@ class Generator(object):
 
 		self._db.query(query)
 		self._db.commit()
+
+	def generate_template(self, params, template_file, out_file):
+		from mako.template import Template
+		from mako.lookup import TemplateLookup
+		from mako import exceptions
+
+		template_dir = os.path.dirname(template_file) + '/'
+		template_name = os.path.basename(template_file)
+
+		with open(out_file, 'w') as view_file:
+			try:
+				lookup = TemplateLookup(directories=[template_dir], output_encoding='utf-8')
+				template = lookup.get_template(template_name)
+				view_file.write(template.render(**params).replace("@@", "%"))
+			except:
+				print "Broken template file: '" + template_file + "'"
+				print exceptions.text_error_template().render()
+				print "Exiting ..."
+				exit()
 
 
