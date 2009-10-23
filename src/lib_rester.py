@@ -150,164 +150,68 @@ class Generator(object):
 		last_version = self.get_schema_version()
 		version = str(last_version + 1).rjust(4, '0')
 
-		f = open('db/migrate/' + version + '_create_' + pluralize(model_name) + '.py', 'w')
+		# Get the files and parameters
+		params = {
+			'model_name' : model_name, 
+			'pairs' : pairs, 
+			'pluralize' : pluralize
+		}
+		template_file = rester_path + 'src/templates/0000_create_model.py.mako'
+		out_file = 'db/migrate/' + version + '_create_' + pluralize(model_name) + '.py'
 
-		f.write(
-			"class Create" + pluralize(model_name.capitalize()) + ":\n" +
-			"	def up(self, generator):\n" +
-			"		generator.create_table('" + pluralize(model_name) + "', {\n"
-		)
-	
-		for field in pairs:
-			field_name, field_type = field.split(':')
-			f.write("\t\t\t'" + field_name + "' : '" + field_type + "', \n")
-		f.write("		}) \n")
-
-		f.write("	def down(self, generator):\n" +
-			"		generator.drop_table('" + pluralize(model_name) + "')\n" +
-			"\n\n"
-		)
+		# Generate the file from the template
+		self.generate_template(params, template_file, out_file)
 
 	def create_model(self, model_name, pairs):
-		f = open('app/models/' + model_name + '.d', 'w')
+		# Get the files and parameters
+		params = {
+			'model_name' : model_name
+		}
+		template_file = rester_path + 'src/templates/model.d.mako'
+		out_file = 'app/models/' + model_name + '.d'
 
-		f.write(
-			"\n\n" + 
-			"import " + model_name + "_base;\n\n" +
-			"public class " + model_name.capitalize() + " : " + model_name.capitalize() + "Base {\n\n" + 
-			"}\n\n"
-		)
-
-		f.close()
+		# Generate the file from the template
+		self.generate_template(params, template_file, out_file)
 
 	def create_scaffold(self, controller_name, pairs):
-		f = open('app/controllers/' + controller_name + '_controller.d', 'w')
-
-		# Add the class opening
-		f.write(
-			"\n\n" + 
-			"import rester;\n" + 
-			"import " + controller_name + ";\n\n" + 
-			"public class " + controller_name.capitalize() + "Controller : ControllerBase {\n"
-		)
-
-		# Add each property
-		f.write(
-			"	public " + controller_name.capitalize() + "[] _" + controller_name + "s;\n" + 
-			"	public " + controller_name.capitalize() + " _" + controller_name + ";\n" + 
-			"\n"
-		)
-
-		# Add the index action
-		f.write(
-			"	public void index() {\n" + 
-			"		_" + controller_name + "s = " + controller_name.capitalize() + ".find_all();\n" + 
-			"	}\n\n"
-		)
-
-		# Add the show action
-		f.write(
-			"	public void show() {\n" + 
-			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n" + 
-			"	}\n\n"
-		)
-
-		# Add the new action
-		f.write(
-			"	public void New() {\n" + 
-			"		_" + controller_name + " = new " + controller_name.capitalize() + "();\n" + 
-			"	}\n\n"
-		)
-
-		# Add the create action
-		f.write(
-			"	public void create() {\n" + 
-			"		_" + controller_name + " = new " + controller_name.capitalize() + "();\n"
-		)
-		for field in pairs:
-			field_name, field_type = field.split(':')
-			f.write("\t\t_" + controller_name + "." + field_name + " = to_" + field_type + "(_request.params[\"" + controller_name + "[" + field_name + "]\"]);\n")
-		f.write(
-			"\n" + 
-			"		if(_" + controller_name + ".save()) {\n" + 
-			"			flash_notice(\"The " + controller_name + " was saved.\");\n" + 
-			"			redirect_to(\"/" + controller_name + "s/show/\" ~ to_s(_" + controller_name + ".id));\n" + 
-			"		} else {\n" + 
-			"			render_view(\"new\");\n" + 
-			"		}\n" + 
-			"	}\n\n"
-		)
-
-		# Add the edit action
-		f.write(
-			"	public void edit() {\n" + 
-			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n" + 
-			"	}\n\n"
-		)
-
-		# Add the create update
-		f.write(
-			"	public void update() {\n" + 
-			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n"
-		)
-		for field in pairs:
-			field_name, field_type = field.split(':')
-			f.write("\t\t_" + controller_name + "." + field_name + " = to_" + field_type + "(_request.params[\"" + controller_name + "[" + field_name + "]\"]);\n")
-		f.write(
-			"\n" + 
-			"		if(_" + controller_name + ".save()) {\n" + 
-			"			flash_notice(\"The " + controller_name + " was updated.\");\n" + 
-			"			redirect_to(\"/" + controller_name + "s/show/\" ~ to_s(_" + controller_name + ".id));\n" + 
-			"		} else {\n" + 
-			"			render_view(\"edit\");\n" + 
-			"		}\n" + 
-			"	}\n\n"
-		)
-
-		# Add the destroy event
-		f.write(
-			"	public void destroy() {\n" + 
-			"		_" + controller_name + " = " + controller_name.capitalize() + ".find(to_ulong(_request.params[\"id\"]));\n" + 
-			"		if(_" + controller_name + ".destroy()) {\n" + 
-			"			redirect_to(\"/" + controller_name + "s/index\");\n" + 
-			"		} else {\n" + 
-			"			flash_error(_" + controller_name + ".errors()[0]);\n" + 
-			"			render_view(\"index\");\n" + 
-			"		}\n" + 
-			"	}\n"
-		)
-
-		# End the class
-		f.write("}\n\n")
-
-		f.close()
-
-		# Add the views
+		# Make sure the view dir exists
 		if not os.path.isdir('app/views/' + controller_name):
 			os.mkdir('app/views/' + controller_name)
+
+		# Get the files and parameters
 		params = {
-			'model_name' : controller_name,
+			'controller_name' : controller_name, 
+			'model_name' : controller_name, 
 			'pairs' : pairs
 		}
+		template_file = rester_path + 'src/templates/name_controller.d.mako'
+		out_file = 'app/controllers/' + controller_name + '_controller.d'
 
+		# Generate name_controller.d
+		self.generate_template(params, template_file, out_file)
+
+		# Generate index.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/index.html.ed.py', 
+			rester_path + 'src/templates/index.html.ed.mako', 
 			'app/views/' + controller_name + '/index.html.ed')
 
+		# Generate edit.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/edit.html.ed.py', 
+			rester_path + 'src/templates/edit.html.ed.mako', 
 			'app/views/' + controller_name + '/edit.html.ed')
 
+		# Generate new.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/new.html.ed.py', 
+			rester_path + 'src/templates/new.html.ed.mako', 
 			'app/views/' + controller_name + '/new.html.ed')
 
+		# Generate show.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/show.html.ed.py', 
+			rester_path + 'src/templates/show.html.ed.mako', 
 			'app/views/' + controller_name + '/show.html.ed')
 
 	def migrate(self):

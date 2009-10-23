@@ -8,9 +8,9 @@
 <h1>Listing ${model_name}s</h1>
 
 <table>
-	<tr> \
+	<tr>
 % for field in pairs:
-<% field_name, field_type = field.split(':') %>
+<% field_name, field_type = field.split(':') %>\
 		<th>${field_name.capitalize()}</th>
 % endfor
 	</tr>
@@ -18,7 +18,7 @@
 <@@ foreach(${model_name.capitalize()} ${model_name} ; controller._${model_name}s) { @@>
 	<tr>
 % for field in pairs:
-<% field_name, field_type = field.split(':') %>
+<% field_name, field_type = field.split(':') %>\
 		<td><@@= ${model_name}.${field_name} @@></td>
 % endfor
 		<td><a href="/${model_name}s/show/<@@=${model_name}.id@@>">Show</a></td>
