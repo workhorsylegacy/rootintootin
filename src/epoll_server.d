@@ -41,8 +41,7 @@ public class TcpServer {
 	}
 
 	public void start() {
-		Socket client;
-
+		Socket client = null;
 		this._selector = new EpollSelector();
 		this._selector.open(); //open(10, 3);
 		this._server.socket.blocking(false);
