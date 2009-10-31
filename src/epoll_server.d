@@ -9,19 +9,18 @@ private import tango.io.Stdout;
 
 public class SocketThread : Thread {
 	private Socket _socket = null;
-	private EpollSelector _selector = null;
+	private char[] delegate() _on_respond_normal;
 
-	public this(Socket socket, EpollSelector selector) {
+	public this(Socket socket, char[] delegate() on_respond_normal) {
 		_socket = socket;
-		_selector = selector;
+		_on_respond_normal = on_respond_normal;
 		super(&run);
 	}
 
 	private void run() {
-		_socket.write("da response yo");
+		_socket.write(_on_respond_normal());
 		_socket.shutdown();
 		_socket.detach();
-		_selector.unregister(_socket);
 	}
 }
 
@@ -46,7 +45,7 @@ public class TcpServer {
 		// Create an epoll selector
 		this._selector = new EpollSelector();
 		this._selector.open(); //open(10, 3);
-		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
+		this.on_started();
 
 		while(true) {
 			// Wait forever for any read, hangup, error, or invalid handle events
@@ -61,10 +60,10 @@ public class TcpServer {
 					client = (cast(ServerSocket) item.conduit).accept();
 
 					try {
-						SocketThread thread = new SocketThread(client, this._selector);
+						SocketThread thread = new SocketThread(client, &this.on_respond_normal);
 						thread.start();
 					} catch(tango.core.Exception.ThreadException err) {
-						client.write("500: Too many connections");
+						client.write(this.on_respond_too_many_threads());
 						client.shutdown();
 						client.detach();
 						this._selector.unregister(item.conduit);
@@ -78,15 +77,43 @@ public class TcpServer {
 			}
 		}
 	}
+
+	public void on_started() {
+		Stdout.format("Running on port: {} ...\n", this._port).flush;
+	}
+
+	public char[] on_respond_normal() {
+		return "The 'normal' response goes here.";
+	}
+
+	public char[] on_respond_too_many_threads() {
+		return "The 'too many threads' response goes here.";
+	}
 }
 
+public class HttpServer : TcpServer {
+	public this(ushort port, ushort max_waiting_clients) {
+		super(port, max_waiting_clients);
+	}
 
+	public void on_started() {
+		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
+	}
+
+	public char[] on_respond_normal() {
+		return "200 da normal response";
+	}
+
+	public char[] on_respond_too_many_threads() {
+		return "500 da boom response";
+	}
+}
 
 void main() {
 	ushort port = 3000;
 	ushort max_waiting_clients = 1000;
 
-	TcpServer server = new TcpServer(port, max_waiting_clients);
+	auto server = new HttpServer(port, max_waiting_clients);
 	server.start();
 }
 
