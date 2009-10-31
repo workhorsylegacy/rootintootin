@@ -11,12 +11,6 @@ def exec_file(file, globals, locals):
 	with open(file, "r") as fh:
 		exec(fh.read()+"\n", globals, locals)
 
-def pluralize(value):
-	if value.endswith('s'):
-		return value
-	else:
-		return value + 's'
-
 def camelize(word):
 	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
 
@@ -74,7 +68,36 @@ class Generator(object):
 		self._db = None
 		self._database_configuration = None
 		self._server_configuration = None
+		self._nouns = None
 		self.load_configuration()
+		self.load_nouns()
+
+	def singularize(self, noun):
+		for singular, plural in self._nouns.items():
+			if noun == singular or noun == plural:
+				return singular
+			elif noun == singular.capitalize() or noun == plural.capitalize():
+				return singular.capitalize()
+
+		raise Exception("No noun found for: '" + noun + "'.")
+
+	def pluralize(self, noun):
+		for singular, plural in self._nouns.items():
+			if noun == singular or noun == plural:
+				return plural
+			elif noun == singular.capitalize() or noun == plural.capitalize():
+				return plural.capitalize()
+
+		raise Exception("No noun found for: '" + noun + "'.")
+
+	def check_pluralization(self, noun):
+		try:
+			self.pluralize(noun)
+		except:
+			print "No noun called '" + noun + "' found."
+			print "Please add it using './gen create noun singular:blah plural:blahs'"
+			print "Exiting ..."
+			exit()
 
 	def create_table(self, table_name, field_map):
 		self.connect_to_database()
@@ -86,7 +109,7 @@ class Generator(object):
 		for field_name, field_type in field_map.items():
 			if field_type == "reference":
 				query += "`" + field_name + "_id` int not null, "
-				query += "foreign key(`" + field_name + "_id`) references `" + pluralize(field_name) + "`(`id`), "
+				query += "foreign key(`" + field_name + "_id`) references `" + self.pluralize(field_name) + "`(`id`), "
 			else:
 				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
 		query = str.rstrip(query, ', ')
@@ -146,6 +169,9 @@ class Generator(object):
 	def create_migration(self, model_name, pairs):
 		self.connect_to_database()
 
+		# Get the name singularized
+		model_name = self.singularize(model_name)
+
 		# Get the last schema version
 		last_version = self.get_schema_version()
 		version = str(last_version + 1).rjust(4, '0')
@@ -154,15 +180,18 @@ class Generator(object):
 		params = {
 			'model_name' : model_name, 
 			'pairs' : pairs, 
-			'pluralize' : pluralize
+			'pluralize' : self.pluralize
 		}
 		template_file = rester_path + 'src/templates/0000_create_model.py.mako'
-		out_file = 'db/migrate/' + version + '_create_' + pluralize(model_name) + '.py'
+		out_file = 'db/migrate/' + version + '_create_' + self.pluralize(model_name) + '.py'
 
 		# Generate the file from the template
 		self.generate_template(params, template_file, out_file)
 
 	def create_model(self, model_name, pairs):
+		# Get the name singularized
+		model_name = self.singularize(model_name)
+
 		# Get the files and parameters
 		params = {
 			'model_name' : model_name
@@ -174,6 +203,9 @@ class Generator(object):
 		self.generate_template(params, template_file, out_file)
 
 	def create_scaffold(self, controller_name, pairs):
+		# Get the name singularized
+		controller_name = self.singularize(controller_name)
+
 		# Make sure the view dir exists
 		if not os.path.isdir('app/views/' + controller_name):
 			os.mkdir('app/views/' + controller_name)
@@ -182,7 +214,8 @@ class Generator(object):
 		params = {
 			'controller_name' : controller_name, 
 			'model_name' : controller_name, 
-			'pairs' : pairs
+			'pairs' : pairs, 
+			'pluralize' : self.pluralize
 		}
 		template_file = rester_path + 'src/templates/name_controller.d.mako'
 		out_file = 'app/controllers/' + controller_name + '_controller.d'
@@ -281,6 +314,9 @@ class Generator(object):
 		self.save_configuration()
 
 	def configure_routes(self, model_name, pairs):
+		# Get the name singularized
+		model_name = self.singularize(model_name)
+
 		f = open('config/routes.py', 'w')
 
 		f.write(
@@ -298,6 +334,19 @@ class Generator(object):
 
 		f.close()
 
+	def create_noun(self, pairs):
+		singular, plural = None, None
+
+		for pair in pairs:
+			key, value = pair.split(':')
+
+			if key == 'singular':
+				singular = value
+			elif key == 'plural':
+				plural = value
+
+		self._nouns[singular] = plural
+		self.save_nouns()
 
 #private
 
@@ -317,6 +366,20 @@ class Generator(object):
 		f.write("server_configuration = {\n")
 		for key, value in self._server_configuration.items():
 			f.write("	\"" + str(key) + "\" : \"" + str(value) + "\", \n")
+		f.write("}\n\n")
+
+		f.close()
+
+	def load_nouns(self):
+		exec_file('config/nouns.py', globals(), locals())
+		self._nouns = locals()['nouns']
+
+	def save_nouns(self):
+		f = open('config/nouns.py', 'w')
+
+		f.write("\nnouns = {\n")
+		for key, value in self._nouns.items():
+			f.write("	\"" + key + "\" : \"" + value + "\", \n")
 		f.write("}\n\n")
 
 		f.close()

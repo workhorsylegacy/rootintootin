@@ -10,6 +10,6 @@
 <p><b>${field_name.capitalize()}:</b> <@@=controller._${model_name}.${field_name}@@></p>
 % endfor
 
-<a href="/${model_name}s/edit/<@@=controller._${model_name}.id@@>">Edit</a> | 
-<a href="/${model_name}s">Back</a>
+<a href="/${pluralize(model_name)}/edit/<@@=controller._${model_name}.id@@>">Edit</a> | 
+<a href="/${pluralize(model_name)}">Back</a>
 

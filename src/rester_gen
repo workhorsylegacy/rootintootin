@@ -29,11 +29,13 @@ elif str.join(' ', sys.argv[2:]) == "drop database":
 # create migration [name] [field:type] ...
 elif str.join(' ', sys.argv[2:4]) == "create migration":
 	model_name = sys.argv[4]
+	generator.check_pluralization(model_name)
 	generator.create_migration(model_name, sys.argv[5:])
 
 # create scaffold [name] [field:type] ...
 elif str.join(' ', sys.argv[2:4]) == "create scaffold":
 	controller_name = sys.argv[4]
+	generator.check_pluralization(controller_name)
 	generator.create_scaffold(controller_name, sys.argv[5:])
 	generator.create_model(controller_name, sys.argv[5:])
 	generator.create_migration(controller_name, sys.argv[5:])
@@ -53,10 +55,15 @@ elif str.join(' ', sys.argv[2:4]) == "configure database":
 elif str.join(' ', sys.argv[2:4]) == "configure server":
 	generator.configure_server(sys.argv[4:])
 
+# create noun [singular:user] [plural:users]
+elif str.join(' ', sys.argv[2:4]) == "create noun":
+	generator.create_noun(sys.argv[4:])
+
 # Nothing
 else:
 	print "The gen script generates code, databases, and config files:"
 	print ""
+	print "./gen create noun [singular:user] [plural:users]"
 	print "./gen create migration [name] [field:type] ..."
 	print "./gen create scaffold [name] [field:type] ..."
 	print "./gen migrate"
