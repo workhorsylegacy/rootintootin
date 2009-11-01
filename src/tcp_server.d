@@ -9,16 +9,16 @@ private import tango.io.Stdout;
 
 public class SocketThread : Thread {
 	private Socket _socket = null;
-	private char[] delegate() _on_respond_normal;
+	private void delegate(Socket socket) _on_respond_normal;
 
-	public this(Socket socket, char[] delegate() on_respond_normal) {
+	public this(Socket socket, void delegate(Socket socket) on_respond_normal) {
 		_socket = socket;
 		_on_respond_normal = on_respond_normal;
 		super(&run);
 	}
 
 	private void run() {
-		_socket.write(_on_respond_normal());
+		_on_respond_normal(_socket);
 		_socket.shutdown();
 		_socket.detach();
 	}
@@ -63,7 +63,7 @@ public class TcpServer {
 						SocketThread thread = new SocketThread(client, &this.on_respond_normal);
 						thread.start();
 					} catch(tango.core.Exception.ThreadException err) {
-						client.write(this.on_respond_too_many_threads());
+						this.on_respond_too_many_threads(client);
 						client.shutdown();
 						client.detach();
 						this._selector.unregister(item.conduit);
@@ -82,12 +82,12 @@ public class TcpServer {
 		Stdout.format("Running on port: {} ...\n", this._port).flush;
 	}
 
-	public char[] on_respond_normal() {
-		return "The 'normal' response goes here.";
+	public void on_respond_normal(Socket socket) {
+		socket.write("The 'normal' response goes here.");
 	}
 
-	public char[] on_respond_too_many_threads() {
-		return "The 'too many threads' response goes here.";
+	public void on_respond_too_many_threads(Socket socket) {
+		socket.write("The 'too many threads' response goes here.");
 	}
 }
 
