@@ -51,10 +51,16 @@ public class SocketThreadPool {
 		_thread_mutex = new Mutex();
 
 		// Create a thread for each socket
-		for(size_t i=0; i<_number_of_threads; i++) {
-			auto t = new SocketThread( &socket_on_end);
-			t.start();
-			_idle_threads ~= t;
+		size_t i = 0;
+		try {
+			for(i=0; i<_number_of_threads; i++) {
+				auto t = new SocketThread( &socket_on_end);
+				t.isDaemon = true;
+				t.start();
+				_idle_threads ~= t;
+			}
+		} catch(tango.core.Exception.ThreadException err) {
+			throw new Exception("Thread pool could not create " ~ to_s(_number_of_threads)  ~ " threads. System ran out at " ~ to_s(i) ~ " threads.");
 		}
 	}
 
