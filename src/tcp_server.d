@@ -12,30 +12,36 @@ private import language_helper;
 
 
 public class SocketThread : Thread {
-	private Semaphore _semaphore;
+	public char[] _buffer = null;
+	private Semaphore _semaphore = null;
 	private Socket _socket = null;
-	private void delegate(Socket socket) _trigger_on_read_request = null;
+	private void delegate(Socket socket, char[] buffer) _trigger_on_read_request = null;
 	private void delegate(SocketThread t) _on_end = null;
 
-	public this(void delegate(SocketThread t) on_end) {
+	public this(void delegate(SocketThread t) on_end, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
+		_buffer = new char[buffer_size];
 		_semaphore = new Semaphore();
 		_on_end = on_end;
+		_trigger_on_read_request = trigger_on_read_request;
 		super(&run);
 	}
 
-	public void run_socket(Socket socket, void delegate(Socket socket) trigger_on_read_request) {
+	public void run_socket(Socket socket) {
 		_socket = socket;
-		_trigger_on_read_request = trigger_on_read_request;
 		_semaphore.notify();
 	}
 
 	private void run() {
 		while(true) {
 			_semaphore.wait();
-			_trigger_on_read_request(_socket);
-			_socket.shutdown();
-			_socket.detach();
-			_on_end(this);
+			try {
+				_trigger_on_read_request(_socket, _buffer);
+				_socket.shutdown();
+				_socket.detach();
+				_on_end(this);
+			} catch(Exception err) {
+				Stdout("_trigger_on_read_request went boom").flush;
+			}
 		}
 	}
 }
@@ -46,7 +52,7 @@ public class SocketThreadPool {
 	private SocketThread[] _busy_threads;
 	private Mutex _thread_mutex;
 
-	public this(size_t number_of_threads) {
+	public this(size_t number_of_threads, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
 		_number_of_threads = number_of_threads;
 		_thread_mutex = new Mutex();
 
@@ -54,7 +60,7 @@ public class SocketThreadPool {
 		size_t i = 0;
 		try {
 			for(i=0; i<_number_of_threads; i++) {
-				auto t = new SocketThread( &socket_on_end);
+				auto t = new SocketThread(&socket_on_end, trigger_on_read_request, buffer_size);
 				t.isDaemon = true;
 				t.start();
 				_idle_threads ~= t;
@@ -62,9 +68,25 @@ public class SocketThreadPool {
 		} catch(tango.core.Exception.ThreadException err) {
 			throw new Exception("Thread pool could not create " ~ to_s(_number_of_threads)  ~ " threads. System ran out at " ~ to_s(i) ~ " threads.");
 		}
+
+		Thread t = new Thread(&testo);
+		t.start();
 	}
 
-	public bool run_socket(Socket socket, void delegate(Socket socket) trigger_on_read_request) {
+	private void testo() {
+		while(true) {
+			Thread.sleep(2);
+
+			try {
+				_thread_mutex.lock();
+				Stdout.format("Threads idle: {} busy: {}\n", _idle_threads.length, _busy_threads.length).flush;
+			} finally {
+				_thread_mutex.unlock();
+			}
+		}
+	}
+
+	public bool run_socket(Socket socket) {
 		SocketThread t = null;
 
 		try {
@@ -74,8 +96,10 @@ public class SocketThreadPool {
 				t = _idle_threads[0];
 				Array!(SocketThread[]).remove(_idle_threads, 0);
 				_busy_threads ~= t;
-				t.run_socket(socket, trigger_on_read_request);
+				t.run_socket(socket);
 			}
+		} catch(Exception err) {
+			Stdout("inner run_socket went boom").flush;
 		} finally {
 			_thread_mutex.unlock();
 		}
@@ -93,6 +117,8 @@ public class SocketThreadPool {
 		
 			// Add the thread to the idle list
 			_idle_threads ~= t;
+		} catch(Exception err) {
+			Stdout("socket_on_end went boom").flush;
 		} finally {
 			_thread_mutex.unlock();
 		}
@@ -101,6 +127,7 @@ public class SocketThreadPool {
 
 
 public class TcpServer {
+	protected size_t _buffer_size;
 	protected ushort _port;
 	protected ushort _max_waiting_clients;
 	protected ushort _max_threads;
@@ -108,7 +135,8 @@ public class TcpServer {
 	private EpollSelector _selector = null;
 	private SocketThreadPool _pool = null;
 
-	public this(ushort port, ushort max_waiting_clients, ushort max_threads) {
+	public this(ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
+		this._buffer_size = buffer_size;
 		this._port = port;
 		this._max_waiting_clients = max_waiting_clients;
 		this._max_threads = max_threads;
@@ -118,7 +146,7 @@ public class TcpServer {
 		Stdout.format("Running on port: {} ...\n", this._port).flush;
 	}
 
-	public void on_read_request(Socket socket) {
+	public void on_read_request(Socket socket, char[] buffer) {
 		socket.write("The 'normal' response goes here.");
 	}
 
@@ -130,8 +158,8 @@ public class TcpServer {
 		this.on_started();
 	}
 
-	protected void trigger_on_read_request(Socket socket) {
-		this.on_read_request(socket);
+	protected void trigger_on_read_request(Socket socket, char[] buffer) {
+		this.on_read_request(socket, buffer);
 	}
 
 	protected void trigger_on_respond_too_many_threads(Socket socket) {
@@ -147,7 +175,7 @@ public class TcpServer {
 		// Create an epoll selector
 		this._selector = new EpollSelector();
 		this._selector.open(); //open(10, 3);
-		this._pool = new SocketThreadPool(this._max_threads);
+		this._pool = new SocketThreadPool(this._max_threads, &this.trigger_on_read_request, this._buffer_size);
 		this.trigger_on_started();
 
 		while(true) {
@@ -162,12 +190,16 @@ public class TcpServer {
 				if(item.conduit is this._server) {
 					client = (cast(ServerSocket) item.conduit).accept();
 
-					bool ran_successfully = this._pool.run_socket(client, &this.trigger_on_read_request);
-					if(!ran_successfully) {
-						this.trigger_on_respond_too_many_threads(client);
-						client.shutdown();
-						client.detach();
-						this._selector.unregister(item.conduit);
+					try {
+						bool ran_successfully = this._pool.run_socket(client);
+						if(!ran_successfully) {
+							this.trigger_on_respond_too_many_threads(client);
+							client.shutdown();
+							client.detach();
+							this._selector.unregister(item.conduit);
+						}
+					} catch(Exception err) {
+						Stdout("outer run_socket went boom").flush;
 					}
 				} else if(item.isError() || item.isHangup() || item.isInvalidHandle()) {
 					Stdout("FIXME: error, hangup, or invalid handle").flush;

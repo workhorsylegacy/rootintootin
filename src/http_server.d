@@ -78,7 +78,6 @@ public class Request {
 }
 
 public class HttpServer : TcpServer {
-	private uint _header_max_size = 0;
 	private int _session_id = 0;
 	private char[][char[]] _sessions;
 	private char[] _salt;
@@ -86,9 +85,8 @@ public class HttpServer : TcpServer {
 	private Mutex _mutex_session_id = null;
 	private Mutex _mutex_sessions = null;
 
-	public this(ushort port, ushort max_waiting_clients, ushort max_threads, uint header_max_size) {
-		super(port, max_waiting_clients, max_threads);
-		this._header_max_size = header_max_size;
+	public this(ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
+		super(port, max_waiting_clients, max_threads, buffer_size);
 		this._mutex_session_id = new Mutex();
 		this._mutex_sessions = new Mutex();
 
@@ -216,9 +214,8 @@ public class HttpServer : TcpServer {
 		this.on_request_options(socket, request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_read_request(Socket socket) {
+	protected void trigger_on_read_request(Socket socket, char[] buffer) {
 		Request request = Request.new_blank();
-		char[] buffer = new char[_header_max_size];
 		int buffer_length = socket.input.read(buffer);
 
 		// Return blank for bad requests
@@ -228,7 +225,7 @@ public class HttpServer : TcpServer {
 
 		// Show an 'HTTP 413 Request Entity Too Large' if the end of the header was not read
 		if(tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0) == buffer_length) {
-			char[] text = "The end of the HTTP header was not found when reading the first " ~ to_s(_header_max_size) ~ " bytes.";
+			char[] text = "The end of the HTTP header was not found when reading the first " ~ to_s(buffer.length) ~ " bytes.";
 			render_text(socket, request, text, 413);
 			return;
 		}
@@ -396,9 +393,9 @@ void main() {
 	ushort port = 3000;
 	ushort max_waiting_clients = 1000;
 	ushort max_threads = 100;
-	uint header_max_size = 8192;
+	size_t buffer_size = 8192;
 
-	auto server = new HttpServer(port, max_waiting_clients, max_threads, header_max_size);
+	auto server = new HttpServer(port, max_waiting_clients, max_threads, buffer_size);
 	server.start();
 }
 
