@@ -9,16 +9,16 @@ private import tango.io.Stdout;
 
 public class SocketThread : Thread {
 	private Socket _socket = null;
-	private void delegate(Socket socket) _on_respond_normal;
+	private void delegate(Socket socket) _trigger_on_read_request;
 
-	public this(Socket socket, void delegate(Socket socket) on_respond_normal) {
+	public this(Socket socket, void delegate(Socket socket) trigger_on_read_request) {
 		_socket = socket;
-		_on_respond_normal = on_respond_normal;
+		_trigger_on_read_request = trigger_on_read_request;
 		super(&run);
 	}
 
 	private void run() {
-		_on_respond_normal(_socket);
+		_trigger_on_read_request(_socket);
 		_socket.shutdown();
 		_socket.detach();
 	}
@@ -26,14 +26,38 @@ public class SocketThread : Thread {
 
 
 public class TcpServer {
-	protected	ushort _port;
-	protected	ushort _max_waiting_clients;
-	private	ServerSocket _server = null;
-	private	EpollSelector _selector = null;
+	protected ushort _port;
+	protected ushort _max_waiting_clients;
+	private ServerSocket _server = null;
+	private EpollSelector _selector = null;
 
 	public this(ushort port, ushort max_waiting_clients) {
 		this._port = port;
 		this._max_waiting_clients = max_waiting_clients;
+	}
+
+	public void on_started() {
+		Stdout.format("Running on port: {} ...\n", this._port).flush;
+	}
+
+	public void on_read_request(Socket socket) {
+		socket.write("The 'normal' response goes here.");
+	}
+
+	public void on_respond_too_many_threads(Socket socket) {
+		socket.write("The 'too many threads' response goes here.");
+	}
+
+	protected void trigger_on_started() {
+		this.on_started();
+	}
+
+	protected void trigger_on_read_request(Socket socket) {
+		this.on_read_request(socket);
+	}
+
+	protected void trigger_on_respond_too_many_threads(Socket socket) {
+		this.on_respond_too_many_threads(socket);
 	}
 
 	public void start() {
@@ -45,7 +69,7 @@ public class TcpServer {
 		// Create an epoll selector
 		this._selector = new EpollSelector();
 		this._selector.open(); //open(10, 3);
-		this.on_started();
+		this.trigger_on_started();
 
 		while(true) {
 			// Wait forever for any read, hangup, error, or invalid handle events
@@ -60,10 +84,10 @@ public class TcpServer {
 					client = (cast(ServerSocket) item.conduit).accept();
 
 					try {
-						SocketThread thread = new SocketThread(client, &this.on_respond_normal);
+						SocketThread thread = new SocketThread(client, &this.trigger_on_read_request);
 						thread.start();
 					} catch(tango.core.Exception.ThreadException err) {
-						this.on_respond_too_many_threads(client);
+						this.trigger_on_respond_too_many_threads(client);
 						client.shutdown();
 						client.detach();
 						this._selector.unregister(item.conduit);
@@ -76,18 +100,6 @@ public class TcpServer {
 				}
 			}
 		}
-	}
-
-	public void on_started() {
-		Stdout.format("Running on port: {} ...\n", this._port).flush;
-	}
-
-	public void on_respond_normal(Socket socket) {
-		socket.write("The 'normal' response goes here.");
-	}
-
-	public void on_respond_too_many_threads(Socket socket) {
-		socket.write("The 'too many threads' response goes here.");
 	}
 }
 
