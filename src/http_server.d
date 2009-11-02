@@ -86,8 +86,8 @@ public class HttpServer : TcpServer {
 	private Mutex _mutex_session_id = null;
 	private Mutex _mutex_sessions = null;
 
-	public this(ushort port, ushort max_waiting_clients, uint header_max_size) {
-		super(port, max_waiting_clients);
+	public this(ushort port, ushort max_waiting_clients, ushort max_threads, uint header_max_size) {
+		super(port, max_waiting_clients, max_threads);
 		this._header_max_size = header_max_size;
 		this._mutex_session_id = new Mutex();
 		this._mutex_sessions = new Mutex();
@@ -395,9 +395,10 @@ public class HttpServer : TcpServer {
 void main() {
 	ushort port = 3000;
 	ushort max_waiting_clients = 1000;
+	ushort max_threads = 100;
 	uint header_max_size = 8192;
 
-	auto server = new HttpServer(port, max_waiting_clients, header_max_size);
+	auto server = new HttpServer(port, max_waiting_clients, max_threads, header_max_size);
 	server.start();
 }
 
