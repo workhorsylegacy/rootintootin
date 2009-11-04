@@ -318,7 +318,24 @@ public class HttpServer : TcpServer {
 		*/
 	}
 
-	private void render_text(Socket socket, Request request, char[] text, ushort status_code = 200) {
+	protected void redirect_to(Socket socket, Request request, char[] url) {
+		// If we have already rendered, show an error
+		if(request.has_rendered) {
+			throw new Exception("Something has already been rendered.");
+		}
+
+		char[] status = Helper.get_verbose_status_code(301);
+
+		char[] header = "HTTP/1.1 " ~ status ~ "\r\n" ~
+		"Location: " ~ url ~ "\r\n" ~
+		"Content-Type: text/html\r\n" ~
+		"Content-Length: 0" ~
+		"\r\n";
+
+		socket.write(header);
+	}
+
+	protected void render_text(Socket socket, Request request, char[] text, ushort status_code = 200) {
 		socket.write(generate_text(request, text, status_code));
 	}
 
@@ -389,14 +406,5 @@ public class HttpServer : TcpServer {
 	}
 }
 
-void main() {
-	ushort port = 3000;
-	ushort max_waiting_clients = 1000;
-	ushort max_threads = 100;
-	size_t buffer_size = 8192;
-
-	auto server = new HttpServer(port, max_waiting_clients, max_threads, buffer_size);
-	server.start();
-}
 
 

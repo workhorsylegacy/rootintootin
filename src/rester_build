@@ -45,7 +45,7 @@ def generate_run(routes, table_map, reference_map):
 		"import language_helper;\n" +
 		"import helper;\n" +
 		"import rester;\n" +
-		"import rester_server;\n" +
+		"import new_server;\n" +
 		"import ui;\n\n"
 	)
 
@@ -92,13 +92,13 @@ def generate_run(routes, table_map, reference_map):
 
 	# Write the run action function
 	out_file.write(
-	"public char[] run_action(Request request) {\n" +
+	"public char[] run_action(Request request, char[] controller, char[] action, char[] id) {\n" +
 	"\n"
 	)
 	
 	for controller, actions in routes.items():
 		out_file.write(
-		"	if(request.controller == \"" + controller + "s\") {\n" +
+		"	if(controller == \"" + controller + "s\") {\n" +
 		"		this._" + controller + "_controller = new " + controller.capitalize() + "Controller();\n" +
 		"		this._" + controller + "_controller.request = request;\n" +
 		"\n"
@@ -113,13 +113,13 @@ def generate_run(routes, table_map, reference_map):
 			elif action == "delete":
 				action = "Delete"
 			out_file.write(
-			"		if(request.action == \"" + action + "\") {\n" +
+			"		if(action == \"" + action + "\") {\n" +
 			"			this._" + controller + "_controller." + action + "();\n"
 			)
 
 			if method == "get":
 				out_file.write(
-				"			return this.render_view(request.controller, request.action);\n"
+				"			return this.render_view(controller, action);\n"
 				)
 			else:
 				out_file.write(
@@ -135,9 +135,6 @@ def generate_run(routes, table_map, reference_map):
 	out_file.write("}\n")
 
 	port = globals()['server_configuration']['port']
-	event_port = None
-	if globals()['server_configuration'].has_key('event_port'):
-		event_port = globals()['server_configuration']['event_port']
 	max_connections = globals()['server_configuration']['max_connections']
 	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
@@ -146,35 +143,23 @@ def generate_run(routes, table_map, reference_map):
 	db_name = globals()['database_configuration']['name']
 
 	# Write the main function
-	if event_port:
-		out_file.write(
-		"\n\nint main() {\n" +
-		"	Server server = new Server();\n" + 
-		"	char[" + str(header_max_size) + "] buffer;\n" + 
-		"	char[" + str(header_max_size) + "] event_buffer;\n" + 
-		"	RunnerBase runner = new Runner();\n" + 
-		"	RunnerBase event_runner = new Runner();\n\n" + 
-		"	server.start(" + str(port) + ", " + str(event_port) + ", " + str(max_connections) + ", \n" + 
-		"				buffer, event_buffer, " + str(header_max_size) + ", \n" + 
-		"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
-		"				\"" + db_password + "\", \"" + db_name + "\",\n" +
-		"				runner, event_runner);\n" +
-		"\n" +
-		"	return 0;\n" +
-		"}\n")
-	else:
-		out_file.write(
-		"\n\nint main() {\n" +
-		"	Server server = new Server();\n" + 
-		"	char[" + str(header_max_size) + "] buffer;\n\n" + 
-		"	server.start(" + str(port) + ", " + str(max_connections) + ", \n" + 
-		"				buffer, " + str(header_max_size) + ", \n" + 
-		"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
-		"				\"" + db_password + "\", \"" + db_name + "\",\n" +
-		"				new Runner());\n" +
-		"\n" +
-		"	return 0;\n" +
-		"}\n")
+	out_file.write(
+	"\n\nint main() {\n" + 
+	"	ushort port = " + port + ";\n" + 
+	"	ushort max_waiting_clients = " + str(max_connections) + ";\n" + 
+	"	ushort max_threads = 100;\n" + 
+	"	size_t buffer_size = " + str(header_max_size) + ";\n" + 
+	"	RunnerBase runner = new Runner();\n" + 
+	"\n" + 
+	"	auto server = new ResterServer(runner, \n" + 
+	"				" + str(port) + ", " + str(max_connections) + ", \n" + 
+	"				" + str(100) + ", " + str(header_max_size) + ", \n" + 
+	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
+	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
+	"	server.start();\n" + 
+	"\n" +
+	"	return 0;\n" +
+	"}\n")
 
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	# Add class opening
@@ -616,7 +601,7 @@ result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
 command = "ldc -g -of run " + \
-			"language_helper.d helper.d rester.d rester_server.d ui.d run.d " + \
+			"language_helper.d helper.d rester.d new_server.d http_server.d tcp_server.d ui.d run.d " + \
 			"db.d db.a " + \
 			str.join(' ', additional_imports) + \
 			" -L=\"-lmysqlclient\""

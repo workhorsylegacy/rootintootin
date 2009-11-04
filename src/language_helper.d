@@ -1,8 +1,8 @@
 
-import tango.text.Util;
-import tango.text.Ascii;
-import tango.text.convert.Integer;
-import tango.text.convert.Float;
+private import tango.text.Util;
+private import tango.text.Ascii;
+private import tango.text.convert.Integer;
+private import tango.text.convert.Float;
 
 
 public static char[] between(char[] value, char[] before, char[] after) {

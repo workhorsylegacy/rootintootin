@@ -11,7 +11,7 @@ public class UserController : ControllerBase {
 	}
 
 	public void show() {
-		_user = User.find(to_ulong(_request.params["id"]));
+		_user = User.find(to_ulong(_request._params["id"]));
 	}
 
 	public void New() {
@@ -20,8 +20,8 @@ public class UserController : ControllerBase {
 
 	public void create() {
 		_user = new User();
-		_user.name = _request.params["user[name]"];
-		_user.email = _request.params["user[email]"];
+		_user.name = _request._params["user[name]"];
+		_user.email = _request._params["user[email]"];
 
 		if(_user.save()) {
 			flash_notice("The user was saved.");
@@ -32,13 +32,13 @@ public class UserController : ControllerBase {
 	}
 
 	public void edit() {
-		_user = User.find(to_ulong(_request.params["id"]));
+		_user = User.find(to_ulong(_request._params["id"]));
 	}
 
 	public void update() {
-		_user = User.find(to_ulong(_request.params["id"]));
-		_user.name = _request.params["user[name]"];
-		_user.email = _request.params["user[email]"];
+		_user = User.find(to_ulong(_request._params["id"]));
+		_user.name = _request._params["user[name]"];
+		_user.email = _request._params["user[email]"];
 
 		if(_user.save()) {
 			flash_notice("The user was updated.");
@@ -49,7 +49,7 @@ public class UserController : ControllerBase {
 	}
 
 	public void destroy() {
-		_user = User.find(to_ulong(_request.params["id"]));
+		_user = User.find(to_ulong(_request._params["id"]));
 		if(_user.destroy()) {
 			redirect_to("/users/index");
 		} else {

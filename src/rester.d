@@ -1,19 +1,20 @@
 
 
 
-import tango.text.convert.Integer;
-import tango.text.Util;
-import tango.stdc.stringz;
-import tango.text.Regex;
+private import tango.text.convert.Integer;
+private import tango.text.Util;
+private import tango.stdc.stringz;
+private import tango.text.Regex;
 
-import tango.io.Stdout;
+private import tango.io.Stdout;
 
-import tango.time.chrono.Gregorian;
-import tango.time.WallClock;
+private import tango.time.chrono.Gregorian;
+private import tango.time.WallClock;
 
 public import language_helper;
-import db;
-import helper;
+private import db;
+private import helper;
+private import http_server;
 
 public class SqlError : Exception {
 	public this(char[] message) {
@@ -60,7 +61,7 @@ public class RunnerBase {
 		return null;
 	}
 
-	public char[] run_action(Request request) {
+	public char[] run_action(Request request, char[] controller, char[] action, char[] id) {
 		return null;
 	}
 }
@@ -264,9 +265,10 @@ public class ControllerBase {
 		this._request.response_type = ResponseType.redirect_to;
 		this._request.redirect_to_url = url;
 	}
-
+/*
 	public void trigger_event(char[] event_name) {
 		this._request.events_to_trigger ~= event_name;
 	}
+*/
 }
 

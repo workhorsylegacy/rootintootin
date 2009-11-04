@@ -69,11 +69,11 @@ public class SocketThreadPool {
 			throw new Exception("Thread pool could not create " ~ to_s(_number_of_threads)  ~ " threads. System ran out at " ~ to_s(i) ~ " threads.");
 		}
 
-		Thread t = new Thread(&testo);
-		t.start();
+		//Thread t = new Thread(&print_thread_status);
+		//t.start();
 	}
 
-	private void testo() {
+	private void print_thread_status() {
 		while(true) {
 			Thread.sleep(2);
 

@@ -13,7 +13,7 @@ public class CommentController : ControllerBase {
 	}
 
 	public void show() {
-		_comment = Comment.find(to_ulong(_request.params["id"]));
+		_comment = Comment.find(to_ulong(_request._params["id"]));
 	}
 
 	public void New() {
@@ -23,9 +23,9 @@ public class CommentController : ControllerBase {
 
 	public void create() {
 		_comment = new Comment();
-		_comment.value = _request.params["comment[value]"];
+		_comment.value = _request._params["comment[value]"];
 		// FIXME: Change this to user not parent
-		_comment.parent = User.find(to_ulong(_request.params["comment[user]"]));
+		_comment.parent = User.find(to_ulong(_request._params["comment[user]"]));
 
 		if(_comment.save()) {
 			flash_notice("The comment was created.");
@@ -36,15 +36,15 @@ public class CommentController : ControllerBase {
 	}
 
 	public void edit() {
-		_comment = Comment.find(to_ulong(_request.params["id"]));
+		_comment = Comment.find(to_ulong(_request._params["id"]));
 		_users = User.find_all();
 	}
 
 	public void update() {
-		_comment = Comment.find(to_ulong(_request.params["id"]));
-		_comment.value = _request.params["comment[value]"];
+		_comment = Comment.find(to_ulong(_request._params["id"]));
+		_comment.value = _request._params["comment[value]"];
 		// FIXME: Change this to user not parent
-		_comment.parent = User.find(to_ulong(_request.params["comment[user]"]));
+		_comment.parent = User.find(to_ulong(_request._params["comment[user]"]));
 
 		if(_comment.save()) {
 			flash_notice("The comment was updated.");
@@ -55,7 +55,7 @@ public class CommentController : ControllerBase {
 	}
 
 	public void destroy() {
-		_comment = Comment.find(to_ulong(_request.params["id"]));
+		_comment = Comment.find(to_ulong(_request._params["id"]));
 		if(_comment.destroy()) {
 			redirect_to("/comments/index");
 		} else {
