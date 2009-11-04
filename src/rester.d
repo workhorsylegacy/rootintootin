@@ -61,7 +61,7 @@ public class RunnerBase {
 		return null;
 	}
 
-	public char[] run_action(Request request, char[] controller, char[] action, char[] id) {
+	public char[] run_action(ref Request request, char[] controller, char[] action, char[] id) {
 		return null;
 	}
 }
@@ -250,6 +250,7 @@ public class ControllerBase {
 	public char[] flash_notice() { return this._flash_notice; }
 	public bool use_layout() { return _use_layout; }
 	public void request(Request value) { this._request = value; }
+	public Request request() { return this._request; }
 
 	public void render_view(char[] name) {
 		this._request.response_type = ResponseType.render_view;

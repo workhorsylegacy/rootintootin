@@ -92,7 +92,7 @@ def generate_run(routes, table_map, reference_map):
 
 	# Write the run action function
 	out_file.write(
-	"public char[] run_action(Request request, char[] controller, char[] action, char[] id) {\n" +
+	"public char[] run_action(ref Request request, char[] controller, char[] action, char[] id) {\n" +
 	"\n"
 	)
 	
@@ -108,13 +108,15 @@ def generate_run(routes, table_map, reference_map):
 		all_actions.update(actions['member'])
 		all_actions.update(actions['collection'])
 		for action, method in all_actions.items():
+			real_action = action
 			if action == "new":
-				action = "New"
+				real_action = "New"
 			elif action == "delete":
-				action = "Delete"
+				real_action = "Delete"
 			out_file.write(
 			"		if(action == \"" + action + "\") {\n" +
-			"			this._" + controller + "_controller." + action + "();\n"
+			"			this._" + controller + "_controller." + real_action + "();\n" +
+			"			request = this._" + controller + "_controller.request;\n"
 			)
 
 			if method == "get":

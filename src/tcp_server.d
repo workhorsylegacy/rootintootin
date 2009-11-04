@@ -36,11 +36,12 @@ public class SocketThread : Thread {
 			_semaphore.wait();
 			try {
 				_trigger_on_read_request(_socket, _buffer);
+			} catch(Exception err) {
+				Stdout("_trigger_on_read_request went boom").flush;
+			} finally {
 				_socket.shutdown();
 				_socket.detach();
 				_on_end(this);
-			} catch(Exception err) {
-				Stdout("_trigger_on_read_request went boom").flush;
 			}
 		}
 	}
