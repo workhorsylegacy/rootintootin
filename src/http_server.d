@@ -20,7 +20,6 @@ private import language_helper;
 private import helper;
 
 public enum ResponseType {
-	normal,
 	render_view, 
 	render_text, 
 	redirect_to
@@ -35,11 +34,6 @@ public class Request {
 	public char[][char[]] _fields;
 	public char[][char[]] _cookies;
 	public uint _content_length = 0;
-
-	private ResponseType _response_type;
-	private char[] _redirect_to_url = null;
-	private char[] _render_view_name = null;
-	private char[] _render_text_text = null;
 
 	public this(char[] method, char[] uri, char[] http_version, char[][char[]] params, char[][char[]] fields, char[][char[]] cookies) {
 		_method = method;
@@ -56,20 +50,11 @@ public class Request {
 	public char[] http_version() { return _http_version; }
 	public uint content_length() { return _content_length; }
 
-	public ResponseType response_type() { return _response_type; }
-	public char[] redirect_to_url() { return _redirect_to_url; }
-	public char[] render_view_name() { return _render_view_name; }
-	public char[] render_text_text() { return _render_text_text; }
-
 	public void has_rendered(bool value) { _has_rendered = value; }
 	public void method(char[] value) { _method = value; }
 	public void uri(char[] value) { _uri = value; }
 	public void http_version(char[] value) { _http_version = value; }
 	public void content_length(uint value) { _content_length = value; }
-	public void response_type(ResponseType value) { _response_type = value; }
-	public void redirect_to_url(char[] value) { _redirect_to_url = value; }
-	public void render_view_name(char[] value) { _render_view_name = value; }
-	public void render_text_text(char[] value) { _render_text_text = value; }
 
 	public static Request new_blank() {
 		char[][char[]] params, cookies, fields;
@@ -335,7 +320,7 @@ public class HttpServer : TcpServer {
 		socket.write(header);
 	}
 
-	protected void render_text(Socket socket, Request request, char[] text, ushort status_code = 200) {
+	protected void render_text(Socket socket, Request request, char[] text, ushort status_code) {
 		socket.write(generate_text(request, text, status_code));
 	}
 

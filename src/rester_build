@@ -60,18 +60,14 @@ def generate_run(routes, table_map, reference_map):
 	# Write the runner class
 	out_file.write(
 	"public class Runner : RunnerBase {\n")
-	for controller, actions in routes.items():
-		out_file.write("	private " + controller.capitalize() + "Controller _" + controller + "_controller;\n")
-	out_file.write("\n")
 
 	# Write the render view function
-	out_file.write(
-	"public char[] render_view(char[] controller_name, char[] view_name) {\n" +
-	"	int[int] line_translations;\n")
-
 	for controller, actions in routes.items():
 		out_file.write(
-		"	if(controller_name == \"" + controller + "s\") {\n")
+		"	public char[] render_view(" + controller.capitalize() + "Controller controller, char[] controller_name, char[] view_name) {\n")
+
+		out_file.write(
+		"		if(controller_name == \"" + controller + "s\") {\n")
 
 		all_actions = {}
 		all_actions.update(actions['member'])
@@ -79,28 +75,26 @@ def generate_run(routes, table_map, reference_map):
 		for action, method in all_actions.items():
 			if method == "get":
 				out_file.write(
-				"		if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
-				"			return " + controller.capitalize() + action.capitalize() + "View.render(this._" + controller + "_controller, line_translations);\n"
+				"			if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
+				"				return " + controller.capitalize() + action.capitalize() + "View.render(controller);\n"
 				)
 
-				out_file.write("		}\n")
+				out_file.write("			}\n")
 
+		out_file.write("		}\n")
+		out_file.write("		return \"Unknown view '\" ~ view_name ~ \"'\";\n")
 		out_file.write("	}\n")
-	out_file.write("	return \"Unknown view '\" ~ view_name ~ \"'\";\n")
-	out_file.write("}\n")
 
 
 	# Write the run action function
 	out_file.write(
-	"public char[] run_action(ref Request request, char[] controller, char[] action, char[] id) {\n" +
-	"\n"
-	)
-	
+	"	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id) {\n")
 	for controller, actions in routes.items():
 		out_file.write(
-		"	if(controller == \"" + controller + "s\") {\n" +
-		"		this._" + controller + "_controller = new " + controller.capitalize() + "Controller();\n" +
-		"		this._" + controller + "_controller.request = request;\n" +
+		"		if(controller_name == \"" + controller + "s\") {\n" +
+		"			" + controller.capitalize() + "Controller controller = new " + controller.capitalize() + "Controller();\n" + 
+		"			controller.request = request;\n" + 
+		"			try {\n" +
 		"\n"
 		)
 
@@ -114,26 +108,33 @@ def generate_run(routes, table_map, reference_map):
 			elif action == "delete":
 				real_action = "Delete"
 			out_file.write(
-			"		if(action == \"" + action + "\") {\n" +
-			"			this._" + controller + "_controller." + real_action + "();\n" +
-			"			request = this._" + controller + "_controller.request;\n"
+			"				if(action_name == \"" + action + "\") {\n" +
+			"					controller." + real_action + "();\n"
 			)
 
 			if method == "get":
 				out_file.write(
-				"			return this.render_view(controller, action);\n"
+				"					return this.render_view(controller, controller_name, action_name);\n"
 				)
 			else:
 				out_file.write(
-				"			return null;\n"
+				"					return null;\n"
 				)
+			out_file.write(
+				"				}\n")
 
-			out_file.write("		}\n")
+		out_file.write(
+			"			} catch(ManualRenderException err) {\n" + 
+			"				if(err._response_type == ResponseType.render_view) {\n" + 
+			"					return this.render_view(controller, controller_name, err._payload);\n" + 
+			"				} else {\n" + 
+			"					throw err;\n" + 
+			"				}\n" + 
+			"			}\n")
+		out_file.write("		}\n")
 
-		out_file.write("	}\n")
-
-	out_file.write("	return null;\n")
-	out_file.write("}\n")
+	out_file.write("		return null;\n")
+	out_file.write("	}\n")
 	out_file.write("}\n")
 
 	port = globals()['server_configuration']['port']
@@ -447,7 +448,7 @@ def generate_views(routes):
 			output.append(
 			"import view_layouts_default;\n\n" +
 			"public class " + controller.capitalize() + member.capitalize() + "View { \n" +
-			"public static char[] render(" + controller.capitalize() + "Controller controller, out int[int] line_translations) { \n" +
+			"public static char[] render(" + controller.capitalize() + "Controller controller) { \n" +
 			"	// Generate the view as an array of strings\n" +
 			"	AutoStringArray builder = new AutoStringArray();")
 

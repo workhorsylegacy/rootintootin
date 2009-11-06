@@ -55,27 +55,15 @@ public class ResterServer : HttpServer {
 		Stdout.format("action: {}\n", action).flush;
 
 		// Run the action
-		char[] response = _runner.run_action(request, controller, action, id);
-
-		switch(request.response_type) {
-			case ResponseType.normal:
-				this.render_text(socket, request, response);
-				break;
-			case ResponseType.redirect_to:
-				this.redirect_to(socket, request, request.redirect_to_url);
-				break;
-			case ResponseType.render_view:
-				response = _runner.render_view(controller, request.render_view_name);
-				this.render_text(socket, request, response, 200);
-				break;
-			case ResponseType.render_text:
-				this.render_text(socket, request, request.render_text_text, 200);
-				break;
-		}
-
-		if(response is null) {
-			this.render_text(socket, request, "404: no controller found", 404);
-			return;
+		try {
+			char[] response = _runner.run_action(request, controller, action, id);
+			this.render_text(socket, request, response, 200);
+		} catch(ManualRenderException err) {
+			if(err._response_type == ResponseType.render_text) {
+				this.render_text(socket, request, err._payload, 200);
+			} else if(err._response_type == ResponseType.redirect_to) {
+				this.redirect_to(socket, request, err._payload);
+			}
 		}
 	}
 }

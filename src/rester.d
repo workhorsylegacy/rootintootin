@@ -16,9 +16,21 @@ private import db;
 private import helper;
 private import http_server;
 
-public class SqlError : Exception {
-	public this(char[] message) {
-		super(message);
+
+public class RunnerBase {
+	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id) {
+		return null;
+	}
+}
+
+public class ManualRenderException : Exception {
+	public ResponseType _response_type;
+	public char[] _payload;
+
+	public this(ResponseType response_type, char[] payload) {
+		super("");
+		_response_type = response_type;
+		_payload = payload;
 	}
 }
 
@@ -53,16 +65,6 @@ public class ModelBase {
 
 	public char[][] errors() {
 		return this._errors;
-	}
-}
-
-public class RunnerBase {
-	public char[] render_view(char[] controller_name, char[] view_name) {
-		return null;
-	}
-
-	public char[] run_action(ref Request request, char[] controller, char[] action, char[] id) {
-		return null;
 	}
 }
 
@@ -253,18 +255,15 @@ public class ControllerBase {
 	public Request request() { return this._request; }
 
 	public void render_view(char[] name) {
-		this._request.response_type = ResponseType.render_view;
-		this._request.render_view_name = name;
+		throw new ManualRenderException(ResponseType.render_view, name);
 	}
 
 	public void render_text(char[] text) {
-		this._request.response_type = ResponseType.render_text;
-		this._request.render_text_text = text;
+		throw new ManualRenderException(ResponseType.render_text, text);
 	}
 
 	public void redirect_to(char[] url) {
-		this._request.response_type = ResponseType.redirect_to;
-		this._request.redirect_to_url = url;
+		throw new ManualRenderException(ResponseType.redirect_to, url);
 	}
 /*
 	public void trigger_event(char[] event_name) {
