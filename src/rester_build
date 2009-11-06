@@ -45,7 +45,7 @@ def generate_run(routes, table_map, reference_map):
 		"import language_helper;\n" +
 		"import helper;\n" +
 		"import rester;\n" +
-		"import new_server;\n" +
+		"import rester_server;\n" +
 		"import ui;\n\n"
 	)
 
@@ -603,7 +603,7 @@ result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
 command = "ldc -g -of run " + \
-			"language_helper.d helper.d rester.d new_server.d http_server.d tcp_server.d ui.d run.d " + \
+			"language_helper.d helper.d rester.d rester_server.d http_server.d tcp_server.d ui.d run.d " + \
 			"db.d db.a " + \
 			str.join(' ', additional_imports) + \
 			" -L=\"-lmysqlclient\""
