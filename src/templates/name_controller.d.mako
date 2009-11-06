@@ -12,7 +12,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 	}
 
 	public void show() {
-		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request.params["id"]));
+		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
 	}
 
 	public void New() {
@@ -23,7 +23,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 		_${controller_name} = new ${controller_name.capitalize()}();
 % for field in pairs:
 <%field_name, field_type = field.split(':') %>\
-		_${controller_name}.${field_name} = to_${field_type}(_request.params["${controller_name}[${field_name}]"]);
+		_${controller_name}.${field_name} = to_${field_type}(_request._params["${controller_name}[${field_name}]"]);
 % endfor
 
 		if(_${controller_name}.save()) {
@@ -35,14 +35,14 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 	}
 
 	public void edit() {
-		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request.params["id"]));
+		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
 	}
 
 	public void update() {
-		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request.params["id"]));
+		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
 % for field in pairs:
 <%field_name, field_type = field.split(':') %>\
-		_${controller_name}.${field_name} = to_${field_type}(_request.params["${controller_name}[${field_name}]"]);
+		_${controller_name}.${field_name} = to_${field_type}(_request._params["${controller_name}[${field_name}]"]);
 % endfor
 
 		if(_${controller_name}.save()) {
@@ -54,7 +54,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 	}
 
 	public void destroy() {
-		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request.params["id"]));
+		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
 
 		if(_${controller_name}.destroy()) {
 			redirect_to("/${pluralize(controller_name)}/index");

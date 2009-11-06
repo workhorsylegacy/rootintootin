@@ -52,8 +52,6 @@ if mode == "new":
 	generator = Generator()
 	generator.configure_database(['user:'+db_user, 'password:'+db_password, 'name:'+name+'_development'])
 	generator.configure_server(['port:'+port])
-	generator.drop_database()
-	generator.create_database()
 
 
 

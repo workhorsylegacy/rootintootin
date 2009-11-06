@@ -11,7 +11,7 @@ public class MessageController : ControllerBase {
 	}
 
 	public void show() {
-		_message = Message.find(to_ulong(_request.params["id"]));
+		_message = Message.find(to_ulong(_request._params["id"]));
 	}
 
 	public void New() {
@@ -20,7 +20,7 @@ public class MessageController : ControllerBase {
 
 	public void create() {
 		_message = new Message();
-		_message.text = _request.params["message[text]"];
+		_message.text = _request._params["message[text]"];
 
 		if(_message.save()) {
 			redirect_to("/messages/show/" ~ to_s(_message.id));
@@ -31,12 +31,12 @@ public class MessageController : ControllerBase {
 	}
 
 	public void edit() {
-		_message = Message.find(to_ulong(_request.params["id"]));
+		_message = Message.find(to_ulong(_request._params["id"]));
 	}
 
 	public void update() {
-		_message = Message.find(to_ulong(_request.params["id"]));
-		_message.text = _request.params["message[text]"];
+		_message = Message.find(to_ulong(_request._params["id"]));
+		_message.text = _request._params["message[text]"];
 
 		if(_message.save()) {
 			redirect_to("/messages/show/" ~ to_s(_message.id));
@@ -46,7 +46,7 @@ public class MessageController : ControllerBase {
 	}
 
 	public void destroy() {
-		_message = Message.find(to_ulong(_request.params["id"]));
+		_message = Message.find(to_ulong(_request._params["id"]));
 		_message.destroy();
 
 		redirect_to("/messages/index");

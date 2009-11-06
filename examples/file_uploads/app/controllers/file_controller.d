@@ -11,7 +11,7 @@ public class FileController : ControllerBase {
 	}
 
 	public void show() {
-		_file = File.find(to_ulong(_request.params["id"]));
+		_file = File.find(to_ulong(_request._params["id"]));
 	}
 
 	public void New() {
@@ -20,7 +20,7 @@ public class FileController : ControllerBase {
 
 	public void create() {
 		_file = new File();
-		_file.name = _request.params["file[name]"];
+		_file.name = _request._params["file[name]"];
 
 		if(_file.save()) {
 			redirect_to("/files/show/" ~ to_s(_file.id));
@@ -30,12 +30,12 @@ public class FileController : ControllerBase {
 	}
 
 	public void edit() {
-		_file = File.find(to_ulong(_request.params["id"]));
+		_file = File.find(to_ulong(_request._params["id"]));
 	}
 
 	public void update() {
-		_file = File.find(to_ulong(_request.params["id"]));
-		_file.name = _request.params["file[name]"];
+		_file = File.find(to_ulong(_request._params["id"]));
+		_file.name = _request._params["file[name]"];
 
 		if(_file.save()) {
 			redirect_to("/files/show/" ~ to_s(_file.id));
@@ -45,7 +45,7 @@ public class FileController : ControllerBase {
 	}
 
 	public void destroy() {
-		_file = File.find(to_ulong(_request.params["id"]));
+		_file = File.find(to_ulong(_request._params["id"]));
 		_file.destroy();
 
 		redirect_to("/files/index");
