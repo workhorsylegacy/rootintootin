@@ -181,7 +181,7 @@ public class TcpServer {
 
 		while(true) {
 			// Wait forever for any read, hangup, error, or invalid handle events
-			this._selector.register(this._server, Event.Read | Event.Hangup | Event.Error | Event.InvalidHandle);;
+			this._selector.register(this._server, Event.Read | Event.Hangup | Event.Error | Event.InvalidHandle);
 			if(this._selector.select(-1) == 0) {
 				continue;
 			}
