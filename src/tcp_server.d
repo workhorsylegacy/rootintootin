@@ -143,15 +143,15 @@ public class TcpServer {
 		this._max_threads = max_threads;
 	}
 
-	public void on_started() {
+	protected void on_started() {
 		Stdout.format("Running on port: {} ...\n", this._port).flush;
 	}
 
-	public void on_read_request(Socket socket, char[] buffer) {
+	protected void on_read_request(Socket socket, char[] buffer) {
 		socket.write("The 'normal' response goes here.");
 	}
 
-	public void on_respond_too_many_threads(Socket socket) {
+	protected void on_respond_too_many_threads(Socket socket) {
 		socket.write("The 'too many threads' response goes here.");
 	}
 
