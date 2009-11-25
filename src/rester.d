@@ -10,12 +10,12 @@ private import tango.io.Stdout;
 
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
+private import tango.core.Thread;
 
 public import language_helper;
 private import db;
 private import helper;
 private import http_server;
-
 
 public class RunnerBase {
 	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id) {
@@ -115,11 +115,14 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 	// Returns a single model that matches the id, or null.
 	static T find(ulong id) {
+		// Get the connection id from the current thread
+		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
+
 		// Create the query and run it
 		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ T._table_name;
 		query ~= " where id=" ~ to_s(id) ~ ";";
 		int row_len, col_len;
-		char*** result = db.db_query_with_result(query, row_len, col_len);
+		char*** result = db.db_query_with_result(connection_id, query, row_len, col_len);
 
 		// Just return null if there was none found
 		if(row_len == 0) {
@@ -153,15 +156,17 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 	// Returns all the models of this type.
 	static T[] find_all(char[] conditions = null, char[] order = null) {
-		T[] all = [];
+		// Get the connection id from the current thread
+		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
 
 		// Create the query and run it
+		T[] all = [];
 		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ _table_name;
 		if(conditions != null) query ~= " where " ~ conditions;
 		if(order != null) query ~= " order by " ~ order;
 		query ~= ";";
 		int row_len, col_len;
-		char*** result = db.db_query_with_result(query, row_len, col_len);
+		char*** result = db.db_query_with_result(connection_id, query, row_len, col_len);
 
 		// Copy all the fields into each model
 		T model = null;
@@ -186,6 +191,9 @@ public template ModelBaseMixin(T, char[] model_name) {
 	}
 
 	bool save() {
+		// Get the connection id from the current thread
+		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
+
 		// Return false if the validation failed
 		if(this.is_valid() == false)
 			return false;
@@ -200,7 +208,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 		 	query ~= ");";
 
 			// Run the query, and save the id
-			_id = db.db_insert_query_with_result_id(query);
+			_id = db.db_insert_query_with_result_id(connection_id, query);
 		} else {
 		// If there is an id, use an update query
 			query ~= "update " ~ typeof(this)._table_name ~ " set ";
@@ -215,13 +223,16 @@ public template ModelBaseMixin(T, char[] model_name) {
 			query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 			// Run the query
-			db.db_update_query(query);
+			db.db_update_query(connection_id, query);
 		}
 
 		return true;
 	}
 
 	bool destroy() {
+		// Get the connection id from the current thread
+		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
+
 		// Create the delete query
 		char[] query = "";
 		query ~= "delete from " ~ typeof(this)._table_name;
@@ -229,7 +240,7 @@ public template ModelBaseMixin(T, char[] model_name) {
 
 		// Run the query
 		db.query_result result;
-		db.db_delete_query(query, result);
+		db.db_delete_query(connection_id, query, result);
 
 		if(result == db.query_result.success) {
 			return true;

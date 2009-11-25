@@ -1,6 +1,7 @@
 
 private import tango.net.device.Socket;
 private import tango.text.Util;
+private import tango.core.Thread;
 
 public import tango.io.Stdout;
 public import http_server;
@@ -10,21 +11,23 @@ private import db;
 private import rester;
 
 public class ResterServer : HttpServer {
-	private RunnerBase _runner = null;
+	private RunnerBase[] _runners = null;
 
-	public this(RunnerBase runner, ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size, 
+	public this(RunnerBase[] runners, ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size, 
 				char[] db_host, char[] db_user, char[] db_password, char[] db_name) {
 		super(port, max_waiting_clients, max_threads, buffer_size);
-		_runner = runner;
+		_runners = runners;
 
-		// FIXME: This is bad because each thread will use the same database connection
-		// change each thread to have its own runner and db connection
 		// Connect to the database
-		db_connect(db_host, db_user, db_password, db_name);
+		db_init(max_threads);
+		// FIXME: Move this to be inside db_init
+		for(size_t i=0; i<max_threads; i++) {
+			db_connect(i, db_host, db_user, db_password, db_name);
+		}
 	}
 
-	protected void on_respond_too_many_threads(Socket socket) {
-		socket.write("503: Service Unavailable - Too many requests in the queue.");
+	protected void on_started() {
+		Stdout.format("Rester running on http://localhost:{} ...\n", this._port).flush;
 	}
 
 	protected void on_request_get(Socket socket, Request request, char[] raw_header, char[] raw_body) {
@@ -55,8 +58,9 @@ public class ResterServer : HttpServer {
 		Stdout.format("action: {}\n", action).flush;
 
 		// Run the action
+		size_t thread_id = cast(size_t) to_int(Thread.getThis().name);
 		try {
-			char[] response = _runner.run_action(request, controller, action, id);
+			char[] response = _runners[thread_id].run_action(request, controller, action, id);
 			this.render_text(socket, request, response, 200);
 		} catch(ManualRenderException err) {
 			if(err._response_type == ResponseType.render_text) {

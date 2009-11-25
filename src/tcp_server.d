@@ -18,11 +18,15 @@ public class SocketThread : Thread {
 	private void delegate(Socket socket, char[] buffer) _trigger_on_read_request = null;
 	private void delegate(SocketThread t) _on_end = null;
 
-	public this(void delegate(SocketThread t) on_end, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
+	public this(size_t thread_id, void delegate(SocketThread t) on_end, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
 		_buffer = new char[buffer_size];
 		_semaphore = new Semaphore();
 		_on_end = on_end;
 		_trigger_on_read_request = trigger_on_read_request;
+
+		// Store the thread_name
+		this.name = to_s(thread_id);
+
 		super(&run);
 	}
 
@@ -61,7 +65,7 @@ public class SocketThreadPool {
 		size_t i = 0;
 		try {
 			for(i=0; i<_number_of_threads; i++) {
-				auto t = new SocketThread(&socket_on_end, trigger_on_read_request, buffer_size);
+				auto t = new SocketThread(i, &socket_on_end, trigger_on_read_request, buffer_size);
 				t.isDaemon = true;
 				t.start();
 				_idle_threads ~= t;
@@ -104,6 +108,7 @@ public class SocketThreadPool {
 		} finally {
 			_thread_mutex.unlock();
 		}
+
 		return t !is null;
 	}
 

@@ -139,6 +139,7 @@ def generate_run(routes, table_map, reference_map):
 
 	port = globals()['server_configuration']['port']
 	max_connections = globals()['server_configuration']['max_connections']
+	max_threads = globals()['server_configuration']['max_threads']
 	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
 	db_user = globals()['database_configuration']['user']
@@ -150,13 +151,16 @@ def generate_run(routes, table_map, reference_map):
 	"\n\nint main() {\n" + 
 	"	ushort port = " + port + ";\n" + 
 	"	ushort max_waiting_clients = " + str(max_connections) + ";\n" + 
-	"	ushort max_threads = 100;\n" + 
+	"	ushort max_threads = " + str(max_threads) + ";\n" + 
 	"	size_t buffer_size = " + str(header_max_size) + ";\n" + 
-	"	RunnerBase runner = new Runner();\n" + 
+	"	RunnerBase[" + str(max_threads) + "] runners;\n" + 
+	"	for(size_t i=0; i<max_threads; i++) {\n" + 
+	"		runners[i] = new Runner();\n" + 
+	"	}\n" + 
 	"\n" + 
-	"	auto server = new ResterServer(runner, \n" + 
-	"				" + str(port) + ", " + str(max_connections) + ", \n" + 
-	"				" + str(100) + ", " + str(header_max_size) + ", \n" + 
+	"	auto server = new ResterServer(runners, \n" + 
+	"				port, max_waiting_clients, \n" + 
+	"				max_threads, buffer_size, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
 	"	server.start();\n" + 
