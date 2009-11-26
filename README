@@ -4,14 +4,20 @@ Rester is a fast RESTful web server and framework written in D. It is designed
 to scale well by default, while still providing a developer experience similar 
 to Ruby on Rails.
 
-1. Install the ldc compiler and tango libraries from this guide:
-http://www.dsource.org/projects/ldc/wiki/BuildInstructionsUbuntu
+1. Add the repository for the ldc compiler and tango libraries
+# ubuntu
+sudo add-apt-repository ppa:d-language-packagers
+
+#fedora
+# or follow the instructions here:
+http://www.dsource.org/projects/ldc/
 
 
 2. Install the dependencies for your distro:
 # ubuntu
 sudo apt-get install mysql-client mysql-server libmysqlclient15-dev \
-python-mysqldb python-pexpect python-mako build-essential bzr ldc-daily
+python-mysqldb python-pexpect python-mako build-essential \
+bzr ldc libtango-ldc-dev
 
 # fedora
 sudo yum groupinstall "Development Tools"
