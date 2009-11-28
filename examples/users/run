@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-./scratch/run
+PWD=`pwd`
+PROJECT_NAME=`basename $PWD`
+~/.rester/`echo $PROJECT_NAME`/scratch/run

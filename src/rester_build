@@ -578,11 +578,17 @@ def process_template_body(body, output):
 		body = after
 
 # Copy all the framework and app files into a scratch dir
+rester_dir = os.path.expanduser('~/.rester')
+project_name = sys.argv[1].split('/')[-1]
 pwd = sys.argv[1]
-scratch = pwd + '/scratch/'
+scratch = rester_dir + '/' + project_name + '/scratch/'
+
+if not os.path.exists(rester_dir):
+	os.mkdir(rester_dir)
 if os.path.exists(scratch):
 	shutil.rmtree(scratch)
 shutil.copytree(os.sys.path[0], scratch)
+
 if os.path.exists(pwd+'/app/'):
 	shutil.copytree(pwd+'/app/', scratch+'app/')
 if os.path.exists(pwd+'/config/'):
