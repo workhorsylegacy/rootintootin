@@ -15,6 +15,8 @@ elif not os.path.exists(sys.argv[1]):
 os.chdir(os.sys.path[0])
 
 def generate_run(routes, table_map, reference_map):
+	generator = Generator()
+
 	# Get the names of all the controllers
 	controller_names = []
 	for entry in os.listdir('app/controllers/'):
@@ -67,7 +69,7 @@ def generate_run(routes, table_map, reference_map):
 		"	public char[] render_view(" + controller.capitalize() + "Controller controller, char[] controller_name, char[] view_name) {\n")
 
 		out_file.write(
-		"		if(controller_name == \"" + controller + "s\") {\n")
+		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
 
 		all_actions = {}
 		all_actions.update(actions['member'])
@@ -91,7 +93,7 @@ def generate_run(routes, table_map, reference_map):
 	"	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id) {\n")
 	for controller, actions in routes.items():
 		out_file.write(
-		"		if(controller_name == \"" + controller + "s\") {\n" +
+		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
 		"			" + controller.capitalize() + "Controller controller = new " + controller.capitalize() + "Controller();\n" + 
 		"			controller.request = request;\n" + 
 		"			try {\n" +
@@ -169,6 +171,7 @@ def generate_run(routes, table_map, reference_map):
 	"}\n")
 
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
+	generator = Generator()
 	# Add class opening
 	properties = "import rester;\n"
 
@@ -179,7 +182,7 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 	properties += "\n"
 
 	properties += "public class " + model_name.capitalize() + "Base : ModelBase {\n"
-	properties += "	mixin ModelBaseMixin!(" + model_name.capitalize() + ", \"" + model_name + "\");\n\n"
+	properties += "	mixin ModelBaseMixin!(" + model_name.capitalize() + ", \"" + model_name + "\", \""+ generator.pluralize(model_name) + "\");\n\n"
 
 	# Add a list of all field names
 	properties += "	protected static char[][] _field_names = ["
@@ -238,29 +241,30 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 						"	}\n"
 	
 	# Add the has_many references
-	table_name = model_name + 's'
+	table_name = generator.pluralize(model_name)
 	if table_name in reference_map:
 		for has_many in reference_map[table_name]:
 			has_many = has_many[:-1]
+			has_manies = generator.pluralize(has_many)
 			properties += \
 					"	protected class " + has_many.capitalize() + "s {\n" + \
 					"		mixin ModelArrayMixin!(" + model_name.capitalize() + "Base, \n" + \
 					"								" + has_many.capitalize() + "Base);\n" + \
 					"	}\n" + \
 					"\n" + \
-					"	protected " + has_many.capitalize() + "s _" + has_many + "s;\n\n" + \
+					"	protected " + has_manies.capitalize() + " _" + has_manies + ";\n\n" + \
 					"	public void after_this() {\n" + \
-					"		_" + has_many + "s = new " + has_many.capitalize() + "s(\n" + \
+					"		_" + has_manies + " = new " + has_manies.capitalize() + "(\n" + \
  					"		" + has_many.capitalize() + "Base.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
 					"		);\n" + \
 					"	}\n\n" + \
-					"	public void " + has_many + "s(" + has_many.capitalize() + "s value) {\n" + \
+					"	public void " + has_manies + "(" + has_manies.capitalize() + " value) {\n" + \
 					"		ensure_was_pulled_from_database();\n" + \
-					"		_" + has_many + "s = value;\n" + \
+					"		_" + has_manies + " = value;\n" + \
 					"	}\n" + \
-					"	public " + has_many.capitalize() + "s " + has_many + "s() {\n" + \
+					"	public " + has_manies.capitalize() + " " + has_manies + "() {\n" + \
 					"		ensure_was_pulled_from_database();\n" + \
-					"		return _" + has_many + "s;\n" + \
+					"		return _" + has_manies + ";\n" + \
 					"	}\n"
 
 
@@ -328,6 +332,7 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 
 def generate_models():
 	# Connect to the database
+	generator = Generator()
 	db = MySQLdb.connect(host = globals()['database_configuration']['host'], 
 						user = globals()['database_configuration']['user'], 
 						passwd = globals()['database_configuration']['password'], 
@@ -388,7 +393,7 @@ def generate_models():
 
 	# Write the generated model base classes into the files
 	for model_name in model_names:
-		model_map = table_map[model_name + 's']
+		model_map = table_map[generator.pluralize(model_name)]
 
 		with open(model_name + '_base.d', 'w') as f:
 			f.write("\n\n")

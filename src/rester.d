@@ -68,8 +68,8 @@ public class ModelBase {
 	}
 }
 
-public template ModelBaseMixin(T, char[] model_name) {
-	static char[] _table_name = model_name ~ "s";
+public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
+	static char[] _table_name = table_name;
 	static char[] _model_name = model_name;
 
 	// FIXME: This should be private

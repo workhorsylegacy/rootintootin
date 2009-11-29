@@ -213,6 +213,7 @@ class Generator(object):
 		# Get the files and parameters
 		params = {
 			'controller_name' : controller_name, 
+			'controller_names' : self.pluralize(controller_name), 
 			'model_name' : controller_name, 
 			'pairs' : pairs, 
 			'pluralize' : self.pluralize

@@ -4,7 +4,7 @@ import rester;
 import ${model_name};
 
 public class ${controller_name.capitalize()}Controller : ControllerBase {
-	public ${controller_name.capitalize()}[] _${controller_name}s;
+	public ${controller_name.capitalize()}[] _${controller_names};
 	public ${controller_name.capitalize()} _${controller_name};
 
 	public void index() {
