@@ -68,7 +68,7 @@ else:
 	print "./gen create scaffold [name] [field:type] ..."
 	print "./gen migrate"
 	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
-	print "./gen configure server [port:number] [max_connections:number] [header_max_size:number]"
+	print "./gen configure server [port:number] [max_connections:number] [max_threads:number] [header_max_size:number]"
 	print "./gen create database"
 	print "./gen drop database"
 
