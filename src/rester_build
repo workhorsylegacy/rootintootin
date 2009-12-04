@@ -152,7 +152,7 @@ def generate_run(routes, table_map, reference_map):
 	out_file.write(
 	"\n\nint main() {\n" + 
 	"	ushort port = " + port + ";\n" + 
-	"	ushort max_waiting_clients = " + str(max_connections) + ";\n" + 
+	"	int max_waiting_clients = " + str(max_connections) + ";\n" + 
 	"	ushort max_threads = " + str(max_threads) + ";\n" + 
 	"	size_t buffer_size = " + str(header_max_size) + ";\n" + 
 	"	RunnerBase[" + str(max_threads) + "] runners;\n" + 

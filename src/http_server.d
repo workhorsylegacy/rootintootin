@@ -70,7 +70,7 @@ public class HttpServer : TcpServer {
 	private Mutex _mutex_session_id = null;
 	private Mutex _mutex_sessions = null;
 
-	public this(ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
+	public this(ushort port, int max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
 		super(port, max_waiting_clients, max_threads, buffer_size);
 		this._mutex_session_id = new Mutex();
 		this._mutex_sessions = new Mutex();

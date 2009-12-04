@@ -135,13 +135,13 @@ public class SocketThreadPool {
 public class TcpServer {
 	protected size_t _buffer_size;
 	protected ushort _port;
-	protected ushort _max_waiting_clients;
+	protected int _max_waiting_clients;
 	protected ushort _max_threads;
 	private ServerSocket _server = null;
 	private EpollSelector _selector = null;
 	private SocketThreadPool _pool = null;
 
-	public this(ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
+	public this(ushort port, int max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
 		this._buffer_size = buffer_size;
 		this._port = port;
 		this._max_waiting_clients = max_waiting_clients;

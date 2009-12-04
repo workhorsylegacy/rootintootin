@@ -13,7 +13,7 @@ private import rester;
 public class ResterServer : HttpServer {
 	private RunnerBase[] _runners = null;
 
-	public this(RunnerBase[] runners, ushort port, ushort max_waiting_clients, ushort max_threads, size_t buffer_size, 
+	public this(RunnerBase[] runners, ushort port, int max_waiting_clients, ushort max_threads, size_t buffer_size, 
 				char[] db_host, char[] db_user, char[] db_password, char[] db_name) {
 		super(port, max_waiting_clients, max_threads, buffer_size);
 		_runners = runners;
