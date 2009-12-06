@@ -90,7 +90,7 @@ def generate_run(routes, table_map, reference_map):
 
 	# Write the run action function
 	out_file.write(
-	"	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id) {\n")
+	"	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id, out char[][] events_to_trigger) {\n")
 	for controller, actions in routes.items():
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
@@ -110,7 +110,7 @@ def generate_run(routes, table_map, reference_map):
 			elif action == "delete":
 				real_action = "Delete"
 			out_file.write(
-			"				if(action_name == \"" + action + "\") {\n" +
+			"				if(action_name == \"" + action + "\") {\n" + 
 			"					controller." + real_action + "();\n"
 			)
 
@@ -132,6 +132,8 @@ def generate_run(routes, table_map, reference_map):
 			"				} else {\n" + 
 			"					throw err;\n" + 
 			"				}\n" + 
+			"			} finally {\n" + 
+			"				events_to_trigger = controller._events_to_trigger;\n" + 
 			"			}\n")
 		out_file.write("		}\n")
 

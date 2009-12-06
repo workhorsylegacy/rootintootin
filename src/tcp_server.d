@@ -14,6 +14,7 @@ private import language_helper;
 public class SocketThread : Thread {
 	public char[] _buffer = null;
 	private Semaphore _semaphore = null;
+	public Semaphore public_semaphore = null;
 	private Socket _socket = null;
 	private void delegate(Socket socket, char[] buffer) _trigger_on_read_request = null;
 	private void delegate(SocketThread t) _on_end = null;
@@ -21,6 +22,7 @@ public class SocketThread : Thread {
 	public this(size_t thread_id, void delegate(SocketThread t) on_end, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
 		_buffer = new char[buffer_size];
 		_semaphore = new Semaphore();
+		public_semaphore = new Semaphore();
 		_on_end = on_end;
 		_trigger_on_read_request = trigger_on_read_request;
 

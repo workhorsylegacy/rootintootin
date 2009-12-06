@@ -18,7 +18,7 @@ private import helper;
 private import http_server;
 
 public class RunnerBase {
-	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id) {
+	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id, out char[][] events_to_trigger) {
 		return null;
 	}
 }
@@ -256,11 +256,13 @@ public class ControllerBase {
 	protected bool _use_layout = true;
 	protected char[] _flash_notice = null;
 	protected char[] _flash_error = null;
+	public char[][] _events_to_trigger;
 
 	public void flash_error(char[] value) { this._flash_error = value; }
 	public void flash_notice(char[] value) { this._flash_notice = value; }
 	public char[] flash_error() { return this._flash_error; }
 	public char[] flash_notice() { return this._flash_notice; }
+	public char[][] events_to_trigger() { return this._events_to_trigger; }
 	public bool use_layout() { return _use_layout; }
 	public void request(Request value) { this._request = value; }
 	public Request request() { return this._request; }
@@ -276,10 +278,9 @@ public class ControllerBase {
 	public void redirect_to(char[] url) {
 		throw new ManualRenderException(ResponseType.redirect_to, url);
 	}
-/*
+
 	public void trigger_event(char[] event_name) {
-		this._request.events_to_trigger ~= event_name;
+		this._events_to_trigger ~= event_name;
 	}
-*/
 }
 
