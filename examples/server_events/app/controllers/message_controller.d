@@ -23,7 +23,7 @@ public class MessageController : ControllerBase {
 		_message.text = _request._params["message[text]"];
 
 		if(_message.save()) {
-			//trigger_event("on_create");
+			trigger_event("on_create");
 			redirect_to("/messages/show/" ~ to_s(_message.id));
 		} else {
 			render_view("new");
