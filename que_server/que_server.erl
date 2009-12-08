@@ -12,7 +12,9 @@ start() ->
 	"Status: 200 OK\r\n" ++ 
 	"Content-Length: " ++ integer_to_list(length(Body)) ++ "\r\n\r\n" ++ 
 	Body,
-	{ok, Listen} = gen_tcp:listen(2345, [list, {packet, line},
+	{ok, Listen} = gen_tcp:listen(2345, [list, 
+										{backlog, 100000},
+										{packet, line},
 										 {reuseaddr, true},
 										 {active, true}]),
 	spawn(fun() -> accept_connect(Listen, Response) end).
