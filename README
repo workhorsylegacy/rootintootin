@@ -28,8 +28,7 @@ sudo yum install mysql mysql-server MySQL-python pexpect python-mako bzr ldc
 cd ~
 bzr branch lp:rester rootintootin
 cd rootintootin
-echo "export PATH=\${PATH}:$(pwd)/bin" >> ~/.bashrc
-source ~/.bashrc
+sudo make install
 
 
 4. Copy the examples to your desktop, to play with:
