@@ -13,9 +13,9 @@ private import tcp_server;
 private import language_helper;
 private import helper;
 private import db;
-private import rester;
+private import rootintootin;
 
-public class ResterServer : HttpServer {
+public class RootinTootinServer : HttpServer {
 	private RunnerBase[] _runners = null;
 	private Semaphore[][char[]] _event_semaphores;
 	private Mutex _event_mutex = null;
@@ -35,7 +35,7 @@ public class ResterServer : HttpServer {
 	}
 
 	protected void on_started() {
-		Stdout.format("Rester running on http://localhost:{} ...\n", this._port).flush;
+		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
 
 	protected void on_request_get(Socket socket, Request request, char[] raw_header, char[] raw_body) {

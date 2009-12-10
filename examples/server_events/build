@@ -2,14 +2,14 @@
 
 import commands
 
-rester_path = None
+rootintootin_path = None
 for entry in commands.getoutput("echo ${PATH}").split(':'):
-	if entry.count('/rester/') > 0:
-		rester_path = entry
+	if entry.count('/rootintootin/') > 0:
+		rootintootin_path = entry
 
-if not rester_path:
-	print "Please add rester to your path. See the README for details."
+if not rootintootin_path:
+	print "Please add rootintootin to your path. See the README for details."
 	exit()
 
-print commands.getoutput(rester_path + "/rester_build `pwd`")
+print commands.getoutput(rootintootin_path + "/rootintootin_build `pwd`")
 

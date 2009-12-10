@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 
 import os, shutil
-from lib_rester import *
+from lib_rootintootin import *
 
 # Make sure the first arg is a path
 if len(sys.argv) != 2:
@@ -46,8 +46,8 @@ def generate_run(routes, table_map, reference_map):
 		"\n" +
 		"import language_helper;\n" +
 		"import helper;\n" +
-		"import rester;\n" +
-		"import rester_server;\n" +
+		"import rootintootin;\n" +
+		"import rootintootin_server;\n" +
 		"import ui;\n\n"
 	)
 
@@ -162,7 +162,7 @@ def generate_run(routes, table_map, reference_map):
 	"		runners[i] = new Runner();\n" + 
 	"	}\n" + 
 	"\n" + 
-	"	auto server = new ResterServer(runners, \n" + 
+	"	auto server = new RootinTootinServer(runners, \n" + 
 	"				port, max_waiting_clients, \n" + 
 	"				max_threads, buffer_size, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
@@ -175,7 +175,7 @@ def generate_run(routes, table_map, reference_map):
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
 	# Add class opening
-	properties = "import rester;\n"
+	properties = "import rootintootin;\n"
 
 	for entry in model_names:
 		properties += "import " + entry + ";\n"
@@ -447,7 +447,7 @@ def generate_views(routes):
 			# Print the openining of the function
 			output = []
 			output.append(
-			"import rester;\n" +
+			"import rootintootin;\n" +
 			"import ui;\n")
 
 			for model_name in model_names:
@@ -496,7 +496,7 @@ def generate_layouts():
 		# Print the openining of the function
 		output = []
 		output.append(
-		"import rester;\n" +
+		"import rootintootin;\n" +
 		"import ui;\n" +
 		"public class " + layout.capitalize() + "Layout { \n" +
 		"public static char[] render(ControllerBase controller, char[] yield) { \n" +
@@ -585,13 +585,13 @@ def process_template_body(body, output):
 		body = after
 
 # Copy all the framework and app files into a scratch dir
-rester_dir = os.path.expanduser('~/.rester')
+rootintootin_dir = os.path.expanduser('~/.rootintootin')
 project_name = sys.argv[1].split('/')[-1]
 pwd = sys.argv[1]
-scratch = rester_dir + '/' + project_name + '/scratch/'
+scratch = rootintootin_dir + '/' + project_name + '/scratch/'
 
-if not os.path.exists(rester_dir):
-	os.mkdir(rester_dir)
+if not os.path.exists(rootintootin_dir):
+	os.mkdir(rootintootin_dir)
 if os.path.exists(scratch):
 	shutil.rmtree(scratch)
 shutil.copytree(os.sys.path[0], scratch)
@@ -621,7 +621,7 @@ result = ""
 result += pexpect.run("gcc -g -c db.c -o db.o")
 result += pexpect.run("ar rcs db.a db.o")
 command = "ldc -g -of run " + \
-			"language_helper.d helper.d rester.d rester_server.d http_server.d tcp_server.d ui.d run.d " + \
+			"language_helper.d helper.d rootintootin.d rootintootin_server.d http_server.d tcp_server.d ui.d run.d " + \
 			"db.d db.a " + \
 			str.join(' ', additional_imports) + \
 			" -L=\"-lmysqlclient\""

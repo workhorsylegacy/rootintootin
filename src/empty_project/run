@@ -2,4 +2,4 @@
 
 PWD=`pwd`
 PROJECT_NAME=`basename $PWD`
-~/.rester/`echo $PROJECT_NAME`/scratch/run
+~/.rootintootin/`echo $PROJECT_NAME`/scratch/run

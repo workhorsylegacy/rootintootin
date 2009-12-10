@@ -4,12 +4,12 @@
 import sys, os
 import shutil
 import commands
-from lib_rester import *
+from lib_rootintootin import *
 
 
-# Find the path to rester, and the path called from
+# Find the path to rootintootin, and the path called from
 pwd = commands.getoutput('pwd') + '/'
-rester_dir = os.path.dirname(os.sys.path[0]) + '/'
+rootintootin_dir = os.path.dirname(os.sys.path[0]) + '/'
 
 # Determine what we are going to do
 mode = ""
@@ -20,9 +20,9 @@ else:
 
 # Show the help
 if mode == "help":
-	print "Creates a new empty Rester project in the current directory:"
+	print "Creates a new empty Rootin Tootin project in the current directory:"
 	print"example:"
-	print "rester name:test_app port:2345 db_user:root db_password:password"
+	print "rootintootin name:test_app port:2345 db_user:root db_password:password"
 	exit()
 
 # Create a new empty project in the current directory
@@ -45,7 +45,7 @@ if mode == "new":
 		exit()
 
 	# Create the project
-	shutil.copytree(rester_dir + 'src/empty_project', pwd + name)
+	shutil.copytree(rootintootin_dir + 'src/empty_project', pwd + name)
 	os.chdir(name)
 
 	# Update the configuration files and create the database

@@ -5,7 +5,7 @@ import commands, pexpect
 import platform
 import MySQLdb
 
-rester_path = os.path.dirname(os.sys.path[0]) + '/'
+rootintootin_path = os.path.dirname(os.sys.path[0]) + '/'
 
 def exec_file(file, globals, locals):
 	with open(file, "r") as fh:
@@ -182,7 +182,7 @@ class Generator(object):
 			'pairs' : pairs, 
 			'pluralize' : self.pluralize
 		}
-		template_file = rester_path + 'src/templates/0000_create_model.py.mako'
+		template_file = rootintootin_path + 'src/templates/0000_create_model.py.mako'
 		out_file = 'db/migrate/' + version + '_create_' + self.pluralize(model_name) + '.py'
 
 		# Generate the file from the template
@@ -196,7 +196,7 @@ class Generator(object):
 		params = {
 			'model_name' : model_name
 		}
-		template_file = rester_path + 'src/templates/model.d.mako'
+		template_file = rootintootin_path + 'src/templates/model.d.mako'
 		out_file = 'app/models/' + model_name + '.d'
 
 		# Generate the file from the template
@@ -218,7 +218,7 @@ class Generator(object):
 			'pairs' : pairs, 
 			'pluralize' : self.pluralize
 		}
-		template_file = rester_path + 'src/templates/name_controller.d.mako'
+		template_file = rootintootin_path + 'src/templates/name_controller.d.mako'
 		out_file = 'app/controllers/' + controller_name + '_controller.d'
 
 		# Generate name_controller.d
@@ -227,25 +227,25 @@ class Generator(object):
 		# Generate index.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/index.html.ed.mako', 
+			rootintootin_path + 'src/templates/index.html.ed.mako', 
 			'app/views/' + controller_name + '/index.html.ed')
 
 		# Generate edit.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/edit.html.ed.mako', 
+			rootintootin_path + 'src/templates/edit.html.ed.mako', 
 			'app/views/' + controller_name + '/edit.html.ed')
 
 		# Generate new.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/new.html.ed.mako', 
+			rootintootin_path + 'src/templates/new.html.ed.mako', 
 			'app/views/' + controller_name + '/new.html.ed')
 
 		# Generate show.html.ed
 		self.generate_template(
 			params, 
-			rester_path + 'src/templates/show.html.ed.mako', 
+			rootintootin_path + 'src/templates/show.html.ed.mako', 
 			'app/views/' + controller_name + '/show.html.ed')
 
 	def migrate(self):

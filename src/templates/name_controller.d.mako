@@ -1,6 +1,6 @@
 
 
-import rester;
+import rootintootin;
 import ${model_name};
 
 public class ${controller_name.capitalize()}Controller : ControllerBase {

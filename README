@@ -1,8 +1,8 @@
 
 
-Rester is a fast RESTful web server and framework written in D. It is designed 
-to scale well by default, while still providing a developer experience similar 
-to Ruby on Rails.
+Rootin Tootin is a fast RESTful web server and framework written in D. It is 
+designed to scale well by default, while still providing a developer experience 
+similar to Ruby on Rails.
 
 1. Add the repository for the ldc compiler and tango libraries
 # ubuntu

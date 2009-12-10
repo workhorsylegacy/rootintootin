@@ -2,7 +2,7 @@
 
 
 # ignore all warnings
-REAL_SCRIPT=`dirname $BASH_SOURCE`/../src/rester_build
+REAL_SCRIPT=`dirname $BASH_SOURCE`/../src/rootintootin_gen
 python2.6 -W ignore::DeprecationWarning $REAL_SCRIPT $@
 
 # full python 3.0 warning mode

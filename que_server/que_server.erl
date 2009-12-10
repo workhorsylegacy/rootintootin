@@ -8,7 +8,7 @@
 start() ->
 	Body = "<h1>pees</h1>\r\n<h2>hat</h2>",
 	Response = "HTTP/1.1 200 OK\r\n" ++ 
-	"Server: Rester_0.1\r\n" ++ 
+	"Server: RootinTootin_0.1\r\n" ++ 
 	"Status: 200 OK\r\n" ++ 
 	"Content-Length: " ++ integer_to_list(length(Body)) ++ "\r\n\r\n" ++ 
 	Body,

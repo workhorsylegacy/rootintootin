@@ -115,7 +115,7 @@ public class HttpServer : TcpServer {
 		// See: https://developer.mozilla.org/En/HTTP_Access_Control
 		char[] response = 
 		"HTTP/1.1 200 OK\r\n" ~ 
-		"Server: Rester_0.1\r\n" ~ 
+		"Server: RootinTootin_0.1\r\n" ~ 
 		"Status: 200 OK\r\n" ~ 
 		"Access-Control-Allow-Origin: *\r\n" ~ 
 		"Content-Length: 0\r\n" ~  
@@ -374,7 +374,7 @@ public class HttpServer : TcpServer {
 		char[][] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
 		"Date: ", to_s(date.day), to_s(date.month), to_s(date.year), "\r\n", 
-		"Server: Rester_0.1\r\n", 
+		"Server: RootinTootin_0.1\r\n", 
 		set_cookies, 
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",
