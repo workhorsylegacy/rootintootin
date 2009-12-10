@@ -21,7 +21,7 @@ else:
 if mode == "help":
 	print "Creates a new empty Rootin Tootin project in the current directory:"
 	print"example:"
-	print "rootintootin name:test_app port:2345 db_user:root db_password:password"
+	print "rootintootin name:test_app port:3000 db_user:root db_password:password"
 	exit()
 
 # Create a new empty project in the current directory

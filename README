@@ -39,7 +39,7 @@ cd ~/Desktop/examples/users
 
 5. Change the site's database user and port:
 ./gen configure database user:root password:password
-./gen configure server port:2345
+./gen configure server port:3000
 
 
 6. Generate, build, run:
@@ -49,7 +49,7 @@ cd ~/Desktop/examples/users
 ./run
 
 
-7. In your web browser navigate to http://localhost:2345/users and you should 
+7. In your web browser navigate to http://localhost:3000/users and you should 
 see a basic CRUD example.
 
 

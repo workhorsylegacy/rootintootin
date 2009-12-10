@@ -7,8 +7,7 @@ database_configuration = {
 }
 
 server_configuration = {
-	"port" : "2345", 
-	"event_port" : "2346", 
+	"port" : "3000", 
 	"max_connections" : "100", 
 	"header_max_size" : "8192", 
 	"max_threads" : "100"
