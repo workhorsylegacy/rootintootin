@@ -1,16 +1,9 @@
-#!/usr/bin/env python2.6
-
-import commands, sys
-
-rootintootin_path = None
-for entry in commands.getoutput("echo ${PATH}").split(':'):
-	if entry.count('/rootintootin/') > 0:
-		rootintootin_path = entry
-
-if not rootintootin_path:
-	print "Please add rootintootin to your path. See the README for details."
-	exit()
-
-print commands.getoutput(rootintootin_path + "/rootintootin_gen `pwd` " + str.join(' ', sys.argv))
+#!/usr/bin/env bash
 
 
+# ignore all warnings
+SCRIPT_PATH=/usr/bin/rootintootin_gen
+python2.6 -W ignore::DeprecationWarning $SCRIPT_PATH `pwd` $@
+
+# full python 3.0 warning mode
+#python2.6 -3 $SCRIPT_PATH `pwd` $@

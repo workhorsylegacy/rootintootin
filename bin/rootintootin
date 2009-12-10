@@ -6,7 +6,6 @@ import shutil
 import commands
 from lib_rootintootin import *
 
-
 # Find the path to rootintootin, and the path called from
 pwd = commands.getoutput('pwd') + '/'
 rootintootin_dir = os.path.dirname(os.sys.path[0]) + '/'

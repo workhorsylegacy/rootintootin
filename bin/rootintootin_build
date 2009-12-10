@@ -594,7 +594,7 @@ if not os.path.exists(rootintootin_dir):
 	os.mkdir(rootintootin_dir)
 if os.path.exists(scratch):
 	shutil.rmtree(scratch)
-shutil.copytree(os.sys.path[0], scratch)
+shutil.copytree(os.sys.path[0]+'/../src/', scratch)
 
 if os.path.exists(pwd+'/app/'):
 	shutil.copytree(pwd+'/app/', scratch+'app/')
