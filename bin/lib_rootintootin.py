@@ -63,6 +63,17 @@ def convert_d_type_to_string(d_type, d_string_variable_name):
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
+class Blacklist(object):
+	def __init__(self):
+		# Load the blacklist
+		exec_file(rootintootin_path + '/bin/blacklist.py', globals(), locals())
+		self._blacklist = locals()['blacklist']
+
+	def check_blacklist(self, name):
+		if name.lower() in self._blacklist:
+			print("The name '" + name + "' is blacklisted and cannnot be used. Exiting ...")
+			exit()
+
 class Generator(object):
 	def __init__(self):
 		self._db = None
