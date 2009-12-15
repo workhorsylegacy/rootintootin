@@ -1,3 +1,8 @@
+rootintootin (0.1.0-2) karmic; urgency=low
+
+  * Changed the distro from unstable to karmic
+
+ -- Matthew Brennan Jones <mattjones@workhorsy.org>  Tue, 15 Dec 2009 11:39:51 -0800
 rootintootin (0.1.0-1) unstable; urgency=low
 
   * Initial release
