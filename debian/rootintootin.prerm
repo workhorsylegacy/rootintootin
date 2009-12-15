@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-
-rm -f /usr/bin/rootintootin
-rm -f /usr/bin/rootintootin_build
-rm -f /usr/bin/rootintootin_gen
-
-#DEBHELPER#
-
