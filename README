@@ -15,7 +15,7 @@ http://www.dsource.org/projects/ldc/
 
 2. Install the dependencies for your distro:
 # ubuntu
-sudo apt-get install mysql-client mysql-server libmysqlclient15-dev \
+sudo apt-get install mysql-client mysql-server libmysqlclient16-dev \
 python-mysqldb python-pexpect python-mako build-essential \
 bzr ldc libtango-ldc-dev
 

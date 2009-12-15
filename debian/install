@@ -1,0 +1,8 @@
+bin/* usr/share/rootintootin/bin
+examples/* usr/share/rootintootin/examples
+que_server/* usr/share/rootintootin/que_server
+src/* usr/share/rootintootin/src
+AUTHORS usr/share/rootintootin
+COPYRIGHT usr/share/rootintootin
+LICENSE usr/share/rootintootin
+README usr/share/rootintootin

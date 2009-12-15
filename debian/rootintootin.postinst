@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+ln -s /usr/share/rootintootin/bin/rootintootin /usr/bin/rootintootin
+ln -s /usr/share/rootintootin/bin/rootintootin_build /usr/bin/rootintootin_build
+ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
+
+#DEBHELPER#
+
