@@ -122,8 +122,9 @@ class Generator(object):
 			cursor.execute(query)
 			print "Created the table '" + table_name + "'."
 		except MySQLdb.OperationalError:
-			raise Exception("Table '" + table_name + "' already exists.")
-		cursor.close()
+			print "Table '" + table_name + "' already exists."
+		finally:
+			cursor.close()
 
 	def drop_table(self, table_name):
 		self.connect_to_database()
@@ -143,6 +144,8 @@ class Generator(object):
 
 	def create_database(self):
 		self.connect_to_database()
+
+		# Create the database
 		cursor = self._db.cursor()
 		db_name = self._database_configuration['name']
 		try:
@@ -150,7 +153,10 @@ class Generator(object):
 			print "Created the database '" + self._database_configuration['name'] + "'."
 		except MySQLdb.ProgrammingError:
 			print "Database '" + self._database_configuration['name'] + "' already exists."
-		cursor.close()
+		finally:
+			cursor.close()
+
+		# Add the schema version table
 		self.create_table("schema_version", {
 			'version' : 'integer'
 		})
