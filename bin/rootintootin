@@ -43,6 +43,10 @@ if mode == "new":
 		print "Error: The directory '" + pwd + name + "' already exists. Exiting ..."
 		exit()
 
+	# Make sure the name is not in the blacklist
+	blacklist = Blacklist()
+	blacklist.check_blacklist(name)
+
 	# Create the project
 	shutil.copytree(rootintootin_dir + 'src/empty_project', pwd + name)
 	os.chdir(name)
