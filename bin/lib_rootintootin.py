@@ -122,7 +122,7 @@ class Generator(object):
 			cursor.execute(query)
 			print "Created the table '" + table_name + "'."
 		except MySQLdb.OperationalError:
-			print "Table '" + table_name + "' already exists."
+			raise Exception("Table '" + table_name + "' already exists.")
 		finally:
 			cursor.close()
 
@@ -157,9 +157,12 @@ class Generator(object):
 			cursor.close()
 
 		# Add the schema version table
-		self.create_table("schema_version", {
-			'version' : 'integer'
-		})
+		try:
+			self.create_table("schema_version", {
+				'version' : 'integer'
+			})
+		except Exception, err:
+			print err
 
 	def drop_database(self):
 		self.connect_to_database()
