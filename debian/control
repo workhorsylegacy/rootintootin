@@ -1,0 +1,15 @@
+Source: rootintootin
+Section: devel
+Priority: extra
+Maintainer: Matthew Brennan Jones <mattjones@workhorsy.org>
+Build-Depends: cdbs
+Standards-Version: 3.8.1
+Homepage: http://rootin.toot.in
+
+Package: rootintootin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, mysql-client, mysql-server, libmysqlclient16-dev, python-mysqldb, python-pexpect, python-mako, build-essential, ldc, libtango-ldc-dev
+Description: A RESTful web framework and server
+ Rootin Tootin is a fast RESTful web server and framework written in D. It is 
+ designed to scale well by default, while still providing a developer experience 
+ similar to Ruby on Rails.
