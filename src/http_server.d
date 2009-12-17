@@ -39,6 +39,7 @@ public class Request {
 	public string[string] _params;
 	public string[string] _fields;
 	public string[string] _cookies;
+	public string[string] _sessions;
 	public uint _content_length = 0;
 
 	public this(string method, string uri, string http_version, string[string] params, string[string] fields, string[string] cookies) {
@@ -70,7 +71,7 @@ public class Request {
 
 public class HttpServer : TcpServer {
 	private int _session_id = 0;
-	private string[string] _sessions;
+	private string[string][string] _sessions;
 	private string _salt;
 
 	private Mutex _mutex_session_id = null;
@@ -257,17 +258,57 @@ public class HttpServer : TcpServer {
 			}
 		}
 
-		// Make sure the session id is one we created
-		if(("_appname_session" in request._cookies) != null) {
-			string hashed_session_id = request._cookies["_appname_session"];
+		// Determine if we have a session id in the cookies
+		bool has_session = false;
+		try {
 			_mutex_sessions.lock();
-			bool has_session = !((hashed_session_id in _sessions) == null);
+			has_session = (("_appname_session" in request._cookies) != null);
+		} finally {
 			_mutex_sessions.unlock();
-			if(!has_session) {
-				Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
-			}
 		}
 
+		// Determine if the session id is invalid
+		if(has_session && (request._cookies["_appname_session"] in _sessions) == null) {
+			string hashed_session_id = request._cookies["_appname_session"];
+			Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
+			has_session = false;
+		}
+
+		// Create a new session if we need it
+		string hashed_session_id = null;
+		if(!has_session) {
+			// Get the next session_id and increment the sequence
+			_mutex_session_id.lock();
+			int new_session_id = _session_id;
+			_session_id++;
+			_mutex_session_id.unlock();
+
+			// Create the hashed session id
+			hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
+			request._cookies["_appname_session"] = hashed_session_id;
+
+			// Make the new session blank
+			try {
+				_mutex_sessions.lock();
+				string[string] new_empty_session;
+				_sessions[hashed_session_id] = new_empty_session;
+			} finally {
+				_mutex_sessions.unlock();
+			}
+			Stdout.format("\nCreated session number '{}' '{}'\n", new_session_id, hashed_session_id).flush;
+		} else {
+			Stdout.format("Using existing session '{}'\n", request._cookies["_appname_session"]).flush;
+		}
+
+/*
+		// Copy the current session to the request
+		try {
+			_mutex_sessions.lock();
+			request._sessions = _sessions[hashed_session_id];
+		} finally {
+			_mutex_sessions.unlock();
+		}
+*/
 		// Get the HTTP GET params
 		if(tango.text.Util.contains(request.uri, '?')) {
 			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
@@ -295,6 +336,14 @@ public class HttpServer : TcpServer {
 				break;
 		}
 
+/*		// Copy the modified session back to the sessions
+		try {
+			_mutex_sessions.lock();
+			 _sessions[hashed_session_id] = request._sessions;
+		} finally {
+			_mutex_sessions.unlock();
+		}
+*/
 		// FIXME: this prints out all the values we care about
 		/*
 		Stdout.format("Total params: {}\n", request._params.length).flush;
@@ -344,31 +393,9 @@ public class HttpServer : TcpServer {
 		// Get the status code.
 		string status = Helper.get_verbose_status_code(status_code);
 
-		// If there is no session add one to the cookies
-		_mutex_sessions.lock();
-		bool has_session = !(("_appname_session" in request._cookies) == null || (request._cookies["_appname_session"] in _sessions) == null);
-		_mutex_sessions.unlock();
-
-		string set_cookies = "";
-		if(!has_session) {
-			// Get the next session_id and increment the sequence
-			_mutex_session_id.lock();
-			int new_session_id = _session_id;
-			_session_id++;
-			_mutex_session_id.unlock();
-
-			string hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
-			request._cookies["_appname_session"] = hashed_session_id; // ~ "; path=/";
-			_mutex_sessions.lock();
-			_sessions[hashed_session_id] = [];
-			_mutex_sessions.unlock();
-			Stdout.format("\nCreated session number '{}' '{}'\n", new_session_id, hashed_session_id).flush;
-		} else {
-			Stdout.format("Using existing session '{}'\n", request._cookies["_appname_session"]).flush;
-		}
-
 		// Get all the new cookie values to send
 		// FIXME: This is sending all cookies. It should only send the ones that have changed
+		string set_cookies = "";
 		foreach(string name, string value ; request._cookies) {
 			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ Helper.escape_value(value) ~ "\r\n";
 		}
