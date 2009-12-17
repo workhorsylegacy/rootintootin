@@ -34,6 +34,12 @@ public class ManualRenderException : Exception {
 	}
 }
 
+public class ModelException : Exception {
+	public this(char[] message) {
+		super(message);
+	}
+}
+
 public template ModelArrayMixin(ParentClass, ModelClass) {
 	ParentClass _parent = null;
 	ModelClass[] _models;
@@ -114,7 +120,7 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 	}
 
 	// Returns a single model that matches the id, or null.
-	static T find(ulong id) {
+	static T find_by_id(ulong id) {
 		// Get the connection id from the current thread
 		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
 
@@ -145,10 +151,10 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 	}
 
 	// Returns a single model that matches the id, or throws if not found.
-	static T find_by_id(ulong id) {
-		T model = find(id);
+	static T find(ulong id) {
+		T model = find_by_id(id);
 		if(model is null) {
-			throw new Exception("No '" ~ _model_name ~ "' with the id '" ~ to_s(id) ~ "' was found.");
+			throw new ModelException("No '" ~ _model_name ~ "' with the id '" ~ to_s(id) ~ "' was found.");
 		} else {
 			return model;
 		}

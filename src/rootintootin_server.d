@@ -103,6 +103,8 @@ public class RootinTootinServer : HttpServer {
 			} else if(err._response_type == ResponseType.redirect_to) {
 				this.redirect_to(socket, request, err._payload);
 			}
+		} catch(ModelException err) {
+			this.render_text(socket, request, err.msg, 200);
 		}
 
 		// Get all requests that need to be triggered
