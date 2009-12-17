@@ -47,7 +47,6 @@ def generate_run(routes, table_map, reference_map):
 		"import tango.text.convert.Integer;\n" +
 		"import tango.text.Util;\n" +
 		"import tango.io.Stdout;\n" +
-		"import tango.text.Regex;\n" +
 		"import tango.time.chrono.Gregorian;\n" +
 		"import tango.time.WallClock;\n" +
 
@@ -74,7 +73,7 @@ def generate_run(routes, table_map, reference_map):
 	# Write the render view function
 	for controller, actions in routes.items():
 		out_file.write(
-		"	public char[] render_view(" + controller.capitalize() + "Controller controller, char[] controller_name, char[] view_name) {\n")
+		"	public string render_view(" + controller.capitalize() + "Controller controller, string controller_name, string view_name) {\n")
 
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
@@ -98,7 +97,7 @@ def generate_run(routes, table_map, reference_map):
 
 	# Write the run action function
 	out_file.write(
-	"	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id, out char[][] events_to_trigger) {\n")
+	"	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {\n")
 	for controller, actions in routes.items():
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
@@ -195,13 +194,13 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 	properties += "	mixin ModelBaseMixin!(" + model_name.capitalize() + ", \"" + model_name + "\", \""+ generator.pluralize(model_name) + "\");\n\n"
 
 	# Add a list of all field names
-	properties += "	protected static char[][] _field_names = ["
+	properties += "	protected static string[] _field_names = ["
 	for field, values in model_map.items():
 		properties += "\"" + field + "\", ";
 	properties += "];\n\n";
 
 	# Add a list of the unique field names
-	properties += "	protected static char[][] _unique_field_names = ["
+	properties += "	protected static string[] _unique_field_names = ["
 	for field, values in model_map.items():
 		if field == "id":
 			continue
@@ -280,7 +279,7 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 
 	# Add the set_field_by_name method
 	properties += \
-				"	public void set_field_by_name(char[] field_name, char[] value, bool must_check_database_first = true) {\n" + \
+				"	public void set_field_by_name(string field_name, string value, bool must_check_database_first = true) {\n" + \
 				"		if(must_check_database_first)\n" + \
 				"			ensure_was_pulled_from_database();\n\n" + \
 				"		switch(field_name) {\n"
@@ -310,7 +309,7 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 
 	# Add the get_field_by_name method
 	properties += \
-				"	public char[] get_field_by_name(char[] field_name) {\n" + \
+				"	public string get_field_by_name(string field_name) {\n" + \
 				"		switch(field_name) {\n"
 
 	# tango.text.convert.Integer.parse.toString
@@ -467,7 +466,7 @@ def generate_views(routes):
 			output.append(
 			"import view_layouts_default;\n\n" +
 			"public class " + controller.capitalize() + member.capitalize() + "View { \n" +
-			"public static char[] render(" + controller.capitalize() + "Controller controller) { \n" +
+			"public static string render(" + controller.capitalize() + "Controller controller) { \n" +
 			"	// Generate the view as an array of strings\n" +
 			"	AutoStringArray builder = new AutoStringArray();")
 
@@ -507,7 +506,7 @@ def generate_layouts():
 		"import rootintootin;\n" +
 		"import ui;\n" +
 		"public class " + layout.capitalize() + "Layout { \n" +
-		"public static char[] render(ControllerBase controller, char[] yield) { \n" +
+		"public static string render(ControllerBase controller, string yield) { \n" +
 		"	// Generate the layout as an array of strings\n" +
 		"	AutoStringArray builder = new AutoStringArray();")
 

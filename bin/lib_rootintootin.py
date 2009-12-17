@@ -24,10 +24,10 @@ def camelize(word):
 
 def sql_type_to_d_type(sql_type):
 	type_map = { 'tinyint(1)' : 'bool',
-				 'varchar(255)' : 'char[]',
-				 'datetime' : 'char[]',
+				 'varchar(255)' : 'string',
+				 'datetime' : 'string',
 				 'int(11)' : 'ulong',
-				 'text' : 'char[]' }
+				 'text' : 'string' }
 
 	return type_map[sql_type]
 
@@ -56,7 +56,7 @@ def convert_string_to_d_type(d_type, d_string_variable_name):
 				'float' : 'to_float(#)',
 				'bool' : 'to_bool(#)',
 				'char' : '#',
-				'char[]' : 'to_s(#)' }
+				'string' : 'to_s(#)' }
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
@@ -67,7 +67,7 @@ def convert_d_type_to_string(d_type, d_string_variable_name):
 				'float' : 'to_s(#)',
 				'bool' : 'to_s(#)',
 				'char' : '#',
-				'char[]' : 'to_s(#)' }
+				'string' : 'to_s(#)' }
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
