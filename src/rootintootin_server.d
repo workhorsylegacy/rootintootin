@@ -25,11 +25,11 @@ private import rootintootin;
 
 public class RootinTootinServer : HttpServer {
 	private RunnerBase[] _runners = null;
-	private Semaphore[][char[]] _event_semaphores;
+	private Semaphore[][string] _event_semaphores;
 	private Mutex _event_mutex = null;
 
 	public this(RunnerBase[] runners, ushort port, int max_waiting_clients, ushort max_threads, size_t buffer_size, 
-				char[] db_host, char[] db_user, char[] db_password, char[] db_name) {
+				string db_host, string db_user, string db_password, string db_name) {
 		super(port, max_waiting_clients, max_threads, buffer_size);
 		_runners = runners;
 		_event_mutex = new Mutex();
@@ -46,28 +46,28 @@ public class RootinTootinServer : HttpServer {
 		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
 
-	protected void on_request_get(Socket socket, Request request, char[] raw_header, char[] raw_body) {
+	protected void on_request_get(Socket socket, Request request, string raw_header, string raw_body) {
 		this.on_request_all(socket, request, raw_header, raw_body);
 	}
 
-	protected void on_request_post(Socket socket, Request request, char[] raw_header, char[] raw_body) {
+	protected void on_request_post(Socket socket, Request request, string raw_header, string raw_body) {
 		this.on_request_all(socket, request, raw_header, raw_body);
 	}
 
-	protected void on_request_put(Socket socket, Request request, char[] raw_header, char[] raw_body) {
+	protected void on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
 		this.on_request_all(socket, request, raw_header, raw_body);
 	}
 
-	protected void on_request_delete(Socket socket, Request request, char[] raw_header, char[] raw_body) {
+	protected void on_request_delete(Socket socket, Request request, string raw_header, string raw_body) {
 		this.on_request_all(socket, request, raw_header, raw_body);
 	}
 
-	protected void on_request_all(Socket socket, Request request, char[] raw_header, char[] raw_body) {
+	protected void on_request_all(Socket socket, Request request, string raw_header, string raw_body) {
 		// Get the controller, action, and id
-		char[][] route = split(split(request.uri, "?")[0], "/");
-		char[] controller = route.length > 1 ? route[1] : null;
-		char[] action = route.length > 2 ? route[2] : "index";
-		char[] id = route.length > 3 ? route[3] : null;
+		string[] route = split(split(request.uri, "?")[0], "/");
+		string controller = route.length > 1 ? route[1] : null;
+		string action = route.length > 2 ? route[2] : "index";
+		string id = route.length > 3 ? route[3] : null;
 		if(id != null) request._params["id"] = id;
 
 		Stdout.format("controller: {}\n", controller).flush;
@@ -99,11 +99,11 @@ public class RootinTootinServer : HttpServer {
 		}
 
 		// Generate and send the request
-		char[][] events_to_trigger;
+		string[] events_to_trigger;
 		size_t thread_id = cast(size_t) to_int(Thread.getThis().name);
 		try {
 			// Run the action and get any event names to trigger
-			char[] response = _runners[thread_id].run_action(request, controller, action, id, events_to_trigger);
+			string response = _runners[thread_id].run_action(request, controller, action, id, events_to_trigger);
 			this.render_text(socket, request, response, 200);
 		} catch(ManualRenderException err) {
 			if(err._response_type == ResponseType.render_text) {
@@ -117,7 +117,7 @@ public class RootinTootinServer : HttpServer {
 
 		// Get all requests that need to be triggered
 		Semaphore[] semaphore;
-		foreach(char[] event_name ; events_to_trigger) {
+		foreach(string event_name ; events_to_trigger) {
 			Stdout.format("triggering: {}\n", event_name).flush;
 			try {
 				_event_mutex.lock();

@@ -13,108 +13,110 @@ private import tango.text.convert.Integer;
 private import tango.text.convert.Float;
 
 
-public static char[] between(char[] value, char[] before, char[] after) {
+public alias char[] string;
+
+public static string between(string value, string before, string after) {
 	return split(split(value, before)[1], after)[0];
 }
 
 // Add a to_s function for basic types
-public static char[] to_s(short value) {
+public static string to_s(short value) {
 	return tango.text.convert.Integer.toString(value);
 }
 
-public static char[] to_s(ushort value) {
+public static string to_s(ushort value) {
 	return tango.text.convert.Integer.toString(value);
 }
 
-public static char[] to_s(int value) {
+public static string to_s(int value) {
 	return tango.text.convert.Integer.toString(value);
 }
 
-public static char[] to_s(uint value) {
+public static string to_s(uint value) {
 	return tango.text.convert.Integer.toString(value);
 }
 
-public static char[] to_s(long value) {
+public static string to_s(long value) {
 	return tango.text.convert.Integer.toString(value);
 }
 
-public static char[] to_s(ulong value) {
+public static string to_s(ulong value) {
 	char[66] tmp = void;
 	return tango.text.convert.Integer.format(tmp, value, "u").dup;
 }
 
-public static char[] to_s(float value) {
+public static string to_s(float value) {
 	return tango.text.convert.Float.toString(value);
 }
 
-public static char[] to_s(double value) {
+public static string to_s(double value) {
 	return tango.text.convert.Float.toString(value);
 }
 
-public static char[] to_s(bool value) {
+public static string to_s(bool value) {
 	return value ? "true" : "false";
 }
 
-public static char[] to_s(char[] value) {
+public static string to_s(string value) {
 	return tango.text.Util.repeat(value, 1);
 }
 
-public static char[] to_s(char value) {
-	char[] new_value;
+public static string to_s(char value) {
+	string new_value;
 	new_value ~= value;
 	return new_value;
 }
 
 // Add a to_# function for strings
-public static int to_int(char[] value) {
+public static int to_int(string value) {
 	return tango.text.convert.Integer.toInt(value);
 }
 
-public static uint to_uint(char[] value) {
+public static uint to_uint(string value) {
 	return cast(uint) tango.text.convert.Integer.convert(value);
 }
 
-public static long to_long(char[] value) {
+public static long to_long(string value) {
 	return tango.text.convert.Integer.toLong(value);
 }
 
-public static ulong to_ulong(char[] value) {
+public static ulong to_ulong(string value) {
 	return tango.text.convert.Integer.convert(value);
 }
 
-public static float to_float(char[] value) {
+public static float to_float(string value) {
 	return tango.text.convert.Float.toFloat(value);
 }
 
-public static double to_double(char[] value) {
+public static double to_double(string value) {
 	return tango.text.convert.Float.parse(value);
 }
 
-public static bool to_bool(char[] value) {
+public static bool to_bool(string value) {
 	return value == "true";
 }
 
 // Add alternate named methods
-public static int to_integer(char[] value) { return to_int(value); }
-public static int to_boolean(char[] value) { return to_bool(value); }
-public static char[] to_string(short value) { return to_s(value); }
-public static char[] to_string(ushort value) { return to_s(value); }
-public static char[] to_string(int value) { return to_s(value); }
-public static char[] to_string(uint value) { return to_s(value); }
-public static char[] to_string(long value) { return to_s(value); }
-public static char[] to_string(ulong value) { return to_s(value); }
-public static char[] to_string(float value) { return to_s(value); }
-public static char[] to_string(double value) { return to_s(value); }
-public static char[] to_string(bool value) { return to_s(value); }
-public static char[] to_string(char[] value) { return to_s(value); }
-public static char[] to_string(char value) { return to_s(value); }
+public static int to_integer(string value) { return to_int(value); }
+public static int to_boolean(string value) { return to_bool(value); }
+public static string to_string(short value) { return to_s(value); }
+public static string to_string(ushort value) { return to_s(value); }
+public static string to_string(int value) { return to_s(value); }
+public static string to_string(uint value) { return to_s(value); }
+public static string to_string(long value) { return to_s(value); }
+public static string to_string(ulong value) { return to_s(value); }
+public static string to_string(float value) { return to_s(value); }
+public static string to_string(double value) { return to_s(value); }
+public static string to_string(bool value) { return to_s(value); }
+public static string to_string(string value) { return to_s(value); }
+public static string to_string(char value) { return to_s(value); }
 
 
 // Can collect strings by auto converting any type you try to add
 public class AutoStringArray {
-	private char[][] _value;
-	public char[][] value() { return _value; }
-	public void opCatAssign(char[] value) { _value ~= value; }
+	private string[] _value;
+	public string[] value() { return _value; }
+	public void opCatAssign(string value) { _value ~= value; }
 	public void opCatAssign(int value) { _value ~= to_s(value); }
 	public void opCatAssign(uint value) { _value ~= to_s(value); }
 	public void opCatAssign(long value) { _value ~= to_s(value); }
@@ -126,10 +128,10 @@ public class AutoStringArray {
 }
 
 // Add string helpers
-public char[] capitalize(char[] value) {
+public string capitalize(string value) {
 	if(value.length == 0) return value;
 
-	char[] first = value[0 .. 1].dup;
+	string first = value[0 .. 1].dup;
 	toUpper(first);
 	return first ~ value[1 .. length];
 }

@@ -19,14 +19,14 @@ private import language_helper;
 
 
 public class SocketThread : Thread {
-	public char[] _buffer = null;
+	public string _buffer = null;
 	private Semaphore _semaphore = null;
 	public Semaphore public_semaphore = null;
 	private Socket _socket = null;
-	private void delegate(Socket socket, char[] buffer) _trigger_on_read_request = null;
+	private void delegate(Socket socket, string buffer) _trigger_on_read_request = null;
 	private void delegate(SocketThread t) _on_end = null;
 
-	public this(size_t thread_id, void delegate(SocketThread t) on_end, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
+	public this(size_t thread_id, void delegate(SocketThread t) on_end, void delegate(Socket socket, string buffer) trigger_on_read_request, size_t buffer_size) {
 		_buffer = new char[buffer_size];
 		_semaphore = new Semaphore();
 		public_semaphore = new Semaphore();
@@ -66,7 +66,7 @@ public class SocketThreadPool {
 	private SocketThread[] _busy_threads;
 	private Mutex _thread_mutex;
 
-	public this(size_t number_of_threads, void delegate(Socket socket, char[] buffer) trigger_on_read_request, size_t buffer_size) {
+	public this(size_t number_of_threads, void delegate(Socket socket, string buffer) trigger_on_read_request, size_t buffer_size) {
 		_number_of_threads = number_of_threads;
 		_thread_mutex = new Mutex();
 
@@ -161,7 +161,7 @@ public class TcpServer {
 		Stdout.format("Running on port: {} ...\n", this._port).flush;
 	}
 
-	protected void on_read_request(Socket socket, char[] buffer) {
+	protected void on_read_request(Socket socket, string buffer) {
 		socket.write("The 'normal' response goes here.");
 	}
 
@@ -173,7 +173,7 @@ public class TcpServer {
 		this.on_started();
 	}
 
-	protected void trigger_on_read_request(Socket socket, char[] buffer) {
+	protected void trigger_on_read_request(Socket socket, string buffer) {
 		this.on_read_request(socket, buffer);
 	}
 

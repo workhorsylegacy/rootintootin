@@ -11,6 +11,7 @@
 
 import tango.text.Util;
 import tango.text.convert.Integer;
+import language_helper;
 
 import tango.io.digest.Digest;
 import tango.io.digest.Sha256;
@@ -19,35 +20,35 @@ import tango.io.encode.Base64;
 
 // Helper functions for the server
 public class Helper {
-	private static char[][ushort] status_code;
-	private static char[][char[]] escape_map;
+	private static string[ushort] status_code;
+	private static string[string] escape_map;
 
-	public static char[] escape_value(char[] value) {
-		foreach(char[] before, char[] after ; escape_map) {
+	public static string escape_value(string value) {
+		foreach(string before, string after ; escape_map) {
 			value = tango.text.Util.substitute(value, before, after);
 		}
 
 		return value;
 	}
 
-	public static char[] unescape_value(char[] value) {
-		foreach(char[] before, char[] after ; escape_map) {
+	public static string unescape_value(string value) {
+		foreach(string before, string after ; escape_map) {
 			value = tango.text.Util.substitute(value, after, before);
 		}
 
 		return value;
 	}
 
-	public static char[] get_verbose_status_code(ushort code) {
+	public static string get_verbose_status_code(ushort code) {
 		return tango.text.convert.Integer.toString(code) ~ " " ~ status_code[code];
 	}
 
-	public static char[] hash_and_base64(char[] value, char[] salt) {
+	public static string hash_and_base64(string value, string salt) {
 		Sha256 sha_encoder = new Sha256();
 		sha_encoder.update(value ~ salt);
 		ubyte[] encoded = sha_encoder.binaryDigest();
 
-		char[] encodebuf = new char[tango.io.encode.Base64.allocateEncodeSize(encoded)];
+		string encodebuf = new char[tango.io.encode.Base64.allocateEncodeSize(encoded)];
 		return tango.io.encode.Base64.encode(encoded, encodebuf);
 	}
 

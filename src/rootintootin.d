@@ -10,7 +10,6 @@
 private import tango.text.convert.Integer;
 private import tango.text.Util;
 private import tango.stdc.stringz;
-private import tango.text.Regex;
 
 private import tango.io.Stdout;
 
@@ -24,16 +23,16 @@ private import helper;
 private import http_server;
 
 public class RunnerBase {
-	public char[] run_action(Request request, char[] controller_name, char[] action_name, char[] id, out char[][] events_to_trigger) {
+	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {
 		return null;
 	}
 }
 
 public class ManualRenderException : Exception {
 	public ResponseType _response_type;
-	public char[] _payload;
+	public string _payload;
 
-	public this(ResponseType response_type, char[] payload) {
+	public this(ResponseType response_type, string payload) {
 		super("");
 		_response_type = response_type;
 		_payload = payload;
@@ -41,7 +40,7 @@ public class ManualRenderException : Exception {
 }
 
 public class ModelException : Exception {
-	public this(char[] message) {
+	public this(string message) {
 		super(message);
 	}
 }
@@ -65,7 +64,7 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 }
 
 public class ModelBase {
-	protected char[][] _errors;
+	protected string[] _errors;
 
 	protected void reset_validation_errors() {
 	}
@@ -75,14 +74,14 @@ public class ModelBase {
 		return this._errors.length == 0;
 	}
 
-	public char[][] errors() {
+	public string[] errors() {
 		return this._errors;
 	}
 }
 
-public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
-	static char[] _table_name = table_name;
-	static char[] _model_name = model_name;
+public template ModelBaseMixin(T, string model_name, string table_name) {
+	static string _table_name = table_name;
+	static string _model_name = model_name;
 
 	// FIXME: This should be private
 	public bool _was_pulled_from_database = true;
@@ -102,23 +101,23 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 		// Get the model from the database and copy all its fields to this model
 		T model = T.find(_id);
 
-		foreach(char[] field_name; model._unique_field_names) {
+		foreach(string field_name; model._unique_field_names) {
 			this.set_field_by_name(field_name, model.get_field_by_name(field_name), false);
 		}
 		_was_pulled_from_database = true;
 	}
 
-	static char[] field_names_as_comma_string() {
+	static string field_names_as_comma_string() {
 		return tango.text.Util.join(_field_names, ", ");
 	}
 
-	static char[] unique_field_names_as_comma_string() {
+	static string unique_field_names_as_comma_string() {
 		return tango.text.Util.join(_unique_field_names, ", ");
 	}
 
-	char[] unique_fields_as_comma_string() {
-		char[][] fields;
-		foreach(char[] field_name; _unique_field_names) {
+	string unique_fields_as_comma_string() {
+		string[] fields;
+		foreach(string field_name; _unique_field_names) {
 			fields ~= "'" ~ this.get_field_by_name(field_name) ~ "'";
 		}
 
@@ -131,7 +130,7 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
 
 		// Create the query and run it
-		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ T._table_name;
+		string query = "select " ~ field_names_as_comma_string ~ " from " ~ T._table_name;
 		query ~= " where id=" ~ to_s(id) ~ ";";
 		int row_len, col_len;
 		char*** result = db.db_query_with_result(connection_id, query, row_len, col_len);
@@ -167,13 +166,13 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 	}
 
 	// Returns all the models of this type.
-	static T[] find_all(char[] conditions = null, char[] order = null) {
+	static T[] find_all(string conditions = null, string order = null) {
 		// Get the connection id from the current thread
 		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
 
 		// Create the query and run it
 		T[] all = [];
-		char[] query = "select " ~ field_names_as_comma_string ~ " from " ~ _table_name;
+		string query = "select " ~ field_names_as_comma_string ~ " from " ~ _table_name;
 		if(conditions != null) query ~= " where " ~ conditions;
 		if(order != null) query ~= " order by " ~ order;
 		query ~= ";";
@@ -210,7 +209,7 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 		if(this.is_valid() == false)
 			return false;
 
-		char[] query = "";
+		string query = "";
 
 		// If there is no id, use an insert query
 		if(this._id < 1) {
@@ -225,7 +224,7 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 		// If there is an id, use an update query
 			query ~= "update " ~ typeof(this)._table_name ~ " set ";
 			uint counter = 0;
-			foreach(char[] field_name ; typeof(this)._unique_field_names) {
+			foreach(string field_name ; typeof(this)._unique_field_names) {
 				counter++;
 				query ~= field_name ~ "='" ~ this.get_field_by_name(field_name) ~ "'";
 				if(counter < typeof(this)._unique_field_names.length) {
@@ -246,7 +245,7 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 		size_t connection_id = cast(size_t) to_int(tango.core.Thread.Thread.getThis().name);
 
 		// Create the delete query
-		char[] query = "";
+		string query = "";
 		query ~= "delete from " ~ typeof(this)._table_name;
 		query ~= " where id=" ~ to_s(this._id) ~ ";";
 
@@ -266,32 +265,32 @@ public template ModelBaseMixin(T, char[] model_name, char[] table_name) {
 public class ControllerBase {
 	protected Request _request = null;
 	protected bool _use_layout = true;
-	protected char[] _flash_notice = null;
-	protected char[] _flash_error = null;
-	public char[][] _events_to_trigger;
+	protected string _flash_notice = null;
+	protected string _flash_error = null;
+	public string[] _events_to_trigger;
 
-	public void flash_error(char[] value) { this._flash_error = value; }
-	public void flash_notice(char[] value) { this._flash_notice = value; }
-	public char[] flash_error() { return this._flash_error; }
-	public char[] flash_notice() { return this._flash_notice; }
-	public char[][] events_to_trigger() { return this._events_to_trigger; }
+	public void flash_error(string value) { this._flash_error = value; }
+	public void flash_notice(string value) { this._flash_notice = value; }
+	public string flash_error() { return this._flash_error; }
+	public string flash_notice() { return this._flash_notice; }
+	public string[] events_to_trigger() { return this._events_to_trigger; }
 	public bool use_layout() { return _use_layout; }
 	public void request(Request value) { this._request = value; }
 	public Request request() { return this._request; }
 
-	public void render_view(char[] name) {
+	public void render_view(string name) {
 		throw new ManualRenderException(ResponseType.render_view, name);
 	}
 
-	public void render_text(char[] text) {
+	public void render_text(string text) {
 		throw new ManualRenderException(ResponseType.render_text, text);
 	}
 
-	public void redirect_to(char[] url) {
+	public void redirect_to(string url) {
 		throw new ManualRenderException(ResponseType.redirect_to, url);
 	}
 
-	public void trigger_event(char[] event_name) {
+	public void trigger_event(string event_name) {
 		this._events_to_trigger ~= event_name;
 	}
 }
