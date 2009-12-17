@@ -9,13 +9,13 @@
 
 // FIXME: Rename to server_helper
 
-import tango.text.Util;
-import tango.text.convert.Integer;
-import language_helper;
+private import tango.text.Util;
+private import tango.text.convert.Integer;
+private import language_helper;
 
-import tango.io.digest.Digest;
-import tango.io.digest.Sha256;
-import tango.io.encode.Base64;
+private import tango.io.digest.Digest;
+private import tango.io.digest.Sha256;
+private import tango.io.encode.Base64;
 
 
 // Helper functions for the server

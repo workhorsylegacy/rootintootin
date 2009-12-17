@@ -1,7 +1,7 @@
 
 
-import rootintootin;
-import ${model_name};
+private import rootintootin;
+private import ${model_name};
 
 public class ${controller_name.capitalize()}Controller : ControllerBase {
 	public ${controller_name.capitalize()}[] _${controller_names};

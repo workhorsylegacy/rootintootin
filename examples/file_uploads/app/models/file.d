@@ -1,6 +1,6 @@
 
 
-import file_base;
+private import file_base;
 
 public class File : FileBase {
 	void reset_validation_errors() {

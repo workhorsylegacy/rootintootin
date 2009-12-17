@@ -1,5 +1,5 @@
 
-import comment_base;
+private import comment_base;
 
 public class Comment : CommentBase {
 

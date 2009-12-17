@@ -8,7 +8,7 @@
 
 
 module db;
-import tango.stdc.stringz;
+private import tango.stdc.stringz;
 
 
 enum query_result { 

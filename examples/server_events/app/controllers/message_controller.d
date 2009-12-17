@@ -1,6 +1,6 @@
 
-import rootintootin;
-import message;
+private import rootintootin;
+private import message;
 
 public class MessageController : ControllerBase {
 	public Message[] _messages;

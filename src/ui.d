@@ -7,8 +7,8 @@
 #-----------------------------------------------------------------------------*/
 
 
-import language_helper;
-import rootintootin;
+private import language_helper;
+private import rootintootin;
 
 public class UI {
 	// FIXME: This should not need the named passed in.

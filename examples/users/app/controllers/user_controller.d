@@ -1,6 +1,6 @@
 
-import rootintootin;
-import user;
+private import rootintootin;
+private import user;
 
 public class UserController : ControllerBase {
 	public User[] _users;

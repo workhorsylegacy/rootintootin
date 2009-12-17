@@ -1,6 +1,6 @@
 
-import rootintootin;
-import file;
+private import rootintootin;
+private import file;
 
 public class FileController : ControllerBase {
 	public File[] _files;

@@ -1,6 +1,6 @@
 
 
-import message_base;
+private import message_base;
 
 public class Message : MessageBase {
 	void reset_validation_errors() {

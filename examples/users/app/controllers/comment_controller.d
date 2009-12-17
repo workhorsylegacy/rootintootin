@@ -1,7 +1,7 @@
 
-import rootintootin;
-import comment;
-import user;
+private import rootintootin;
+private import comment;
+private import user;
 
 public class CommentController : ControllerBase {
 	public Comment[] _comments;

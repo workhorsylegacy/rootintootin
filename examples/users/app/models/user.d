@@ -1,5 +1,5 @@
 
-import user_base;
+private import user_base;
 
 public class User : UserBase {
 	void reset_validation_errors() {

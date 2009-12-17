@@ -44,26 +44,26 @@ def generate_run(routes, table_map, reference_map):
 	# Write the imports
 	out_file.write(
 		"\n" +
-		"import tango.text.convert.Integer;\n" +
-		"import tango.text.Util;\n" +
-		"import tango.io.Stdout;\n" +
-		"import tango.time.chrono.Gregorian;\n" +
-		"import tango.time.WallClock;\n" +
+		"private import tango.text.convert.Integer;\n" +
+		"private import tango.text.Util;\n" +
+		"private import tango.io.Stdout;\n" +
+		"private import tango.time.chrono.Gregorian;\n" +
+		"private import tango.time.WallClock;\n" +
 
 		"\n" +
-		"import language_helper;\n" +
-		"import helper;\n" +
-		"import rootintootin;\n" +
-		"import rootintootin_server;\n" +
-		"import ui;\n\n"
+		"private import language_helper;\n" +
+		"private import helper;\n" +
+		"private import rootintootin;\n" +
+		"private import rootintootin_server;\n" +
+		"private import ui;\n\n"
 	)
 
 	for controller_name in controller_names:
-		out_file.write("import " + controller_name + "_controller;\n")
+		out_file.write("private import " + controller_name + "_controller;\n")
 	out_file.write("\n")
 
 	for view_name in view_names:
-		out_file.write("import " + view_name + ";\n")
+		out_file.write("private import " + view_name + ";\n")
 	out_file.write("\n")
 
 	# Write the runner class
@@ -182,12 +182,12 @@ def generate_run(routes, table_map, reference_map):
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
 	# Add class opening
-	properties = "import rootintootin;\n"
+	properties = "private import rootintootin;\n"
 
 	for entry in model_names:
-		properties += "import " + entry + ";\n"
+		properties += "private import " + entry + ";\n"
 		if model_name != entry:
-			properties += "import " + entry + "_base;\n"
+			properties += "private import " + entry + "_base;\n"
 	properties += "\n"
 
 	properties += "public class " + model_name.capitalize() + "Base : ModelBase {\n"
@@ -454,17 +454,17 @@ def generate_views(routes):
 			# Print the openining of the function
 			output = []
 			output.append(
-			"import rootintootin;\n" +
-			"import ui;\n")
+			"private import rootintootin;\n" +
+			"private import ui;\n")
 
 			for model_name in model_names:
-				output.append("import " + model_name + ";\n")
+				output.append("private import " + model_name + ";\n")
 
 			for controller_name in controller_names:
-				output.append("import " + controller_name + ";\n")
+				output.append("private import " + controller_name + ";\n")
 
 			output.append(
-			"import view_layouts_default;\n\n" +
+			"private import view_layouts_default;\n\n" +
 			"public class " + controller.capitalize() + member.capitalize() + "View { \n" +
 			"public static string render(" + controller.capitalize() + "Controller controller) { \n" +
 			"	// Generate the view as an array of strings\n" +
@@ -503,8 +503,8 @@ def generate_layouts():
 		# Print the openining of the function
 		output = []
 		output.append(
-		"import rootintootin;\n" +
-		"import ui;\n" +
+		"private import rootintootin;\n" +
+		"private import ui;\n" +
 		"public class " + layout.capitalize() + "Layout { \n" +
 		"public static string render(ControllerBase controller, string yield) { \n" +
 		"	// Generate the layout as an array of strings\n" +
