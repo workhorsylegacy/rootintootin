@@ -57,6 +57,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
 
 		if(_${controller_name}.destroy()) {
+			flash_notice("The ${controller_name} was destroyed.");
 			redirect_to("/${pluralize(controller_name)}/index");
 		} else {
 			flash_error(_${controller_name}.errors()[0]);

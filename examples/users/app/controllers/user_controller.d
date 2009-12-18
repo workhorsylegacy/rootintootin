@@ -51,6 +51,7 @@ public class UserController : ControllerBase {
 	public void destroy() {
 		_user = User.find(to_ulong(_request._params["id"]));
 		if(_user.destroy()) {
+			flash_notice("The user was destroyed.");
 			redirect_to("/users/index");
 		} else {
 			flash_error(_user.errors()[0]);

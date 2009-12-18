@@ -57,6 +57,7 @@ public class CommentController : ControllerBase {
 	public void destroy() {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
 		if(_comment.destroy()) {
+			flash_notice("The comment was destroyed.");
 			redirect_to("/comments/index");
 		} else {
 			flash_error(_comment.errors()[0]);

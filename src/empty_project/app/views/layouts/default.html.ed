@@ -32,6 +32,8 @@
 		</script>
 
 		<h1>content start</h1>
+		<p id="flash_error" style="background:#FF0000;"><%=controller.flash_error%></p>
+		<p id="flash_notice" style="background:#00FF00;"><%=controller.flash_notice%></p>
 		<%= yield %>
 		<h1>content end</h1>
 	</body>

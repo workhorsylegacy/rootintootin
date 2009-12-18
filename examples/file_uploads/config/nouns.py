@@ -1,5 +1,5 @@
 
 nouns = {
-
+	"file" : "files", 
 }
 

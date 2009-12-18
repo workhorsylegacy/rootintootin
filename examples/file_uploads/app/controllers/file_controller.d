@@ -23,6 +23,7 @@ public class FileController : ControllerBase {
 		_file.name = _request._params["file[name]"];
 
 		if(_file.save()) {
+			flash_notice("The file was created.");
 			redirect_to("/files/show/" ~ to_s(_file.id));
 		} else {
 			render_view("new");
@@ -38,6 +39,7 @@ public class FileController : ControllerBase {
 		_file.name = _request._params["file[name]"];
 
 		if(_file.save()) {
+			flash_notice("The file was updated.");
 			redirect_to("/files/show/" ~ to_s(_file.id));
 		} else {
 			render_view("edit");
@@ -46,9 +48,13 @@ public class FileController : ControllerBase {
 
 	public void destroy() {
 		_file = File.find(to_ulong(_request._params["id"]));
-		_file.destroy();
-
-		redirect_to("/files/index");
+		if(_file.destroy()) {
+			flash_notice("The file was destroyed.");
+			redirect_to("/files/index");
+		} else {
+			flash_error(_file.errors()[0]);
+			render_view("index");
+		}
 	}
 }
 

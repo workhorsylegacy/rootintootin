@@ -265,18 +265,31 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 public class ControllerBase {
 	protected Request _request = null;
 	protected bool _use_layout = true;
-	protected string _flash_notice = null;
-	protected string _flash_error = null;
 	public string[] _events_to_trigger;
 
-	public void flash_error(string value) { this._flash_error = value; }
-	public void flash_notice(string value) { this._flash_notice = value; }
-	public string flash_error() { return this._flash_error; }
-	public string flash_notice() { return this._flash_notice; }
 	public string[] events_to_trigger() { return this._events_to_trigger; }
 	public bool use_layout() { return _use_layout; }
 	public void request(Request value) { this._request = value; }
 	public Request request() { return this._request; }
+	public void flash_error(string value) { this.set_flash(value, "flash_error"); }
+	public string flash_error() { return this.get_flash("flash_error"); }
+	public void flash_notice(string value) { this.set_flash(value, "flash_notice"); }
+	public string flash_notice() { return this.get_flash("flash_notice"); }
+
+	private void set_flash(string value, string name) {
+		if(!_request) return;
+		_request._sessions[name] = value;
+	}
+
+	private string get_flash(string name) {
+		if(_request && name in _request._sessions) {
+			string value = _request._sessions[name];
+			_request._sessions.remove(name);
+			return value;
+		} else {
+			return "";
+		}
+	}
 
 	public void render_view(string name) {
 		throw new ManualRenderException(ResponseType.render_view, name);
