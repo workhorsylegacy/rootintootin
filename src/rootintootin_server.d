@@ -15,6 +15,8 @@ private import tango.core.sync.Semaphore;
 private import tango.core.sync.Mutex;
 
 private import tango.io.device.File;
+private import Path = tango.io.Path;
+
 public import tango.io.Stdout;
 public import http_server;
 private import tcp_server;
@@ -74,13 +76,27 @@ public class RootinTootinServer : HttpServer {
 		Stdout.format("action: {}\n", action).flush;
 
 		// Send any files
-		if(controller == "jquery.js" || controller == "favicon.ico") {
-			auto file = new File("public/" ~ controller, File.ReadExisting);
+		string normalized = Path.normalize(request.uri);
+		if(Path.exists("public" ~ normalized)) {
+			bool read_file_broke = false;
+			File file = null;
 			// FIXME: Use the existing buffer instead of creating a new one here
 			char[1024 * 200] buf;
-			int len = file.read(buf);
-			file.close();
-			this.render_text(socket, request, buf[0 .. len], 200);
+			int len = 0;
+			try {
+				file = new File("public" ~ normalized, File.ReadExisting);
+				len = file.read(buf);
+			} catch {
+				read_file_broke = true;
+			} finally {
+				if(file) file.close();
+			}
+
+			if(read_file_broke) {
+				this.render_text(socket, request, "404 Failed to read the file.", 404);
+			} else {
+				this.render_text(socket, request, buf[0 .. len], 200);
+			}
 			return;
 		}
 

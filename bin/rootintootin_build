@@ -609,6 +609,8 @@ if os.path.exists(pwd+'/config/'):
 	shutil.copytree(pwd+'/config/', scratch+'config/')
 if os.path.exists(pwd+'/db/'):
 	shutil.copytree(pwd+'/db/', scratch+'db/')
+if os.path.exists(pwd+'/public/'):
+	shutil.copytree(pwd+'/public/', scratch+'public/')
 os.chdir(scratch)
 
 # Get the routes
