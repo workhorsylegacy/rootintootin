@@ -258,6 +258,14 @@ public class HttpServer : TcpServer {
 			}
 		}
 
+		// Get the HTTP GET params
+		if(tango.text.Util.contains(request.uri, '?')) {
+			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
+				string[] pair = tango.text.Util.split(param, "=");
+				request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+			}
+		}
+
 		// Determine if we have a session id in the cookies
 		bool has_session = false;
 		try {
@@ -278,10 +286,14 @@ public class HttpServer : TcpServer {
 		string hashed_session_id = null;
 		if(!has_session) {
 			// Get the next session_id and increment the sequence
-			_mutex_session_id.lock();
-			int new_session_id = _session_id;
-			_session_id++;
-			_mutex_session_id.unlock();
+			int new_session_id = -1;
+			try {
+				_mutex_session_id.lock();
+				new_session_id = _session_id;
+				_session_id++;
+			} finally {
+				_mutex_session_id.unlock();
+			}
 
 			// Create the hashed session id
 			hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
@@ -297,24 +309,16 @@ public class HttpServer : TcpServer {
 			}
 			Stdout.format("\nCreated session number '{}' '{}'\n", new_session_id, hashed_session_id).flush;
 		} else {
+			hashed_session_id = request._cookies["_appname_session"];
 			Stdout.format("Using existing session '{}'\n", request._cookies["_appname_session"]).flush;
 		}
 
-/*
 		// Copy the current session to the request
 		try {
 			_mutex_sessions.lock();
 			request._sessions = _sessions[hashed_session_id];
 		} finally {
 			_mutex_sessions.unlock();
-		}
-*/
-		// Get the HTTP GET params
-		if(tango.text.Util.contains(request.uri, '?')) {
-			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
-				string[] pair = tango.text.Util.split(param, "=");
-				request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
-			}
 		}
 
 		// Process the remainder of the request based on its method
@@ -336,14 +340,14 @@ public class HttpServer : TcpServer {
 				break;
 		}
 
-/*		// Copy the modified session back to the sessions
+		// Copy the modified session back to the sessions
 		try {
 			_mutex_sessions.lock();
 			 _sessions[hashed_session_id] = request._sessions;
 		} finally {
 			_mutex_sessions.unlock();
 		}
-*/
+
 		// FIXME: this prints out all the values we care about
 		/*
 		Stdout.format("Total params: {}\n", request._params.length).flush;
