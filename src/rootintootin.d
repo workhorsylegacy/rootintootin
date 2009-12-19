@@ -266,6 +266,8 @@ public class ControllerBase {
 	protected Request _request = null;
 	protected bool _use_layout = true;
 	public string[] _events_to_trigger;
+	public string action_name;
+	public string controller_name;
 
 	public string[] events_to_trigger() { return this._events_to_trigger; }
 	public bool use_layout() { return _use_layout; }

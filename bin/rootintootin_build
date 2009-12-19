@@ -102,6 +102,8 @@ def generate_run(routes, table_map, reference_map):
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
 		"			" + controller.capitalize() + "Controller controller = new " + controller.capitalize() + "Controller();\n" + 
+		"			controller.action_name = action_name;\n" + 
+		"			controller.controller_name = controller_name;\n" + 
 		"			controller.request = request;\n" + 
 		"			try {\n" +
 		"\n"
