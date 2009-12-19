@@ -22,6 +22,7 @@ private import tango.io.encode.Base64;
 public class Helper {
 	private static string[ushort] status_code;
 	private static string[string] escape_map;
+	private static string[string] mimetype_map;
 
 	public static string escape_value(string value) {
 		foreach(string before, string after ; escape_map) {
@@ -464,6 +465,20 @@ public class Helper {
 		escape_map["Ž"] = "%17D";
 		escape_map["ž"] = "%17E";
 		escape_map["ſ"] = "%17F";
+
+		// FIXME: Add all the popular ones
+		// FIXME: Users should be able to add their own in their apps config
+		mimetype_map["js"]   = "application/x-javascript";
+		mimetype_map["css"]  = "text/css";
+		mimetype_map["ico"]  = "image/x-icon";
+		mimetype_map["gif"]  = "image/gif";
+		mimetype_map["png"]  = "image/png";
+		mimetype_map["jpg"]  = "image/jpeg";
+		mimetype_map["jpeg"] = "image/jpeg";
+		mimetype_map["bmp"]  = "image/bmp";
+		mimetype_map["pdf"]  = "application/pdf";
+		mimetype_map["html"] = "text/html; charset=utf-8";
+		mimetype_map["htm"]  = "text/html; charset=utf-8";
 	}
 }
 

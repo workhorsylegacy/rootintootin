@@ -379,11 +379,11 @@ public class HttpServer : TcpServer {
 		socket.write(header);
 	}
 
-	protected void render_text(Socket socket, Request request, string text, ushort status_code) {
-		socket.write(generate_text(request, text, status_code));
+	protected void render_text(Socket socket, Request request, string text, ushort status_code = 200, string content_type = "text/html; charset=utf-8") {
+		socket.write(generate_text(request, text, status_code, content_type));
 	}
 
-	private string generate_text(Request request, string text, ushort status_code = 200) {
+	private string generate_text(Request request, string text, ushort status_code, string content_type) {
 		// Use a blank request if there was none
 		if(request is null) {
 			request = Request.new_blank();
@@ -418,7 +418,7 @@ public class HttpServer : TcpServer {
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
 		"Access-Control-Allow-Origin: *\r\n",
 		"Cache-Control: private, max-age=0\r\n",
-		"Content-Type: text/html; charset=utf-8\r\n",
+		"Content-Type: ", content_type, "\r\n",
 		"Content-Length: ", to_s(text.length), "\r\n",
 		//"Vary: User-Agent\r\n",
 		"\r\n",

@@ -80,12 +80,14 @@ public class RootinTootinServer : HttpServer {
 		if(Path.exists("public" ~ normalized)) {
 			bool read_file_broke = false;
 			File file = null;
+			string mimetype = null;
 			// FIXME: Use the existing buffer instead of creating a new one here
 			char[1024 * 200] buf;
 			int len = 0;
 			try {
 				file = new File("public" ~ normalized, File.ReadExisting);
 				len = file.read(buf);
+				mimetype = Helper.mimetype_map[split(normalized, ".")[length-1]];
 			} catch {
 				read_file_broke = true;
 			} finally {
@@ -95,7 +97,7 @@ public class RootinTootinServer : HttpServer {
 			if(read_file_broke) {
 				this.render_text(socket, request, "404 Failed to read the file.", 404);
 			} else {
-				this.render_text(socket, request, buf[0 .. len], 200);
+				this.render_text(socket, request, buf[0 .. len], 200, mimetype);
 			}
 			return;
 		}
