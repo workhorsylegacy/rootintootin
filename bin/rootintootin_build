@@ -73,7 +73,7 @@ def generate_run(routes, table_map, reference_map):
 	# Write the render view function
 	for controller, actions in routes.items():
 		out_file.write(
-		"	public string render_view(" + controller.capitalize() + "Controller controller, string controller_name, string view_name) {\n")
+		"	private string render_view(" + controller.capitalize() + "Controller controller, string controller_name, string view_name) {\n")
 
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
