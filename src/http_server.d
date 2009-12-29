@@ -15,7 +15,6 @@ private import tango.io.Stdout;
 
 private import tango.net.device.Socket;
 private import tango.math.random.engines.Twister;
-private import tango.core.sync.Mutex;
 
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
@@ -74,13 +73,8 @@ public class HttpServer : TcpServer {
 	private string[string][string] _sessions;
 	private string _salt;
 
-	private Mutex _mutex_session_id = null;
-	private Mutex _mutex_sessions = null;
-
-	public this(ushort port, int max_waiting_clients, ushort max_threads, size_t buffer_size = 0) {
-		super(port, max_waiting_clients, max_threads, buffer_size);
-		this._mutex_session_id = new Mutex();
-		this._mutex_sessions = new Mutex();
+	public this(ushort port, int max_waiting_clients, string buffer) {
+		super(port, max_waiting_clients, buffer);
 
 		// Get a random salt for salting sessions
 		Twister* random = new Twister();
@@ -91,10 +85,6 @@ public class HttpServer : TcpServer {
 
 	protected void on_started() {
 		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
-	}
-
-	protected void on_respond_too_many_threads(Socket socket) {
-		socket.write("503: Service Unavailable - Too many requests in the queue.");
 	}
 
 	protected void on_request_get(Socket socket, Request request, string raw_header, string raw_body) {
@@ -206,7 +196,7 @@ public class HttpServer : TcpServer {
 		this.on_request_options(socket, request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_read_request(Socket socket, string buffer) {
+	protected void trigger_on_request(Socket socket, string buffer) {
 		Request request = Request.new_blank();
 		int buffer_length = socket.input.read(buffer);
 
@@ -268,12 +258,7 @@ public class HttpServer : TcpServer {
 
 		// Determine if we have a session id in the cookies
 		bool has_session = false;
-		try {
-			_mutex_sessions.lock();
-			has_session = (("_appname_session" in request._cookies) != null);
-		} finally {
-			_mutex_sessions.unlock();
-		}
+		has_session = (("_appname_session" in request._cookies) != null);
 
 		// Determine if the session id is invalid
 		if(has_session && (request._cookies["_appname_session"] in _sessions) == null) {
@@ -286,27 +271,16 @@ public class HttpServer : TcpServer {
 		string hashed_session_id = null;
 		if(!has_session) {
 			// Get the next session_id and increment the sequence
-			int new_session_id = -1;
-			try {
-				_mutex_session_id.lock();
-				new_session_id = _session_id;
-				_session_id++;
-			} finally {
-				_mutex_session_id.unlock();
-			}
+			int new_session_id = _session_id;
+			_session_id++;
 
 			// Create the hashed session id
 			hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
 			request._cookies["_appname_session"] = hashed_session_id;
 
 			// Make the new session blank
-			try {
-				_mutex_sessions.lock();
-				string[string] new_empty_session;
-				_sessions[hashed_session_id] = new_empty_session;
-			} finally {
-				_mutex_sessions.unlock();
-			}
+			string[string] new_empty_session;
+			_sessions[hashed_session_id] = new_empty_session;
 			Stdout.format("\nCreated session number '{}' '{}'\n", new_session_id, hashed_session_id).flush;
 		} else {
 			hashed_session_id = request._cookies["_appname_session"];
@@ -314,12 +288,7 @@ public class HttpServer : TcpServer {
 		}
 
 		// Copy the current session to the request
-		try {
-			_mutex_sessions.lock();
-			request._sessions = _sessions[hashed_session_id];
-		} finally {
-			_mutex_sessions.unlock();
-		}
+		request._sessions = _sessions[hashed_session_id];
 
 		// Process the remainder of the request based on its method
 		switch(request.method) {
@@ -341,12 +310,7 @@ public class HttpServer : TcpServer {
 		}
 
 		// Copy the modified session back to the sessions
-		try {
-			_mutex_sessions.lock();
-			 _sessions[hashed_session_id] = request._sessions;
-		} finally {
-			_mutex_sessions.unlock();
-		}
+		_sessions[hashed_session_id] = request._sessions;
 
 		// FIXME: this prints out all the values we care about
 		/*

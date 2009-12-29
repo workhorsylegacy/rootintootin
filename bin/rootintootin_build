@@ -164,16 +164,11 @@ def generate_run(routes, table_map, reference_map):
 	"\n\nint main() {\n" + 
 	"	ushort port = " + port + ";\n" + 
 	"	int max_waiting_clients = " + str(max_connections) + ";\n" + 
-	"	ushort max_threads = " + str(max_threads) + ";\n" + 
-	"	size_t buffer_size = " + str(header_max_size) + ";\n" + 
-	"	RunnerBase[" + str(max_threads) + "] runners;\n" + 
-	"	for(size_t i=0; i<max_threads; i++) {\n" + 
-	"		runners[i] = new Runner();\n" + 
-	"	}\n" + 
+	"	char[" + str(header_max_size) + "] buffer;\n" + 
+	"	RunnerBase runner = new Runner();\n" + 
 	"\n" + 
-	"	auto server = new RootinTootinServer(runners, \n" + 
-	"				port, max_waiting_clients, \n" + 
-	"				max_threads, buffer_size, \n" + 
+	"	auto server = new RootinTootinServer(runner, \n" + 
+	"				port, max_waiting_clients, buffer, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
 	"	server.start();\n" + 
