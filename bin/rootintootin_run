@@ -8,7 +8,11 @@
 #
 #-------------------------------------------------------------------------------
 
-import os, shutil
+import os, sys, shutil
+import errno
+import functools
+import socket
+from tornado import ioloop, iostream
 from lib_rootintootin import *
 
 # Make sure the first arg is a path
@@ -150,7 +154,7 @@ def generate_run(routes, table_map, reference_map):
 	out_file.write("	}\n")
 	out_file.write("}\n")
 
-	port = globals()['server_configuration']['port']
+	port = str(int(globals()['server_configuration']['port']) + 1)
 	max_connections = globals()['server_configuration']['max_connections']
 	max_threads = globals()['server_configuration']['max_threads']
 	header_max_size = globals()['server_configuration']['header_max_size']
@@ -588,55 +592,130 @@ def process_template_body(body, output):
 		# Set the remaining text as the body, so it can be processed next
 		body = after
 
-# Copy all the framework and app files into a scratch dir
-rootintootin_dir = os.path.expanduser('~/.rootintootin')
-project_name = sys.argv[1].split('/')[-1]
-pwd = sys.argv[1]
-scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+class BufferServer(object):
+	def __init__(self):
+		self._io_loop = None
+		self._port = None
 
-if not os.path.exists(rootintootin_dir):
-	os.mkdir(rootintootin_dir)
-if os.path.exists(scratch):
-	shutil.rmtree(scratch)
-shutil.copytree(os.sys.path[0]+'/../src/', scratch)
+	def connection_ready(self, sock, fd, events):
+		while True:
+			try:
+				connection, address = sock.accept()
+			except socket.error, e:
+				if e[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
+					raise
+				return
+			#connection.setblocking(0)
 
-if os.path.exists(pwd+'/app/'):
-	shutil.copytree(pwd+'/app/', scratch+'app/')
-if os.path.exists(pwd+'/config/'):
-	shutil.copytree(pwd+'/config/', scratch+'config/')
-if os.path.exists(pwd+'/db/'):
-	shutil.copytree(pwd+'/db/', scratch+'db/')
-if os.path.exists(pwd+'/public/'):
-	shutil.copytree(pwd+'/public/', scratch+'public/')
-os.chdir(scratch)
+			# Get the request
+			request = connection.recv(1024 * 8)
 
-# Get the routes
-exec_file("config/routes.py", globals(), locals())
-exec_file("config/config.py", globals(), locals())
+			# Write the request to the rootin tootin server
+			# and read the response back
+			client = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0);
+			client.connect(('0.0.0.0', self._port+1))
+			client.send(request)
+			response = client.recv(1024 * 8)
+			client.close()
 
-# Do code generation
-table_map, reference_map = generate_models()
-generate_controllers()
-generate_layouts()
-generate_views(routes)
-generate_run(routes, table_map, reference_map)
+			# Write the response to the client
+			stream = iostream.IOStream(connection)
+			stream.write(response, stream.close)
 
-# Compile the application into an executable
-additional_imports = get_link_files()
-result = ""
-result += pexpect.run("gcc -g -c db.c -o db.o")
-result += pexpect.run("ar rcs db.a db.o")
-command = "ldc -g -of run " + \
-			"language_helper.d helper.d rootintootin.d rootintootin_server.d http_server.d tcp_server.d ui.d run.d " + \
-			"db.d db.a " + \
-			str.join(' ', additional_imports) + \
-			" -L=\"-lmysqlclient\""
-result += pexpect.run(command)
+	def start(self):
+		self._setup_app()
 
-if len(result) != 0:
-	print result
-else:
-	print "Build successful."
+		# Create a new tcp socket that is nonblocking, and
+		# can reuse dangling addresses.
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		sock.setblocking(0)
+		sock.bind(('', self._port))
+		sock.listen(10000)
+
+		# Create a tornado loop that uses our 
+		# socket and callback to process requests
+		self._io_loop = ioloop.IOLoop.instance()
+		callback = functools.partial(self.connection_ready, sock)
+		self._io_loop.add_handler(sock.fileno(), callback, self._io_loop.READ)
+
+		# Exit the tornado loop if ctrl + c is pressed.
+		try:
+			print "Buffer Server running on http://localhost:" + str(self._port)
+			self._io_loop.start()
+		except KeyboardInterrupt:
+			self.stop()
+
+	def stop(self):
+		if self._io_loop:
+			self._io_loop.stop()
+		print "Exiting ..."
+
+	def _setup_app(self):
+		# Copy all the framework and app files into a scratch dir
+		rootintootin_dir = os.path.expanduser('~/.rootintootin')
+		project_name = sys.argv[1].split('/')[-1]
+		pwd = sys.argv[1]
+		scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+
+		if not os.path.exists(rootintootin_dir):
+			os.mkdir(rootintootin_dir)
+		if os.path.exists(scratch):
+			shutil.rmtree(scratch)
+		shutil.copytree(os.sys.path[0]+'/../src/', scratch)
+
+		if os.path.exists(pwd+'/app/'):
+			shutil.copytree(pwd+'/app/', scratch+'app/')
+		if os.path.exists(pwd+'/config/'):
+			shutil.copytree(pwd+'/config/', scratch+'config/')
+		if os.path.exists(pwd+'/db/'):
+			shutil.copytree(pwd+'/db/', scratch+'db/')
+		if os.path.exists(pwd+'/public/'):
+			shutil.copytree(pwd+'/public/', scratch+'public/')
+		os.chdir(scratch)
+
+		# Load the config files
+		exec_file("config/routes.py", globals(), locals())
+		exec_file("config/config.py", globals(), locals())
+		globals()['database_configuration'] = locals()['database_configuration']
+		globals()['server_configuration'] = locals()['server_configuration']
+		globals()['routes'] = locals()['routes']
+
+		self._port = int(globals()['server_configuration']['port'])
+
+		# Do code generation
+		table_map, reference_map = generate_models()
+		generate_controllers()
+		generate_layouts()
+		generate_views(routes)
+		generate_run(routes, table_map, reference_map)
+
+		# Compile the application into an executable
+		additional_imports = get_link_files()
+		result = ""
+		result += pexpect.run("gcc -g -c db.c -o db.o")
+		result += pexpect.run("ar rcs db.a db.o")
+		command = "ldc -g -of run " + \
+					"language_helper.d helper.d rootintootin.d rootintootin_server.d http_server.d tcp_server.d ui.d run.d " + \
+					"db.d db.a " + \
+					str.join(' ', additional_imports) + \
+					" -L=\"-lmysqlclient\""
+		result += pexpect.run(command)
+
+		if len(result) != 0:
+			print result
+			return
+		else:
+			print "Build successful!"
+
+		# Run the real server in its own process
+		# FIXME: We need to kill this process if it already running
+		# And kill it when the buffer starts
+		os.system(scratch + "run" + " &")
+
+# Start the buffer server
+server = BufferServer()
+server.start()
 
 
 

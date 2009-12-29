@@ -6,7 +6,7 @@ all:
 
 remove:
 	rm -f /usr/bin/rootintootin
-	rm -f /usr/bin/rootintootin_build
+	rm -f /usr/bin/rootintootin_run
 	rm -f /usr/bin/rootintootin_gen
 	rm -f -rf /usr/share/rootintootin/
 	rm -f /usr/share/rootintootin
@@ -14,12 +14,12 @@ remove:
 install: remove
 	cp -R . /usr/share/rootintootin/
 	ln -s /usr/share/rootintootin/bin/rootintootin /usr/bin/rootintootin
-	ln -s /usr/share/rootintootin/bin/rootintootin_build /usr/bin/rootintootin_build
+	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 
 install_dev: remove
 	ln -s `pwd` /usr/share/rootintootin
 	ln -s /usr/share/rootintootin/bin/rootintootin /usr/bin/rootintootin
-	ln -s /usr/share/rootintootin/bin/rootintootin_build /usr/bin/rootintootin_build
+	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 

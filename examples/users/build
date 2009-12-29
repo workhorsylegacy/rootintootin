@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-
-# ignore all warnings
-SCRIPT_PATH=/usr/bin/rootintootin_build
-python2.6 -W ignore::DeprecationWarning $SCRIPT_PATH `pwd` $@
-
-# full python 3.0 warning mode
-#python2.6 -3 $SCRIPT_PATH `pwd` $@
