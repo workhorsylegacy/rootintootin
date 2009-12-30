@@ -1,3 +1,22 @@
+*-*-*  Matthew Brennan Jones  <mattjones@workhorsy.org>
+
+	Release 0.2.0
+	* Added a blacklist of words to be disallowed by the gen script.
+	* Moved to a Python Tornado and D based server for speed and concurrency.
+	* Updated the server so it automatically rebuilds when files change.
+	* Replaced the ./build and ./run scripts with just ./run.
+	* Model.find_by_id returns null on nothing found, while Model.find throws.
+	* Added proper copyright/license headers to each file.
+	* Changed the framework to use string as an alias for char[].
+	* Changed most imports to be private.
+	* Fixed broken sessions.
+	* Added flash notice support.
+	* Made the download of arbitrary files work.
+	* Added a basic mime type map, for downloaded files.
+	* Moved scaffolding js and css to their own files.
+	* Added proper page titles.
+	* Fixed bug #501459: 'Dangling slashes in urls break routes'.
+
 2009-12-15  Matthew Brennan Jones  <mattjones@workhorsy.org>
 
 	Release 0.1.0
