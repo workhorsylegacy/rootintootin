@@ -4,54 +4,49 @@ Rootin Tootin is a fast RESTful web server and framework written in D. It is
 designed to scale well by default, while still providing a developer experience 
 similar to Ruby on Rails.
 
-1. Add the repository for the ldc compiler and tango libraries
-# ubuntu
-sudo add-apt-repository ppa:d-language-packagers
 
-#fedora
-# or follow the instructions here:
-http://www.dsource.org/projects/ldc/
-
-
-2. Install the dependencies for your distro:
+1. Install the dependencies for your distro:
 # ubuntu
 sudo apt-get install mysql-client mysql-server libmysqlclient16-dev \
 python-mysqldb python-pexpect python-mako python-pyinotify \
 build-essential bzr ldc libtango-ldc-dev
+sudo service mysql start
 
 # fedora
+# Install ldc and tango from here:
+# http://www.dsource.org/projects/ldc/
 sudo yum groupinstall "Development Tools"
 sudo yum install mysql mysql-server MySQL-python pexpect python-mako python-inotify bzr ldc
+sudo service mysqld start
 
-
-3. Move to your install location, download the code, add path to bashrc:
+2. Move to your install location, download the code, add path to bashrc:
 cd ~
 bzr branch lp:rester rootintootin
 cd rootintootin
 sudo make install
 
 
-4. Copy the examples to your desktop, to play with:
+3. Copy the examples to your desktop, to play with:
 cp -r examples/ ~/Desktop/examples/
 cd ~/Desktop/examples/users
 
 
-5. Change the site's database user and port:
+4. Change the site's database user and port:
 ./gen configure database user:root password:password
 ./gen configure server port:3000
 
 
-6. Generate, build, run:
+5. Generate, build, run:
 ./gen create database
 ./gen migrate
 ./run
 
 
-7. In your web browser navigate to http://localhost:3000/users and you should 
+6. In your web browser navigate to http://localhost:3000/users and you should 
 see a basic CRUD example.
 
 
-8. Now look at the code and start hacking. I will add more formal documentation 
+7. Now look at the code and start hacking. I will add more formal documentation 
 when things are a little more fleshed out.
 
 
