@@ -636,6 +636,7 @@ class BuilderThread(threading.Thread):
 		self._server_pid = None
 		self._is_running = False
 		self._project_dir = sys.argv[1] + '/'
+		self._compile_error = None
 
 		# Only get CRUD events
 		all_flags = pyinotify.EventsCodes.ALL_FLAGS
@@ -657,6 +658,9 @@ class BuilderThread(threading.Thread):
 
 	def get_is_running(self):
 		return self._is_running
+
+	def get_compile_error(self):
+		return self._compile_error
 
 	def run(self):
 		self._is_running = True
@@ -731,9 +735,11 @@ class BuilderThread(threading.Thread):
 		result += pexpect.run(command)
 
 		if len(result) != 0:
-			print result
+			self._compile_error = result
+			print "Build failed!"
 			return
 		else:
+			self._compile_error = None
 			print "Build successful!"
 
 		# Run the real server in its own process
@@ -754,6 +760,14 @@ class BufferServer(object):
 					raise
 				return
 			#connection.setblocking(0)
+
+			# If there was a compile error, write that instead
+			response = self._builder_thread.get_compile_error()
+			if response:
+				# Write the response to the client
+				stream = iostream.IOStream(connection)
+				stream.write(response, stream.close)
+				return
 
 			# Get the request
 			request = connection.recv(1024 * 8)
