@@ -66,7 +66,7 @@ public class RootinTootinServer : HttpServer {
 
 		// Send any files
 		string normalized = Path.normalize(request.uri);
-		if(Path.exists("public" ~ normalized)) {
+		if(normalized != "/" && Path.exists("public" ~ normalized)) {
 			bool read_file_broke = false;
 			File file = null;
 			string mimetype = null;

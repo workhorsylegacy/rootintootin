@@ -153,6 +153,18 @@ def generate_run(routes, table_map, reference_map):
 			"			}\n")
 		out_file.write("		}\n")
 
+	links = "<ul>"
+	for controller_name in controller_names:
+		links += "<li><a href=\\\"" + generator.pluralize(controller_name) + "\\\">" + generator.pluralize(controller_name) + "</a></li>"
+	links += "</ul>"
+
+	out_file.write(
+	"		if(controller_name == \"\") {\n" + 
+	"			return \"<h1>404 No controller specified</h1>\" ~ \n" + 
+	"			\"" + links + "\";\n"
+	"		}\n"
+	)
+
 	out_file.write("		return null;\n")
 	out_file.write("	}\n")
 	out_file.write("}\n")
