@@ -142,6 +142,11 @@ def generate_run(routes, table_map, reference_map):
 				"				}\n")
 
 		out_file.write(
+			"				return \"<h1>404 No action specified</h1>\" ~ \n" + 
+			"				\"<a href=\\\"index\\\">index</a>\";\n"
+		)
+
+		out_file.write(
 			"			} catch(ManualRenderException err) {\n" + 
 			"				if(err._response_type == ResponseType.render_view) {\n" + 
 			"					return this.render_view(controller, controller_name, err._payload);\n" + 
