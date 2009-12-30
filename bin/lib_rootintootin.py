@@ -337,8 +337,8 @@ class Generator(object):
 
 			if key == 'port':
 				self._server_configuration['port'] = value
-			elif key == 'max_connections':
-				self._server_configuration['max_connections'] = value
+			elif key == 'max_waiting_clients':
+				self._server_configuration['max_waiting_clients'] = value
 
 		self.save_configuration()
 

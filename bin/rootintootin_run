@@ -158,7 +158,7 @@ def generate_run(routes, table_map, reference_map):
 	out_file.write("}\n")
 
 	port = str(int(globals()['server_configuration']['port']) + 1)
-	max_connections = globals()['server_configuration']['max_connections']
+	max_waiting_clients = globals()['server_configuration']['max_waiting_clients']
 	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
 	db_user = globals()['database_configuration']['user']
@@ -169,7 +169,7 @@ def generate_run(routes, table_map, reference_map):
 	out_file.write(
 	"\n\nint main() {\n" + 
 	"	ushort port = " + port + ";\n" + 
-	"	int max_waiting_clients = " + str(max_connections) + ";\n" + 
+	"	int max_waiting_clients = " + str(max_waiting_clients) + ";\n" + 
 	"	char[" + str(header_max_size) + "] buffer;\n" + 
 	"	RunnerBase runner = new Runner();\n" + 
 	"\n" + 

@@ -19,7 +19,7 @@ def print_usage():
 	print "./gen create scaffold [name] [field:type] ..."
 	print "./gen migrate"
 	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
-	print "./gen configure server [port:number] [max_connections:number] [header_max_size:number]"
+	print "./gen configure server [port:number] [max_waiting_clients:number] [header_max_size:number]"
 	print "./gen create database"
 	print "./gen drop database"
 	exit(1)
@@ -67,7 +67,7 @@ elif str.join(' ', sys.argv[2:]) == "migrate":
 elif str.join(' ', sys.argv[2:4]) == "configure database":
 	generator.configure_database(sys.argv[4:])
 
-# configure server [port:number] [max_connections:number] \
+# configure server [port:number] [max_waiting_clients:number] \
 #					[header_max_size:number]
 elif str.join(' ', sys.argv[2:4]) == "configure server":
 	generator.configure_server(sys.argv[4:])
