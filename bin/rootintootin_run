@@ -8,12 +8,15 @@
 #
 #-------------------------------------------------------------------------------
 
-import os, sys, shutil
+import os, sys, shutil, signal, subprocess
+import threading, time
+import pyinotify
 import errno
 import functools
 import socket
 from tornado import ioloop, iostream
 from lib_rootintootin import *
+
 
 # Make sure the first arg is a path
 if len(sys.argv) != 2:
@@ -592,66 +595,92 @@ def process_template_body(body, output):
 		# Set the remaining text as the body, so it can be processed next
 		body = after
 
-class BufferServer(object):
+class BuilderThread(threading.Thread):
+	class EventHandler(pyinotify.ProcessEvent):
+		def __init__(self):
+			self._had_event = False
+
+		def set_had_event(self, value):
+			self._had_event = value
+
+		def get_had_event(self):
+			return self._had_event
+
+		# new
+		def process_IN_CREATE(self, event):
+			#print "new: " + event.name
+			self._had_event = True
+
+		# new
+		def process_IN_MOVED_TO(self, event):
+			#print "new: " + event.name
+			self._had_event = True
+
+		# update
+		def process_IN_MODIFY(self, event):
+			#print "update: " + event.name
+			self._had_event = True
+
+		# destroy
+		def process_IN_DELETE(self, event):
+			#print "destroy: " + event.name
+			self._had_event = True
+
+		# destroy
+		def process_IN_MOVED_FROM(self, event):
+			#print "destroy: " + event.name
+			self._had_event = True
+
 	def __init__(self):
-		self._io_loop = None
-		self._port = None
+		threading.Thread.__init__(self)
+		self._server_pid = None
+		self._is_running = False
+		self._project_dir = sys.argv[1] + '/'
 
-	def connection_ready(self, sock, fd, events):
-		while True:
-			try:
-				connection, address = sock.accept()
-			except socket.error, e:
-				if e[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
-					raise
-				return
-			#connection.setblocking(0)
+		# Only get CRUD events
+		all_flags = pyinotify.EventsCodes.ALL_FLAGS
+		mask = all_flags['IN_MODIFY'] | \
+				all_flags['IN_DELETE']  | \
+				all_flags['IN_CREATE']  | \
+				all_flags['IN_MOVED_FROM']  | \
+				all_flags['IN_MOVED_TO']
 
-			# Get the request
-			request = connection.recv(1024 * 8)
+		# Start watching the files
+		wm = pyinotify.WatchManager()
+		wm.add_watch(self._project_dir, mask, rec=True)
+		self._event_handler = BuilderThread.EventHandler()
+		self._notifier = pyinotify.ThreadedNotifier(wm, self._event_handler)
+		self._notifier.start()
 
-			# Write the request to the rootin tootin server
-			# and read the response back
-			client = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0);
-			client.connect(('0.0.0.0', self._port+1))
-			client.send(request)
-			response = client.recv(1024 * 8)
-			client.close()
+	def set_is_running(self, value):
+		self._is_running = value
 
-			# Write the response to the client
-			stream = iostream.IOStream(connection)
-			stream.write(response, stream.close)
+	def get_is_running(self):
+		return self._is_running
 
-	def start(self):
+	def run(self):
+		self._is_running = True
 		self._setup_app()
 
-		# Create a new tcp socket that is nonblocking, and
-		# can reuse dangling addresses.
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		sock.setblocking(0)
-		sock.bind(('', self._port))
-		sock.listen(10000)
+		while self._is_running:
+			if self._event_handler.get_had_event():
+				print "Rebuilding project ..."
+				self._event_handler.set_had_event(False)
+				self._setup_app()
+			time.sleep(3)
 
-		# Create a tornado loop that uses our 
-		# socket and callback to process requests
-		self._io_loop = ioloop.IOLoop.instance()
-		callback = functools.partial(self.connection_ready, sock)
-		self._io_loop.add_handler(sock.fileno(), callback, self._io_loop.READ)
+		self._notifier.stop()
+		self._kill_server()
 
-		# Exit the tornado loop if ctrl + c is pressed.
-		try:
-			print "Buffer Server running on http://localhost:" + str(self._port)
-			self._io_loop.start()
-		except KeyboardInterrupt:
-			self.stop()
-
-	def stop(self):
-		if self._io_loop:
-			self._io_loop.stop()
-		print "Exiting ..."
+	def _kill_server(self):
+		# Kill the previous server
+		if self._server_pid:
+			os.kill(self._server_pid, signal.SIGHUP)
+			self._server_pid = None
 
 	def _setup_app(self):
+		self._kill_server()
+
 		# Copy all the framework and app files into a scratch dir
 		rootintootin_dir = os.path.expanduser('~/.rootintootin')
 		project_name = sys.argv[1].split('/')[-1]
@@ -709,9 +738,70 @@ class BufferServer(object):
 			print "Build successful!"
 
 		# Run the real server in its own process
-		# FIXME: We need to kill this process if it already running
-		# And kill it when the buffer starts
-		os.system(scratch + "run" + " &")
+		self._server_pid = subprocess.Popen([scratch + "run", ""]).pid
+
+class BufferServer(object):
+	def __init__(self):
+		self._io_loop = None
+		self._port = 3000
+		self._builder_thread = None
+
+	def connection_ready(self, sock, fd, events):
+		while True:
+			try:
+				connection, address = sock.accept()
+			except socket.error, e:
+				if e[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
+					raise
+				return
+			#connection.setblocking(0)
+
+			# Get the request
+			request = connection.recv(1024 * 8)
+
+			# Write the request to the rootin tootin server
+			# and read the response back
+			client = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0);
+			client.connect(('0.0.0.0', self._port+1))
+			client.send(request)
+			response = client.recv(1024 * 8)
+			client.close()
+
+			# Write the response to the client
+			stream = iostream.IOStream(connection)
+			stream.write(response, stream.close)
+
+	def start(self):
+		# Create a new tcp socket that is nonblocking, and
+		# can reuse dangling addresses.
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		sock.setblocking(0)
+		sock.bind(('', self._port))
+		sock.listen(10000)
+
+		# Create a tornado loop that uses our 
+		# socket and callback to process requests
+		self._io_loop = ioloop.IOLoop.instance()
+		callback = functools.partial(self.connection_ready, sock)
+		self._io_loop.add_handler(sock.fileno(), callback, self._io_loop.READ)
+
+		self._builder_thread = BuilderThread()
+		self._builder_thread.start()
+
+		# Exit the tornado loop if ctrl + c is pressed.
+		try:
+			print "Buffer Server running on http://localhost:" + str(self._port) + " ..."
+			self._io_loop.start()
+		except KeyboardInterrupt:
+			self.stop()
+
+	def stop(self):
+		print "Exiting ..."
+		if self._io_loop:
+			self._io_loop.stop()
+		if self._builder_thread:
+			self._builder_thread.set_is_running(False)
 
 # Start the buffer server
 server = BufferServer()
