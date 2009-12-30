@@ -660,7 +660,6 @@ class BuilderThread(threading.Thread):
 
 	def run(self):
 		self._is_running = True
-		self._setup_app()
 
 		while self._is_running:
 			if self._event_handler.get_had_event():
@@ -743,7 +742,7 @@ class BuilderThread(threading.Thread):
 class BufferServer(object):
 	def __init__(self):
 		self._io_loop = None
-		self._port = 3000
+		self._port = None
 		self._builder_thread = None
 
 	def connection_ready(self, sock, fd, events):
@@ -772,6 +771,11 @@ class BufferServer(object):
 			stream.write(response, stream.close)
 
 	def start(self):
+		self._builder_thread = BuilderThread()
+		self._builder_thread._setup_app()
+		self._port = int(globals()['server_configuration']['port'])
+		self._builder_thread.start()
+
 		# Create a new tcp socket that is nonblocking, and
 		# can reuse dangling addresses.
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
@@ -785,9 +789,6 @@ class BufferServer(object):
 		self._io_loop = ioloop.IOLoop.instance()
 		callback = functools.partial(self.connection_ready, sock)
 		self._io_loop.add_handler(sock.fileno(), callback, self._io_loop.READ)
-
-		self._builder_thread = BuilderThread()
-		self._builder_thread.start()
 
 		# Exit the tornado loop if ctrl + c is pressed.
 		try:
