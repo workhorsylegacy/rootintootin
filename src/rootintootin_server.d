@@ -55,6 +55,7 @@ public class RootinTootinServer : HttpServer {
 	protected void on_request_all(Socket socket, Request request, string raw_header, string raw_body) {
 		// Get the controller, action, and id
 		string[] route = split(split(request.uri, "?")[0], "/");
+		if(route[length-1] == "") route = route[0 .. length-1];
 		string controller = route.length > 1 ? route[1] : null;
 		string action = route.length > 2 ? route[2] : "index";
 		string id = route.length > 3 ? route[3] : null;
