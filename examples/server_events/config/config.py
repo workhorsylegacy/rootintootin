@@ -9,7 +9,6 @@ database_configuration = {
 server_configuration = {
 	"port" : "3000", 
 	"max_connections" : "100", 
-	"header_max_size" : "8192", 
-	"max_threads" : "100"
+	"header_max_size" : "8192"
 }
 

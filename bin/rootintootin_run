@@ -159,7 +159,6 @@ def generate_run(routes, table_map, reference_map):
 
 	port = str(int(globals()['server_configuration']['port']) + 1)
 	max_connections = globals()['server_configuration']['max_connections']
-	max_threads = globals()['server_configuration']['max_threads']
 	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
 	db_user = globals()['database_configuration']['user']
