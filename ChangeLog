@@ -16,6 +16,7 @@
 	* Moved scaffolding js and css to their own files.
 	* Added proper page titles.
 	* Fixed bug #501459: 'Dangling slashes in urls break routes'.
+	* Fixed bug #500882: 'mysql connection error on new project'.
 
 2009-12-15  Matthew Brennan Jones  <mattjones@workhorsy.org>
 

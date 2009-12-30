@@ -346,10 +346,20 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 def generate_models():
 	# Connect to the database
 	generator = Generator()
-	db = MySQLdb.connect(host = globals()['database_configuration']['host'], 
-						user = globals()['database_configuration']['user'], 
-						passwd = globals()['database_configuration']['password'], 
-						db = globals()['database_configuration']['name'])
+	db = None
+	try:
+		db = MySQLdb.connect(host = globals()['database_configuration']['host'], 
+							user = globals()['database_configuration']['user'], 
+							passwd = globals()['database_configuration']['password'], 
+							db = globals()['database_configuration']['name'])
+	except MySQLdb.OperationalError, err:
+		if err.args[0] == 2002:
+			print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
+		elif err.args[0] == 1045:
+			print "Can't log into the mysql server. Make sure the user name and password are correct in config/config.py. Exiting ..."
+		else:
+			print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
+		exit()
 
 	# Get all the tables
 	table_map = {}

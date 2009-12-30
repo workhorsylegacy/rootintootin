@@ -423,7 +423,12 @@ class Generator(object):
 						user = self._database_configuration['user'], 
 						passwd = self._database_configuration['password'])
 		except MySQLdb.OperationalError, err:
-			print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
+			if err.args[0] == 2002:
+				print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
+			elif err.args[0] == 1045:
+				print "Can't log into the mysql server. Make sure the user name and password are correct in config/config.py. Exiting ..."
+			else:
+				print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
 			exit()
 
 	def get_schema_version(self):
