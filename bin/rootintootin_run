@@ -164,13 +164,10 @@ def generate_run(routes, table_map, reference_map):
 	links += "</ul>"
 
 	out_file.write(
-	"		if(controller_name == \"\") {\n" + 
-	"			return \"<h1>404 No controller specified</h1>\" ~ \n" + 
-	"			\"" + links + "\";\n"
-	"		}\n"
+	"		return \"<h1>404 No controller specified</h1>\" ~ \n" + 
+	"		\"" + links + "\";\n"
 	)
 
-	out_file.write("		return null;\n")
 	out_file.write("	}\n")
 	out_file.write("}\n")
 
