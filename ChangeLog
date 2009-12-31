@@ -15,6 +15,8 @@
 	* Added a basic mime type map, for downloaded files.
 	* Moved scaffolding js and css to their own files.
 	* Added proper page titles.
+	* Added a default page that lists controllers.
+	* Added a unknown action page.
 	* Fixed bug #501459: 'Dangling slashes in urls break routes'.
 	* Fixed bug #500882: 'mysql connection error on new project'.
 
