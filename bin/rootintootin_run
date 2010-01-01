@@ -481,21 +481,20 @@ def generate_views(routes):
 			# Print the openining of the function
 			output = []
 			output.append(
-			"private import rootintootin;\n" +
-			"private import ui;\n")
+			"private import rootintootin;" +
+			"private import ui;")
 
 			for model_name in model_names:
-				output.append("private import " + model_name + ";\n")
+				output.append("private import " + model_name + ";")
 
 			for controller_name in controller_names:
-				output.append("private import " + controller_name + ";\n")
+				output.append("private import " + controller_name + ";")
 
 			output.append(
-			"private import view_layouts_default;\n\n" +
-			"public class " + controller.capitalize() + member.capitalize() + "View { \n" +
-			"public static string render(" + controller.capitalize() + "Controller controller) { \n" +
-			"	// Generate the view as an array of strings\n" +
-			"	AutoStringArray builder = new AutoStringArray();")
+			"private import view_layouts_default;" +
+			"public class " + controller.capitalize() + member.capitalize() + "View { " +
+			"public static string render(" + controller.capitalize() + "Controller controller) { " +
+			"AutoStringArray b = new AutoStringArray();")
 
 			process_template_body(body, output)
 
@@ -503,9 +502,9 @@ def generate_views(routes):
 			output.append(
 			"\n" +
 			"	if(controller.use_layout) {\n" + 
-			"		return DefaultLayout.render(controller, tango.text.Util.join(builder.value, \"\")); \n" + 
+			"		return DefaultLayout.render(controller, tango.text.Util.join(b.value, \"\")); \n" + 
 			"	} else {\n" + 
-			"		return tango.text.Util.join(builder.value, \"\"); \n" + 
+			"		return tango.text.Util.join(b.value, \"\"); \n" + 
 			"	}\n"
 			"}\n" +
 			"}\n")
@@ -530,18 +529,17 @@ def generate_layouts():
 		# Print the openining of the function
 		output = []
 		output.append(
-		"private import rootintootin;\n" +
-		"private import ui;\n" +
-		"public class " + layout.capitalize() + "Layout { \n" +
-		"public static string render(ControllerBase controller, string yield) { \n" +
-		"	// Generate the layout as an array of strings\n" +
-		"	AutoStringArray builder = new AutoStringArray();")
+		"private import rootintootin;" +
+		"private import ui;" +
+		"public class " + layout.capitalize() + "Layout { " +
+		"public static string render(ControllerBase controller, string yield) { " +
+		"AutoStringArray b = new AutoStringArray();")
 
 		process_template_body(body, output)
 
 		# Print the closing of the function
 		output.append(
-		"\n	return tango.text.Util.join(builder.value, \"\"); \n" +
+		"\n	return tango.text.Util.join(b.value, \"\"); \n" +
 		"}\n" +
 		"}\n")
 
@@ -596,7 +594,7 @@ def process_template_body(body, output):
 
 		# If there were no brackets, just print the last text as a string
 		if open_index == -1 and close_index == -1:
-			output.append("\n	builder ~= \"" + body.replace("\"", "\\\"") + "\"; ")
+			output.append(" b~= \"" + body.replace("\"", "\\\"") + "\";")
 			break
 
 		# Get the text before, after, and in between the brackets
@@ -606,14 +604,14 @@ def process_template_body(body, output):
 
 		# If there was text before the opening, print it as a string
 		if len(before) > 0:
-			output.append("\n	builder ~= \"" + before.replace("\"", "\\\"") + "\"; ")
+			output.append(" b~= \"" + before.replace("\"", "\\\"") + "\";")
 
 		# Print the code between the brackets
 		if len(middle) > 0:
 			if middle[0] == "=":
-				output.append("\n	builder ~= " + middle[1:] + ";")
+				output.append(" b~= " + middle[1:] + ";")
 			else:
-				output.append("\n	" + middle)
+				output.append(" " + middle)
 
 		# Set the remaining text as the body, so it can be processed next
 		body = after
