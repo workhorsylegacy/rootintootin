@@ -1,6 +1,7 @@
-*-*-*  Matthew Brennan Jones  <mattjones@workhorsy.org>
+2009-12-31  Matthew Brennan Jones  <mattjones@workhorsy.org>
 
 	Release 0.2.0
+	* Moved from GPLv2 to GPLv3
 	* Added a blacklist of words to be disallowed by the gen script.
 	* Moved to a Python Tornado and D based server for speed and concurrency.
 	* Updated the server so it automatically rebuilds when files change.

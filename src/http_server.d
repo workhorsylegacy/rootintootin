@@ -1,7 +1,7 @@
-/*-------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
 #
 #    This file is part of the Rootin Tootin web framework and licensed under the
-#    GPL version 2 or greater. See the COPYRIGHT file for copyright information.
+#    GPL version 3 or greater. See the COPYRIGHT file for copyright information.
 #    This project is hosted at http://rootin.toot.in .
 #
 #-----------------------------------------------------------------------------*/
