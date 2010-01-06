@@ -374,6 +374,11 @@ class Generator(object):
 			elif key == 'plural':
 				plural = value
 
+		# Don't allow the plural and singular nouns are the same.
+		if plural == singular:
+			print "The singular and plural nouns cannot be the same."
+			exit()
+
 		self._nouns[singular] = plural
 		self.save_nouns()
 
