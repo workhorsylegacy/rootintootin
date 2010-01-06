@@ -1,5 +1,6 @@
 <h1>Listing comments</h1>
 
+<% if(controller._comments.length > 0) { %>
 <table>
 	<tr>
 		<th>User</th>
@@ -16,8 +17,10 @@
 	</tr>
 <% } %>
 </table>
+<% } else { %>
+<p>There are no comments.</p>
+<% } %>
 
 <br />
-
 <a href="/comments/new">New comment</a>
 

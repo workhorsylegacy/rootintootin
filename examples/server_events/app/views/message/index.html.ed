@@ -1,6 +1,7 @@
 <h1>Listing messages</h1>
 
 <div id="content">
+	<% if(controller._messages.length > 0) { %>
 	<table>
 		<tr>
 			<th>Text</th>
@@ -15,6 +16,9 @@
 		</tr>
 	<% } %>
 	</table>
+	<% } else { %>
+	<p>There are no messages.</p>
+	<% } %>
 </div>
 
 		<script type="text/javascript">

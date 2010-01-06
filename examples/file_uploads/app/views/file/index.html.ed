@@ -1,5 +1,6 @@
 <h1>Listing Files</h1>
 
+<% if(controller._files.length > 0) { %>
 <table>
 	<tr>
 		<th>Name</th>
@@ -14,8 +15,10 @@
 	</tr>
 <% } %>
 </table>
+<% } else { %>
+<p>There are no files.</p>
+<% } %>
 
 <br />
-
 <a href="/files/new">New file</a>
 

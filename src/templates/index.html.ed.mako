@@ -7,6 +7,7 @@
 </%doc>\
 <h1>Listing ${pluralize(model_name)}</h1>
 
+<@@ if(controller._${pluralize(model_name)}.length > 0) { @@>
 <table>
 	<tr>
 % for field in pairs:
@@ -27,6 +28,10 @@
 	</tr>
 <@@ } @@>
 </table>
+<@@ } else { @@>
+<p>There are no ${pluralize(model_name)}.</p>
+<@@ } @@>
+
 
 <br />
 <a href="/${pluralize(model_name)}/new">New ${model_name}</a>
