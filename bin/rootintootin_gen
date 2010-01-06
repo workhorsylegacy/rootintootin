@@ -22,6 +22,7 @@ def print_usage():
 	print "./gen configure server [port:number] [max_waiting_clients:number] [header_max_size:number]"
 	print "./gen create database"
 	print "./gen drop database"
+	print "./gen recreate database"
 	exit(1)
 
 # Make sure the first arg is a path
@@ -42,6 +43,11 @@ if str.join(' ', sys.argv[2:]) == "create database":
 # drop database
 elif str.join(' ', sys.argv[2:]) == "drop database":
 	generator.drop_database()
+
+# recreate database
+elif str.join(' ', sys.argv[2:]) == "recreate database":
+	generator.drop_database()
+	generator.create_database()
 
 # create migration [name] [field:type] ...
 elif str.join(' ', sys.argv[2:4]) == "create migration":
