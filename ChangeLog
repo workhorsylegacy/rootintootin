@@ -1,4 +1,5 @@
 *-*-*  Release 0.3.0
+	* Templates now use <%= for print with escape, and <%# for just print.
 	* The web server now returns 'building ...' while compiling.
 	* Added the 'recreate database' command to the gen script.
 	* Fixed bug #503179: 'DB data is not formatted correctly when rendered'.
