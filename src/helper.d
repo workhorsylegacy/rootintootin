@@ -25,18 +25,23 @@ public class Helper {
 	private static string[string] mimetype_map;
 
 	public static string escape_value(string value) {
-		foreach(string before, string after ; escape_map) {
-			value = tango.text.Util.substitute(value, before, after);
+		value = tango.text.Util.substitute(value, "+", "%2B");
+		value = tango.text.Util.substitute(value, " ", "+");
+
+		foreach(string normal, string escaped ; escape_map) {
+			value = tango.text.Util.substitute(value, escaped, normal);
 		}
 
 		return value;
 	}
 
 	public static string unescape_value(string value) {
-		foreach(string before, string after ; escape_map) {
-			value = tango.text.Util.substitute(value, after, before);
+		foreach(string normal, string escaped ; escape_map) {
+			value = tango.text.Util.substitute(value, escaped, normal);
 		}
 
+		value = tango.text.Util.substitute(value, "+", " ");
+		value = tango.text.Util.substitute(value, "%2B", "+");
 		return value;
 	}
 
@@ -109,7 +114,6 @@ public class Helper {
 		escape_map["("] = "%28";
 		escape_map[")"] = "%29";
 		escape_map["*"] = "%2A";
-		escape_map["+"] = "%2B";
 		escape_map[","] = "%2C";
 		escape_map["-"] = "%2D";
 		escape_map["."] = "%2E";
