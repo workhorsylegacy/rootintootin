@@ -688,7 +688,6 @@ class BuilderThread(threading.Thread):
 
 		while self._is_running:
 			if self._event_handler.get_had_event():
-				print "Rebuilding project ..."
 				self._event_handler.set_had_event(False)
 				self._setup_app()
 			time.sleep(3)
@@ -703,6 +702,7 @@ class BuilderThread(threading.Thread):
 			self._server_pid = None
 
 	def _setup_app(self):
+		print "Rebuilding project ..."
 		self._kill_server()
 
 		# Copy all the framework and app files into a scratch dir
