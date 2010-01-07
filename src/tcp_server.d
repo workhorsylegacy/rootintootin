@@ -52,11 +52,11 @@ public class TcpServer {
 					try {
 						// Have the event process the request
 						this.trigger_on_request(client, _buffer);
-
+					} catch(Exception err) {
+						client.output.write(to_s(err.file) ~ "(" ~ to_s(err.line) ~ "): " ~ err.msg);
+					} finally {
 						client.shutdown();
 						client.detach();
-					} catch(Exception err) {
-						Stdout("FIXME: inner loop threw").flush;
 					}
 				} else if(item.isError() || item.isHangup() || item.isInvalidHandle()) {
 					Stdout("FIXME: error, hangup, or invalid handle").flush;
