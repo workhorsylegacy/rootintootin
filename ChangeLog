@@ -1,6 +1,11 @@
-2009-12-31  Matthew Brennan Jones  <mattjones@workhorsy.org>
+*-*-*  Release 0.3.0
+	* The web server now returns 'building ...' while compiling.
+	* Added the 'recreate database' command to the gen script.
+	* Fixed bug #502003: 'Not providing an argument for show crashes the server'.
+	* Fixed bug #503190: 'Having the same plural and singular word for a noun fails'.
+	* Fixed bug #503981: 'CRUD UI with no data is confusing'.
 
-	Release 0.2.0
+2009-12-31  Release 0.2.0
 	* Moved from GPLv2 to GPLv3
 	* Added a blacklist of words to be disallowed by the gen script.
 	* Moved to a Python Tornado and D based server for speed and concurrency.
@@ -21,7 +26,5 @@
 	* Fixed bug #501459: 'Dangling slashes in urls break routes'.
 	* Fixed bug #500882: 'mysql connection error on new project'.
 
-2009-12-15  Matthew Brennan Jones  <mattjones@workhorsy.org>
-
-	Release 0.1.0
-
+2009-12-15  Release 0.1.0
+	* Initial release
