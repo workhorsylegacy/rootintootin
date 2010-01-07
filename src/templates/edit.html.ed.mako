@@ -8,7 +8,7 @@
 <form action="/${pluralize(model_name)}/update/<@@=controller._${model_name}.id@@>" class="edit_${model_name}" id="edit_${model_name}_<@@=controller._${model_name}.id@@>" method="post">
 	<h1>Editing ${model_name.capitalize()}</h1>
 
-	<@@= UI.errors_for(controller._${model_name}, "${model_name}") @@>
+	<@@# UI.errors_for(controller._${model_name}, "${model_name}") @@>
 % for field in pairs:
 <% field_name, field_type = field.split(':') %>
 	<p>

@@ -2,7 +2,7 @@
 <form action="/messages/update/<%=controller._message.id%>" class="edit_message" id="edit_message_<%=controller._message.id%>" method="post">
 	<h1>Editing Message</h1>
 
-	<%= UI.errors_for(controller._message, "message") %>
+	<%# UI.errors_for(controller._message, "message") %>
 
 	<p>
 		<label for="message_text">Text</label><br />
