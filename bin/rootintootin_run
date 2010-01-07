@@ -658,7 +658,7 @@ class BuilderThread(threading.Thread):
 		threading.Thread.__init__(self)
 		self._server_pid = None
 		self._is_running = False
-		self._project_dir = sys.argv[1] + '/'
+		self._project_dir = sys.argv[1] + '/app/'
 		self._compile_error = None
 
 		# Only get CRUD events
