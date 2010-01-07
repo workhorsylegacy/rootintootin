@@ -14,7 +14,7 @@
 		</p>
 		<p id="flash_error"><%=controller.flash_error%></p>
 		<p id="flash_notice"><%=controller.flash_notice%></p>
-		<%= yield %>
+		<%# yield %>
 	</body>
 </html>
 

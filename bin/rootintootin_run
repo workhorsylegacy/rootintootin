@@ -609,6 +609,8 @@ def process_template_body(body, output):
 		# Print the code between the brackets
 		if len(middle) > 0:
 			if middle[0] == "=":
+				output.append(" b~= h(" + middle[1:] + ");")
+			elif middle[0] == "#":
 				output.append(" b~= " + middle[1:] + ";")
 			else:
 				output.append(" " + middle)

@@ -45,6 +45,28 @@ public class Helper {
 		return value;
 	}
 
+	public static string html_escape(string value) {
+		auto keys = ["&", "\"", ">", "<"];
+		auto values = ["&amp;", "&quot;", "&gt;", "&lt;"];
+
+		for(size_t i=0; i<keys.length; i++) {
+			value = tango.text.Util.substitute(value, keys[i], values[i]);
+		}
+
+		return value;
+	}
+
+	public static string html_unescape(string value) {
+		auto keys = ["&", "\"", ">", "<"];
+		auto values = ["&amp;", "&quot;", "&gt;", "&lt;"];
+
+		for(size_t i=0; i<keys.length; i++) {
+			value = tango.text.Util.substitute(value, values[i], keys[i]);
+		}
+
+		return value;
+	}
+
 	public static string get_verbose_status_code(ushort code) {
 		return tango.text.convert.Integer.toString(code) ~ " " ~ status_code[code];
 	}
