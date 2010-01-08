@@ -1,4 +1,8 @@
 *-*-*  Release 0.3.0
+	* The './gen create scaffolding' now gives model fields expected default values, instead of null.
+	* The './gen create scaffolding' now gives each field a proper html control, instead of a textbox.
+	* The './gen create scaffolding' now only allows valid field types.
+	* The server now rebuilds only when files under the app dir change, instead of any file changing.
 	* Templates now use <%= for print with escape, and <%# for just print.
 	* The web server now returns 'building ...' while compiling.
 	* Added the 'recreate database' command to the gen script.
