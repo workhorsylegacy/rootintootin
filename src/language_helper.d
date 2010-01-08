@@ -93,7 +93,7 @@ public static double to_double(string value) {
 }
 
 public static bool to_bool(string value) {
-	return value == "true";
+	return value=="true" || value=="1";
 }
 
 // Add alternate named methods

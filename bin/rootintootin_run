@@ -224,10 +224,10 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 		properties += "\"" + field + "\", ";
 	properties += "];\n\n";
 
-	# Add all the fields
+	# Add all the fields with default values
 	for field, values in model_map.items():
 		if not field.endswith('_id'):
-			properties += "	protected " + sql_type_to_d_type(values['type']) + " _" + field + ";\n"
+			properties += "	protected " + sql_type_to_d_type(values['type']) + " _" + field + " = " + sql_type_to_default_d_value(values['type']) + ";\n"
 
 	# Add the field properties
 	for field, values in model_map.items():

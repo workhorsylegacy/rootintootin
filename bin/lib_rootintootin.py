@@ -22,6 +22,34 @@ def exec_file(file, globals, locals):
 def camelize(word):
 	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
 
+def migration_type_default_sql_value(migration_type):
+	type_map = {'boolean' : 'not null default 0',
+				'date' : 'not null default 0',
+				'datetime' : 'not null default 0',
+				'decimal' : 'not null default 0',
+				'float' : 'not null default 0',
+				'integer' : 'not null default 0',
+				'string' : 'default null',
+				'text' : 'default null',
+				'time' : 'not null default 0',
+				'timestamp' : 'not null default 0' }
+
+	return type_map[migration_type]
+
+def sql_type_to_default_d_value(migration_type):
+	type_map = {'tinyint(1)' : 'false',
+				'date' : '"0"',
+				'datetime' : '"0"',
+				'decimal(10,0)' : '0',
+				'float' : '0',
+				'int(11)' : '0',
+				'varchar(255)' : 'null',
+				'text' : 'null',
+				'time' : '"0"',
+				'timestamp' : '"0"' }
+
+	return type_map[migration_type]
+
 def is_valid_migration_type(migration_type):
 	try:
 		migration_type_to_sql_type(migration_type)
@@ -157,7 +185,7 @@ class Generator(object):
 				query += "`" + field_name + "_id` int not null, "
 				query += "foreign key(`" + field_name + "_id`) references `" + self.pluralize(field_name) + "`(`id`), "
 			else:
-				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + ", "
+				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + " " + migration_type_default_sql_value(field_type) + ", "
 		query = str.rstrip(query, ', ')
 		query += ") ENGINE=innoDB;"
 
