@@ -22,27 +22,52 @@ def exec_file(file, globals, locals):
 def camelize(word):
 	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
 
+def is_valid_migration_type(migration_type):
+	try:
+		migration_type_to_sql_type(migration_type)
+		return True
+	except:
+		return False
+
 def sql_type_to_d_type(sql_type):
-	type_map = { 'tinyint(1)' : 'bool',
-				 'varchar(255)' : 'string',
-				 'datetime' : 'string',
-				 'int(11)' : 'ulong',
-				 'text' : 'string' }
+	type_map = {'tinyint(1)' : 'bool',
+				'date' : 'string',
+				'datetime' : 'string',
+				'decimal(10,0)' : 'double',
+				'float' : 'float',
+				'int(11)' : 'ulong',
+				'varchar(255)' : 'string',
+				'text' : 'string',
+				'time' : 'string',
+				'timestamp' : 'string'}
 
 	return type_map[sql_type]
 
 def migration_type_to_sql_type(migration_type):
-	type_map = {'binary' : 'blob',
-				'boolean' : 'tinyint(1)',
+	type_map = {'boolean' : 'tinyint(1)',
 				'date' : 'date',
 				'datetime' : 'datetime',
-				'decimal' : 'datetime',
+				'decimal' : 'decimal(10,0)',
 				'float' : 'float',
 				'integer' : 'int(11)',
 				'string' : 'varchar(255)',
 				'text' : 'text',
 				'time' : 'time',
 				'timestamp' : 'datetime' }
+
+	return type_map[migration_type]
+
+def migration_type_to_html_type(migration_type):
+	type_map = {'boolean' : 'bool', 
+				'date' : 'string', 
+				'datetime' : 'string', 
+				'decimal' : 'double', 
+				'float' : 'float', 
+				'integer' : 'integer', 
+				'string' : 'string', 
+				'text' : 'string', 
+				'time' : 'string', 
+				'timestamp' : 'string'}
 
 	return type_map[migration_type]
 
@@ -54,6 +79,7 @@ def convert_string_to_d_type(d_type, d_string_variable_name):
 				'long' : 'to_long(#)',
 				'ulong' : 'to_ulong(#)',
 				'float' : 'to_float(#)',
+				'double' : 'to_double(#)',
 				'bool' : 'to_bool(#)',
 				'char' : '#',
 				'string' : 'to_s(#)' }
@@ -65,6 +91,7 @@ def convert_d_type_to_string(d_type, d_string_variable_name):
 				'long' : 'to_s(#)',
 				'ulong' : 'to_s(#)',
 				'float' : 'to_s(#)',
+				'double' : 'to_s(#)',
 				'bool' : 'to_s(#)',
 				'char' : '#',
 				'string' : 'to_s(#)' }
@@ -231,6 +258,13 @@ class Generator(object):
 		self.generate_template(params, template_file, out_file)
 
 	def create_scaffold(self, controller_name, pairs):
+		# Make sure the field types are valid
+		for pair in pairs:
+			key, value = pair.split(':')
+			if not is_valid_migration_type(value):
+				print "The type '" + str(value) + "' is not a valid migration type. Exiting ..."
+				exit()
+
 		# Get the name singularized
 		controller_name = self.singularize(controller_name)
 
@@ -244,7 +278,9 @@ class Generator(object):
 			'controller_names' : self.pluralize(controller_name), 
 			'model_name' : controller_name, 
 			'pairs' : pairs, 
-			'pluralize' : self.pluralize
+			'pluralize' : self.pluralize, 
+			'migration_type_to_html_type' : migration_type_to_html_type,
+			'migration_type_to_d_type' : migration_type_to_d_type
 		}
 		template_file = rootintootin_path + 'src/templates/name_controller.d.mako'
 		out_file = 'app/controllers/' + controller_name + '_controller.d'
