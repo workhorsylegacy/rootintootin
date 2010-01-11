@@ -31,7 +31,7 @@ public class CommentController : ControllerBase {
 			flash_notice("The comment was created.");
 			redirect_to("/comments/show/" ~ to_s(_comment.id));
 		} else {
-			render_view("new");
+			render_view("new", 200);
 		}
 	}
 
@@ -50,7 +50,7 @@ public class CommentController : ControllerBase {
 			flash_notice("The comment was updated.");
 			redirect_to("/comments/show/" ~ to_s(_comment.id));
 		} else {
-			render_view("edit");
+			render_view("edit", 200);
 		}
 	}
 
@@ -61,7 +61,7 @@ public class CommentController : ControllerBase {
 			redirect_to("/comments/index");
 		} else {
 			flash_error(_comment.errors()[0]);
-			render_view("index");
+			render_view("index", 200);
 		}
 	}
 }

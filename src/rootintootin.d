@@ -28,14 +28,54 @@ public class RunnerBase {
 	}
 }
 
-public class ManualRenderException : Exception {
-	public ResponseType _response_type;
-	public string _payload;
+public class RenderTextException : Exception { 
+	public string _text;
+	public ushort _status;
 
-	public this(ResponseType response_type, string payload) {
+	public this(string text, ushort status) {
 		super("");
-		_response_type = response_type;
-		_payload = payload;
+		_response = text;
+		_status = status;
+	}
+}
+
+public class RenderViewException : Exception { 
+	public string _response;
+	public ushort _status;
+
+	public this(string response, ushort status) {
+		super("");
+		_response = response;
+		_status = status;
+	}
+}
+
+public class RenderRedirectException : Exception { 
+	public string _url;
+	public ushort _status;
+
+	public this(string url) {
+		super("");
+		_url = url;
+		_status = 301;
+	}
+}
+
+public class RenderNoActionException : Exception { 
+	public ushort _status;
+
+	public this() {
+		super("");
+		_status = 404;
+	}
+}
+
+public class RenderNoControllerException : Exception { 
+	public ushort _status;
+
+	public this() {
+		super("");
+		_status = 404;
 	}
 }
 
@@ -64,7 +104,12 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 }
 
 public class ModelBase {
+	protected ulong _id;
 	protected string[] _errors;
+
+	public ulong id() {
+		return _id;
+	}
 
 	protected void reset_validation_errors() {
 	}
@@ -76,6 +121,27 @@ public class ModelBase {
 
 	public string[] errors() {
 		return this._errors;
+	}
+
+	public string to_json() {
+		return null;
+	}
+
+	public string to_xml() {
+		return null;
+	}
+
+	public static string to_json(ModelBase[] models) {
+		string retval = "{";
+		foreach(ModelBase model ; models) {
+			retval ~= model.to_json();
+		}
+		retval ~= "}";
+		return retval;
+	}
+
+	public static string to_xml(ModelBase[] models) {
+		return null;
 	}
 }
 
@@ -281,16 +347,43 @@ public class ControllerBase {
 		}
 	}
 
-	public void render_view(string name) {
-		throw new ManualRenderException(ResponseType.render_view, name);
+	public void respond_with(ModelBase model, string view_name, ushort status, string[] formats) {
+		switch(_request.format) {
+			case("html"): render_view(view_name, status); break;
+			case("json"): render_text(model.to_json(), status); break;
+			case("xml"): render_text(model.to_xml(), status); break;
+			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
+		}
 	}
 
-	public void render_text(string text) {
-		throw new ManualRenderException(ResponseType.render_text, text);
+	public void respond_with(ModelBase[] models, string view_name, ushort status, string[] formats) {
+		switch(_request.format) {
+			case("html"): render_view(view_name, status); break;
+			case("json"): render_text(ModelBase.to_json(models), status); break;
+			case("xml"): render_text(ModelBase.to_xml(models), status); break;
+			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
+		}
+	}
+
+	public void respond_with_redirect(ModelBase model, string view_name, ushort status, string[] formats) {
+		switch(_request.format) {
+			case("html"): redirect_to("/" ~ controller_name ~ "/" ~ view_name ~ "/" ~ to_s(model.id)); break;
+			case("json"): render_text(model.to_json(), status); break;
+			case("xml"): render_text(model.to_xml(), status); break;
+			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
+		}
+	}
+
+	public void render_view(string name, ushort status) {
+		throw new ManualRenderException(ResponseType.render_view, name, status);
+	}
+
+	public void render_text(string text, ushort status) {
+		throw new ManualRenderException(ResponseType.render_text, text, status);
 	}
 
 	public void redirect_to(string url) {
-		throw new ManualRenderException(ResponseType.redirect_to, url);
+		throw new ManualRenderException(ResponseType.redirect_to, url, 301);
 	}
 
 	public void trigger_event(string event_name) {

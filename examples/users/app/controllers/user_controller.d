@@ -8,14 +8,17 @@ public class UserController : ControllerBase {
 
 	public void index() {
 		_users = User.find_all();
+		respond_with(_users, "index", 200, ["html", "json"]);
 	}
 
 	public void show() {
 		_user = User.find(to_ulong(_request._params["id"]));
+		respond_with(_user, "show", 200, ["html", "json"]);
 	}
 
 	public void New() {
 		_user = new User();
+		respond_with(_user, "new", 200, ["html", "json"]);
 	}
 
 	public void create() {
@@ -25,14 +28,15 @@ public class UserController : ControllerBase {
 
 		if(_user.save()) {
 			flash_notice("The user was saved.");
-			redirect_to("/users/show/" ~ to_s(_user.id));
+			respond_with_redirect(_user, "show", 200, ["html", "json"]);
 		} else {
-			render_view("new");
+			respond_with(_user, "new", 422, ["html", "json"]);
 		}
 	}
 
 	public void edit() {
 		_user = User.find(to_ulong(_request._params["id"]));
+		respond_with(_user, "edit", 200, ["html", "json"]);
 	}
 
 	public void update() {
@@ -42,9 +46,9 @@ public class UserController : ControllerBase {
 
 		if(_user.save()) {
 			flash_notice("The user was updated.");
-			redirect_to("/users/show/" ~ to_s(_user.id));
+			respond_with_redirect(_user, "show", 200, ["html", "json"]);
 		} else {
-			render_view("edit");
+			respond_with(_user, "edit", 200, ["html", "json"]);
 		}
 	}
 
@@ -52,10 +56,10 @@ public class UserController : ControllerBase {
 		_user = User.find(to_ulong(_request._params["id"]));
 		if(_user.destroy()) {
 			flash_notice("The user was destroyed.");
-			redirect_to("/users/index");
+			respond_with_redirect(_user, "index", 200, ["html", "json"]);
 		} else {
 			flash_error(_user.errors()[0]);
-			render_view("index");
+			respond_with(_user, "index", 422, ["html", "json"]);
 		}
 	}
 }

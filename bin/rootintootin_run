@@ -80,7 +80,7 @@ def generate_run(routes, table_map, reference_map):
 	# Write the render view function
 	for controller, actions in routes.items():
 		out_file.write(
-		"	private string render_view(" + controller.capitalize() + "Controller controller, string controller_name, string view_name) {\n")
+		"	private string generate_view(" + controller.capitalize() + "Controller controller, string controller_name, string view_name) {\n")
 
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
@@ -113,7 +113,7 @@ def generate_run(routes, table_map, reference_map):
 		"			controller.controller_name = controller_name;\n" + 
 		"			controller.request = request;\n" + 
 		"			try {\n" +
-		"\n"
+		"				switch(action_name) {\n"
 		)
 
 		all_actions = {}
@@ -126,36 +126,20 @@ def generate_run(routes, table_map, reference_map):
 			elif action == "delete":
 				real_action = "Delete"
 			out_file.write(
-			"				if(action_name == \"" + action + "\") {\n" + 
-			"					controller." + real_action + "();\n"
+			"				case(\"" + action + "\"): controller." + real_action + "(); break;\n" + 
 			)
 
-			if method == "get":
-				out_file.write(
-				"					return this.render_view(controller, controller_name, action_name);\n"
-				)
-			else:
-				out_file.write(
-				"					return null;\n"
-				)
-			out_file.write(
-				"				}\n")
-
 		out_file.write(
-			"				return \"<h1>404 No action specified</h1>\" ~ \n" + 
-			"				\"<a href=\\\"index\\\">index</a>\";\n"
+			"					default: throw new RenderNoActionException();\n" + 
+			"				}\n" + 
 		)
 
 		out_file.write(
-			"			} catch(ManualRenderException err) {\n" + 
-			"				if(err._response_type == ResponseType.render_view) {\n" + 
-			"					return this.render_view(controller, controller_name, err._payload);\n" + 
-			"				} else {\n" + 
-			"					throw err;\n" + 
-			"				}\n" + 
+			"			} catch(RenderViewException err) {\n" + 
+			"				return this.generate_view(controller, controller_name, err._response);\n" + 
 			"			} finally {\n" + 
 			"				events_to_trigger = controller._events_to_trigger;\n" + 
-			"			}\n")
+			"			}")
 		out_file.write("		}\n")
 
 	links = "<ul>"

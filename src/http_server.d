@@ -24,16 +24,11 @@ private import tcp_server;
 private import language_helper;
 private import helper;
 
-public enum ResponseType {
-	render_view, 
-	render_text, 
-	redirect_to
-}
-
 public class Request {
 	private bool _has_rendered = false;
 	private string _method = null;
 	private string _uri = null;
+	private string _format = null;
 	private string _http_version = null;
 	public string[string] _params;
 	public string[string] _fields;
@@ -41,9 +36,10 @@ public class Request {
 	public string[string] _sessions;
 	public uint _content_length = 0;
 
-	public this(string method, string uri, string http_version, string[string] params, string[string] fields, string[string] cookies) {
+	public this(string method, string uri, string format, string http_version, string[string] params, string[string] fields, string[string] cookies) {
 		_method = method;
 		_uri = uri;
+		_format = format;
 		_http_version = http_version;
 		_params = params;
 		_fields = fields;
@@ -53,18 +49,20 @@ public class Request {
 	public bool has_rendered() { return _has_rendered; }
 	public string method() { return _method; }
 	public string uri() { return _uri; }
+	public string format() { return _format; }
 	public string http_version() { return _http_version; }
 	public uint content_length() { return _content_length; }
 
 	public void has_rendered(bool value) { _has_rendered = value; }
 	public void method(string value) { _method = value; }
 	public void uri(string value) { _uri = value; }
+	public void format(string value) { _format = value; }
 	public void http_version(string value) { _http_version = value; }
 	public void content_length(uint value) { _content_length = value; }
 
 	public static Request new_blank() {
 		string[string] params, cookies, fields;
-		return new Request("", "", "", params, fields, cookies);
+		return new Request("", "", "", "", params, fields, cookies);
 	}
 }
 
@@ -223,6 +221,8 @@ public class HttpServer : TcpServer {
 		string[] first_line = split(header_lines[0], " ");
 		request.method = first_line[0];
 		request.uri = first_line[1];
+		request.format = after_last(after_last(request.uri, "/"), ".");
+		if(request.format == "") request.format = "html";
 		request.http_version = first_line[2];
 
 		// Get all the fields

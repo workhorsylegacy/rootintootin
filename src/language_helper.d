@@ -19,6 +19,30 @@ public static string between(string value, string before, string after) {
 	return split(split(value, before)[1], after)[0];
 }
 
+public static string before(string value, string separator) {
+	string[] sections = split(value, separator);
+	if(sections.length > 0)
+		return sections[0];
+	else
+		return "";
+}
+
+public static string after(string value, string separator) {
+	string[] sections = split(value, separator);
+	if(sections.length > 1)
+		return sections[1];
+	else
+		return "";
+}
+
+public static string after_last(string value, string separator) {
+	string[] sections = split(value, separator);
+	if(sections.length > 1)
+		return sections[length-1];
+	else
+		return "";
+}
+
 // Add a to_s function for basic types
 public static string to_s(short value) {
 	return tango.text.convert.Integer.toString(value);

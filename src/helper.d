@@ -115,6 +115,7 @@ public class Helper {
 		status_code[415] = "Unsupported Media Type";
 		status_code[416] = "Requested range not satisfiable";
 		status_code[417] = "Expectation Failed";
+		status_code[422] = "Unprocessable Entity";
 		status_code[500] = "Internal Server Error";
 		status_code[501] = "Not Implemented";
 		status_code[502] = "Bad Gateway";

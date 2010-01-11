@@ -54,13 +54,16 @@ public class RootinTootinServer : HttpServer {
 
 	protected void on_request_all(Socket socket, Request request, string raw_header, string raw_body) {
 		// Get the controller, action, and id
-		string[] route = split(split(request.uri, "?")[0], "/");
+		string[] route = split(before(request.uri, "?"), "/");
+		route[length-1] = before(route[length-1], ".");
 		if(route[length-1] == "") route = route[0 .. length-1];
 		string controller = route.length > 1 ? route[1] : null;
 		string action = route.length > 2 ? route[2] : "index";
 		string id = route.length > 3 ? route[3] : null;
 		if(id != null) request._params["id"] = id;
 
+		Stdout.format("uri: {}\n", request.uri).flush;
+		Stdout.format("format: {}\n", request.format).flush;
 		Stdout.format("controller: {}\n", controller).flush;
 		Stdout.format("action: {}\n", action).flush;
 
@@ -92,14 +95,23 @@ public class RootinTootinServer : HttpServer {
 		}
 
 		// Generate and send the request
+/*
+	render_view, 
+	render_text, 
+	redirect_to, 
+	no_action, 
+	no_controller
+*/
 		string[] events_to_trigger;
 		try {
 			// Run the action and get any event names to trigger
 			string response = _runner.run_action(request, controller, action, id, events_to_trigger);
 			this.render_text(socket, request, response, 200);
 		} catch(ManualRenderException err) {
-			if(err._response_type == ResponseType.render_text) {
-				this.render_text(socket, request, err._payload, 200);
+			if(err._response_type == ResponseType.render_view) {
+				this.render_text(socket, request, err._payload, err._status);
+			} else if(err._response_type == ResponseType.redirect_to) {
+				this.redirect_to(socket, request, err._payload);
 			} else if(err._response_type == ResponseType.redirect_to) {
 				this.redirect_to(socket, request, err._payload);
 			}
