@@ -10,15 +10,18 @@ public class CommentController : ControllerBase {
 
 	public void index() {
 		_comments = Comment.find_all();
+		respond_with(_comments, "index", 200, ["html", "json"]);
 	}
 
 	public void show() {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
+		respond_with(_comment, "show", 200, ["html", "json"]);
 	}
 
 	public void New() {
 		_comment = new Comment();
 		_users = User.find_all();
+		respond_with(_comment, "new", 200, ["html", "json"]);
 	}
 
 	public void create() {
@@ -29,15 +32,16 @@ public class CommentController : ControllerBase {
 
 		if(_comment.save()) {
 			flash_notice("The comment was created.");
-			redirect_to("/comments/show/" ~ to_s(_comment.id));
+			respond_with_redirect(_comment, "show", 200, ["html", "json"]);
 		} else {
-			render_view("new", 200);
+			respond_with(_comment, "new", 422, ["html", "json"]);
 		}
 	}
 
 	public void edit() {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
 		_users = User.find_all();
+		respond_with(_comment, "edit", 200, ["html", "json"]);
 	}
 
 	public void update() {
@@ -48,9 +52,9 @@ public class CommentController : ControllerBase {
 
 		if(_comment.save()) {
 			flash_notice("The comment was updated.");
-			redirect_to("/comments/show/" ~ to_s(_comment.id));
+			respond_with_redirect(_comment, "show", 200, ["html", "json"]);
 		} else {
-			render_view("edit", 200);
+			respond_with(_comment, "edit", 200, ["html", "json"]);
 		}
 	}
 
@@ -58,10 +62,10 @@ public class CommentController : ControllerBase {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
 		if(_comment.destroy()) {
 			flash_notice("The comment was destroyed.");
-			redirect_to("/comments/index");
+			respond_with_redirect("index", 200, ["html", "json"]);
 		} else {
 			flash_error(_comment.errors()[0]);
-			render_view("index", 200);
+			respond_with(_comment, "index", 422, ["html", "json"]);
 		}
 	}
 }

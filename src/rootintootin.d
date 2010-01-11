@@ -34,48 +34,43 @@ public class RenderTextException : Exception {
 
 	public this(string text, ushort status) {
 		super("");
-		_response = text;
+		_text = text;
 		_status = status;
 	}
 }
 
 public class RenderViewException : Exception { 
-	public string _response;
+	public string _name;
 	public ushort _status;
 
-	public this(string response, ushort status) {
+	public this(string name, ushort status) {
 		super("");
-		_response = response;
+		_name = name;
 		_status = status;
 	}
 }
 
 public class RenderRedirectException : Exception { 
 	public string _url;
-	public ushort _status;
 
 	public this(string url) {
 		super("");
 		_url = url;
-		_status = 301;
 	}
 }
 
 public class RenderNoActionException : Exception { 
-	public ushort _status;
-
 	public this() {
 		super("");
-		_status = 404;
 	}
 }
 
 public class RenderNoControllerException : Exception { 
-	public ushort _status;
+	public string[] _controllers;
 
-	public this() {
+	public this(string[] controllers) {
 		super("");
-		_status = 404;
+		_controllers = controllers;
 	}
 }
 
@@ -374,16 +369,25 @@ public class ControllerBase {
 		}
 	}
 
+	public void respond_with_redirect(string view_name, ushort status, string[] formats) {
+		switch(_request.format) {
+			case("html"): redirect_to("/" ~ controller_name ~ "/" ~ view_name); break;
+			case("json"): render_text("", status); break;
+			case("xml"): render_text("", status); break;
+			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
+		}
+	}
+
 	public void render_view(string name, ushort status) {
-		throw new ManualRenderException(ResponseType.render_view, name, status);
+		throw new RenderViewException(name, status);
 	}
 
 	public void render_text(string text, ushort status) {
-		throw new ManualRenderException(ResponseType.render_text, text, status);
+		throw new RenderTextException(text, status);
 	}
 
 	public void redirect_to(string url) {
-		throw new ManualRenderException(ResponseType.redirect_to, url, 301);
+		throw new RenderRedirectException(url);
 	}
 
 	public void trigger_event(string event_name) {

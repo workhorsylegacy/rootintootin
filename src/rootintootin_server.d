@@ -95,28 +95,24 @@ public class RootinTootinServer : HttpServer {
 		}
 
 		// Generate and send the request
-/*
-	render_view, 
-	render_text, 
-	redirect_to, 
-	no_action, 
-	no_controller
-*/
 		string[] events_to_trigger;
 		try {
 			// Run the action and get any event names to trigger
 			string response = _runner.run_action(request, controller, action, id, events_to_trigger);
 			this.render_text(socket, request, response, 200);
-		} catch(ManualRenderException err) {
-			if(err._response_type == ResponseType.render_view) {
-				this.render_text(socket, request, err._payload, err._status);
-			} else if(err._response_type == ResponseType.redirect_to) {
-				this.redirect_to(socket, request, err._payload);
-			} else if(err._response_type == ResponseType.redirect_to) {
-				this.redirect_to(socket, request, err._payload);
+		} catch(RenderTextException e) {
+			this.render_text(socket, request, e._text, e._status);
+		} catch(RenderRedirectException e) {
+			this.redirect_to(socket, request, e._url);
+		} catch(RenderNoActionException e) {
+			this.render_text(socket, request, e.msg, 404);
+		} catch(RenderNoControllerException e) {
+			string response = "<h1>Unknown Controller</h1>\n<ul>\n";
+			foreach(string controller_name ; e._controllers) {
+				response ~= "	<li><a href=\"/" ~ controller_name ~ "\">" ~ controller_name ~ "</a></li>\n";
 			}
-		} catch(ModelException err) {
-			this.render_text(socket, request, err.msg, 200);
+			response ~= "</ul>\n";
+			this.render_text(socket, request, response, 404);
 		}
 
 		// FIXME: Here we need to trigger all the events in events_to_trigger

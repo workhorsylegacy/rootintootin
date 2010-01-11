@@ -126,30 +126,25 @@ def generate_run(routes, table_map, reference_map):
 			elif action == "delete":
 				real_action = "Delete"
 			out_file.write(
-			"				case(\"" + action + "\"): controller." + real_action + "(); break;\n" + 
-			)
+				"					case(\"" + action + "\"): controller." + real_action + "(); break;\n")
 
 		out_file.write(
 			"					default: throw new RenderNoActionException();\n" + 
-			"				}\n" + 
-		)
-
+			"				}\n")
 		out_file.write(
 			"			} catch(RenderViewException err) {\n" + 
-			"				return this.generate_view(controller, controller_name, err._response);\n" + 
+			"				return this.generate_view(controller, controller_name, err._name);\n" + 
 			"			} finally {\n" + 
 			"				events_to_trigger = controller._events_to_trigger;\n" + 
-			"			}")
+			"			}\n")
 		out_file.write("		}\n")
 
-	links = "<ul>"
+	links = []
 	for controller_name in controller_names:
-		links += "<li><a href=\\\"" + generator.pluralize(controller_name) + "\\\">" + generator.pluralize(controller_name) + "</a></li>"
-	links += "</ul>"
+		links.append("\"" + generator.pluralize(controller_name) + "\"")
 
 	out_file.write(
-	"		return \"<h1>404 No controller specified</h1>\" ~ \n" + 
-	"		\"" + links + "\";\n"
+	"		throw new RenderNoControllerException([" + str.join(', ', links) + "]);\n"
 	)
 
 	out_file.write("	}\n")
