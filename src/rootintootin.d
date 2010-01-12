@@ -127,12 +127,11 @@ public class ModelBase {
 	}
 
 	public static string to_json(ModelBase[] models) {
-		string retval = "{";
+		string[] retval;
 		foreach(ModelBase model ; models) {
 			retval ~= model.to_json();
 		}
-		retval ~= "}";
-		return retval;
+		return "[" ~ tango.text.Util.join(retval, ", ") ~ "]";
 	}
 
 	public static string to_xml(ModelBase[] models) {

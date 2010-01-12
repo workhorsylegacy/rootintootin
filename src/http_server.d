@@ -347,7 +347,8 @@ public class HttpServer : TcpServer {
 		socket.write(header);
 	}
 
-	protected void render_text(Socket socket, Request request, string text, ushort status_code = 200, string content_type = "text/html; charset=utf-8") {
+	protected void render_text(Socket socket, Request request, string text, ushort status_code = 200) {
+		string content_type = Helper.mimetype_map[request.format];
 		socket.write(generate_text(request, text, status_code, content_type));
 	}
 

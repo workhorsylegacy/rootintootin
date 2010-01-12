@@ -506,6 +506,8 @@ public class Helper {
 		mimetype_map["pdf"]  = "application/pdf";
 		mimetype_map["html"] = "text/html; charset=utf-8";
 		mimetype_map["htm"]  = "text/html; charset=utf-8";
+		mimetype_map["json"] = "application/json";
+		mimetype_map["xml"] = "text/xml";
 	}
 }
 

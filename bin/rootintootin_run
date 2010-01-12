@@ -327,6 +327,14 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 				"				break;\n" + \
 				"		}\n" + \
 				"		return null;\n" + \
+				"	}\n" + \
+				"	public string to_json() {\n" + \
+				"		string retval = \"{\\n\";\n" + \
+				"		foreach(string field; _field_names) {\n" + \
+				"			retval ~= \"	\\\"\" ~ field ~ \"\\\" : \\\"\" ~ get_field_by_name(field) ~ \"\\\"\\n\";\n" + \
+				"		}\n" + \
+				"		retval ~= \"}\";\n" + \
+				"		return retval;\n" + \
 				"	}\n"
 
 	# Add class closing
