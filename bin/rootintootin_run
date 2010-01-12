@@ -126,7 +126,7 @@ def generate_run(routes, table_map, reference_map):
 			elif action == "delete":
 				real_action = "Delete"
 			out_file.write(
-				"					case(\"" + action + "\"): controller." + real_action + "(); break;\n")
+				"					case \"" + action + "\": controller." + real_action + "(); break;\n")
 
 		out_file.write(
 			"					default: throw new RenderNoActionException();\n" + 
@@ -308,7 +308,6 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 				"	public string get_field_by_name(string field_name) {\n" + \
 				"		switch(field_name) {\n"
 
-	# tango.text.convert.Integer.parse.toString
 	for field, values in model_map.items():
 		if field.endswith('_id'):
 			reference_type = field.split('_id')[0]
@@ -327,13 +326,27 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 				"				break;\n" + \
 				"		}\n" + \
 				"		return null;\n" + \
-				"	}\n" + \
+				"	}\n"
+
+	# Add the to_json method
+	properties += \
 				"	public string to_json() {\n" + \
-				"		string retval = \"{\\n\";\n" + \
-				"		foreach(string field; _field_names) {\n" + \
-				"			retval ~= \"	\\\"\" ~ field ~ \"\\\" : \\\"\" ~ get_field_by_name(field) ~ \"\\\"\\n\";\n" + \
-				"		}\n" + \
-				"		retval ~= \"}\";\n" + \
+				"		string retval = \"{\\\"\" ~ _model_name ~ \"\\\" : {\\n\";\n"
+
+	for field, values in model_map.items():
+		if field.endswith('_id'):
+			reference_type = field.split('_id')[0]
+			properties += \
+				"		retval ~= \"	\\\"" + field + "\\\" : \" ~ (_" + reference_type + " is null ? null : to_s(_" + reference_type + ".id)) ~ \", \\n\";\n"
+		else:
+			escape = ''
+			if sql_type_to_d_type(values['type']) == 'string': escape = "\\\""
+			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "this." + field)
+			properties += \
+				"		retval ~= \"	\\\"" + field + "\\\" : " + escape + "\" ~ " + value_to_string + " ~ \"" + escape + ", \\n\";\n"
+
+	properties += \
+				"		retval ~= \"}}\";\n" + \
 				"		return retval;\n" + \
 				"	}\n"
 
