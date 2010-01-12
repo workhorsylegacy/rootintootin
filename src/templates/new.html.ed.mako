@@ -42,5 +42,5 @@
 	<input id="${model_name}_submit" name="commit" type="submit" value="Create" />
 </form>
 
-<a href="/${pluralize(model_name)}">Back</a>
+<@@#link_to("Back", "/${pluralize(model_name)}")@@>
 

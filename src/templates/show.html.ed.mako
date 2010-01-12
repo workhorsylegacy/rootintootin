@@ -10,6 +10,5 @@
 <p><b>${field_name.capitalize()}:</b> <@@=controller._${model_name}.${field_name}@@></p>
 % endfor
 
-<a href="/${pluralize(model_name)}/edit/<@@=controller._${model_name}.id@@>">Edit</a> | 
-<a href="/${pluralize(model_name)}">Back</a>
-
+<@@#link_to("Show", "/${pluralize(model_name)}/edit/" ~ to_s(controller._${model_name}.id))@@> | 
+<@@#link_to("Back", "/${pluralize(model_name)}")@@>

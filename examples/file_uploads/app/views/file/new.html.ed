@@ -10,5 +10,4 @@
 	<input name="commit" type="submit" value="Upload file" />
 </form>
 
-<a href="/files">Back</a>
-
+<%#link_to("Back", "/files")%>

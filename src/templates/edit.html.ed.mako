@@ -42,7 +42,7 @@
 	<input id="${model_name}_submit" name="commit" type="submit" value="Update" />
 </form>
 
-<a href="/${pluralize(model_name)}/show/<@@=controller._${model_name}.id@@>">Show</a> |
-<a href="/${pluralize(model_name)}">Back</a>
+<@@#link_to("Show", "/${pluralize(model_name)}/show/" ~ to_s(controller._${model_name}.id))@@> | 
+<@@#link_to("Back", "/${pluralize(model_name)}")@@>
 
 

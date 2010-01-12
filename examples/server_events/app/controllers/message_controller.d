@@ -8,14 +8,17 @@ public class MessageController : ControllerBase {
 
 	public void index() {
 		_messages = Message.find_all();
+		respond_with(_messages, "index", 200, ["html", "json"]);
 	}
 
 	public void show() {
 		_message = Message.find(to_ulong(_request._params["id"]));
+		respond_with(_message, "show", 200, ["html", "json"]);
 	}
 
 	public void New() {
 		_message = new Message();
+		respond_with(_message, "new", 200, ["html", "json"]);
 	}
 
 	public void create() {
@@ -24,14 +27,16 @@ public class MessageController : ControllerBase {
 
 		if(_message.save()) {
 			trigger_event("on_create");
-			redirect_to("/messages/show/" ~ to_s(_message.id));
+			flash_notice("The message was saved.");
+			respond_with_redirect(_message, "show", 200, ["html", "json"]);
 		} else {
-			render_view("new");
+			respond_with(_message, "new", 422, ["html", "json"]);
 		}
 	}
 
 	public void edit() {
 		_message = Message.find(to_ulong(_request._params["id"]));
+		respond_with(_message, "edit", 200, ["html", "json"]);
 	}
 
 	public void update() {
@@ -39,17 +44,22 @@ public class MessageController : ControllerBase {
 		_message.text = _request._params["message[text]"];
 
 		if(_message.save()) {
-			redirect_to("/messages/show/" ~ to_s(_message.id));
+			flash_notice("The message was updated.");
+			respond_with_redirect(_message, "show", 200, ["html", "json"]);
 		} else {
-			render_view("edit");
+			respond_with(_message, "edit", 200, ["html", "json"]);
 		}
 	}
 
 	public void destroy() {
 		_message = Message.find(to_ulong(_request._params["id"]));
-		_message.destroy();
-
-		redirect_to("/messages/index");
+		if(_message.destroy()) {
+			flash_notice("The message was destroyed.");
+			respond_with_redirect("index", 200, ["html", "json"]);
+		} else {
+			flash_error(_message.errors()[0]);
+			respond_with(_message, "index", 422, ["html", "json"]);
+		}
 	}
 
 	public void on_create() {

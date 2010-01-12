@@ -1,6 +1,6 @@
 
 <p><b>Text:</b> <%=controller._message.text%></p>
 
-<a href="/messages/edit/<%=controller._message.id%>">Edit</a> | 
-<a href="/messages">Back</a>
+<%#link_to("Edit", "/messages/edit/" ~ to_s(controller._message.id))%> | 
+<%#link_to("Back", "/messages")%>
 

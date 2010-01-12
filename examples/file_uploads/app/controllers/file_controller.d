@@ -8,14 +8,17 @@ public class FileController : ControllerBase {
 
 	public void index() {
 		_files = File.find_all();
+		respond_with(_files, "index", 200, ["html", "json"]);
 	}
 
 	public void show() {
 		_file = File.find(to_ulong(_request._params["id"]));
+		respond_with(_file, "show", 200, ["html", "json"]);
 	}
 
 	public void New() {
 		_file = new File();
+		respond_with(_file, "new", 200, ["html", "json"]);
 	}
 
 	public void create() {
@@ -24,14 +27,15 @@ public class FileController : ControllerBase {
 
 		if(_file.save()) {
 			flash_notice("The file was created.");
-			redirect_to("/files/show/" ~ to_s(_file.id));
+			respond_with_redirect(_file, "show", 200, ["html", "json"]);
 		} else {
-			render_view("new");
+			respond_with(_file, "new", 422, ["html", "json"]);
 		}
 	}
 
 	public void edit() {
 		_file = File.find(to_ulong(_request._params["id"]));
+		respond_with(_file, "edit", 200, ["html", "json"]);
 	}
 
 	public void update() {
@@ -40,9 +44,9 @@ public class FileController : ControllerBase {
 
 		if(_file.save()) {
 			flash_notice("The file was updated.");
-			redirect_to("/files/show/" ~ to_s(_file.id));
+			respond_with_redirect(_file, "show", 200, ["html", "json"]);
 		} else {
-			render_view("edit");
+			respond_with(_file, "edit", 200, ["html", "json"]);
 		}
 	}
 
@@ -50,10 +54,10 @@ public class FileController : ControllerBase {
 		_file = File.find(to_ulong(_request._params["id"]));
 		if(_file.destroy()) {
 			flash_notice("The file was destroyed.");
-			redirect_to("/files/index");
+			respond_with_redirect("index", 200, ["html", "json"]);
 		} else {
 			flash_error(_file.errors()[0]);
-			render_view("index");
+			respond_with(_file, "index", 422, ["html", "json"]);
 		}
 	}
 }

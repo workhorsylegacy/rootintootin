@@ -22,9 +22,9 @@
 <% field_name, field_type = field.split(':') %>\
 		<td><@@= ${model_name}.${field_name} @@></td>
 % endfor
-		<td><a href="/${pluralize(model_name)}/show/<@@=${model_name}.id@@>">Show</a></td>
-		<td><a href="/${pluralize(model_name)}/edit/<@@=${model_name}.id@@>">Edit</a></td>
-		<td><a href="/${pluralize(model_name)}/destroy/<@@=${model_name}.id@@>" onclick="post_href('delete'); return false;">Destroy</a></td>
+		<td><@@#link_to("Show", "/${pluralize(model_name)}/show/" ~ to_s(${model_name}.id))@@></td>
+		<td><@@#link_to("Edit", "/${pluralize(model_name)}/edit/" ~ to_s(${model_name}.id))@@></td>
+		<td><@@#link_to("Destroy", "/${pluralize(model_name)}/destroy/" ~ to_s(${model_name}.id), "onclick=\"post_href('delete'); return false;\"")@@></td>
 	</tr>
 <@@ } @@>
 </table>
@@ -34,5 +34,5 @@
 
 
 <br />
-<a href="/${pluralize(model_name)}/new">New ${model_name}</a>
+<@@#link_to("New ${model_name}", "/${pluralize(model_name)}/new")@@>
 

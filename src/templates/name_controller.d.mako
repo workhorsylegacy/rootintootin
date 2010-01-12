@@ -9,14 +9,17 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 	public void index() {
 		_${pluralize(controller_name)} = ${controller_name.capitalize()}.find_all();
+		respond_with(_${pluralize(controller_name)}, "index", 200, ["html", "json"]);
 	}
 
 	public void show() {
 		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
+		respond_with(_${controller_name}, "show", 200, ["html", "json"]);
 	}
 
 	public void New() {
 		_${controller_name} = new ${controller_name.capitalize()}();
+		respond_with(_${controller_name}, "new", 200, ["html", "json"]);
 	}
 
 	public void create() {
@@ -28,14 +31,15 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 		if(_${controller_name}.save()) {
 			flash_notice("The ${controller_name} was saved.");
-			redirect_to("/${pluralize(controller_name)}/show/" ~ to_s(_${controller_name}.id));
+			respond_with_redirect(_${controller_name}, "show", 200, ["html", "json"]);
 		} else {
-			render_view("new");
+			respond_with(_${controller_name}, "edit", 200, ["html", "json"]);
 		}
 	}
 
 	public void edit() {
 		_${controller_name} = ${controller_name.capitalize()}.find(to_ulong(_request._params["id"]));
+		respond_with(_${controller_name}, "edit", 200, ["html", "json"]);
 	}
 
 	public void update() {
@@ -47,9 +51,9 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 		if(_${controller_name}.save()) {
 			flash_notice("The ${controller_name} was updated.");
-			redirect_to("/${pluralize(controller_name)}/show/" ~ to_s(_${controller_name}.id));
+			respond_with_redirect(_${controller_name}, "show", 200, ["html", "json"]);
 		} else {
-			render_view("edit");
+			respond_with(_${controller_name}, "edit", 200, ["html", "json"]);
 		}
 	}
 
@@ -58,10 +62,10 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 		if(_${controller_name}.destroy()) {
 			flash_notice("The ${controller_name} was destroyed.");
-			redirect_to("/${pluralize(controller_name)}/index");
+			respond_with_redirect("index", 200, ["html", "json"]);
 		} else {
 			flash_error(_${controller_name}.errors()[0]);
-			render_view("index");
+			respond_with(_${controller_name}, "index", 422, ["html", "json"]);
 		}
 	}
 }

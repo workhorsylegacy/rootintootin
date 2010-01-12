@@ -12,5 +12,5 @@
 	<input id="message_submit" name="commit" type="submit" value="Create" />
 </form>
 
-<a href="/messages">Back</a>
+<%#link_to("Back", "/messages")%>
 

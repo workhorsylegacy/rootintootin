@@ -12,7 +12,6 @@
 	<input id="message_submit" name="commit" type="submit" value="Update" />
 </form>
 
-<a href="/messages/show/<%=controller._message.id%>">Show</a> |
-<a href="/messages">Back</a>
-
+<%#link_to("Show", "/messages/show/" ~ to_s(controller._message.id))%> | 
+<%#link_to("Back", "/messages")%>
 

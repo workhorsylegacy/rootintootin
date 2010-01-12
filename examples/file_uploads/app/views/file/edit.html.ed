@@ -10,7 +10,7 @@
 	<input name="commit" type="submit" value="Upload file" />
 </form>
 
-<a href="/files/show/<%=controller._file.id%>">Show</a> |
-<a href="/files">Back</a>
+<%#link_to("Show", "/files/show/" ~ to_s(controller._file.id))%> | 
+<%#link_to("Back", "/files")%>
 
 
