@@ -16,7 +16,7 @@
 	<input id="user_submit" name="commit" type="submit" value="Update" />
 </form>
 
-<a href="/users/show/<%=controller._user.id%>">Show</a> |
-<a href="/users">Back</a>
+<%#link_to("Show", "/users/show/" ~ to_s(controller._user.id))%> | 
+<%#link_to("Back", "/users")%>
 
 

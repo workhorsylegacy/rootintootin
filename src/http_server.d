@@ -26,6 +26,7 @@ private import helper;
 
 public class Request {
 	private bool _has_rendered = false;
+	private bool _was_format_specified;
 	private string _method = null;
 	private string _uri = null;
 	private string _format = null;
@@ -47,6 +48,7 @@ public class Request {
 	}
 
 	public bool has_rendered() { return _has_rendered; }
+	public bool was_format_specified() { return _was_format_specified; }
 	public string method() { return _method; }
 	public string uri() { return _uri; }
 	public string format() { return _format; }
@@ -54,6 +56,7 @@ public class Request {
 	public uint content_length() { return _content_length; }
 
 	public void has_rendered(bool value) { _has_rendered = value; }
+	public void was_format_specified(bool value) { _was_format_specified = value; }
 	public void method(string value) { _method = value; }
 	public void uri(string value) { _uri = value; }
 	public void format(string value) { _format = value; }
@@ -222,7 +225,8 @@ public class HttpServer : TcpServer {
 		request.method = first_line[0];
 		request.uri = first_line[1];
 		request.format = after_last(after_last(request.uri, "/"), ".");
-		if(request.format == "") request.format = "html";
+		request.was_format_specified = (request.format != "");
+		if(!request.was_format_specified) request.format = "html";
 		request.http_version = first_line[2];
 
 		// Get all the fields

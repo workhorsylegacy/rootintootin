@@ -11,6 +11,11 @@ private import language_helper;
 private import helper;
 private import rootintootin;
 
+public static ControllerBase controller = null;
+public static void set_controller(ControllerBase value) {
+	controller = value;
+}
+
 public static string h(string value) { return Helper.html_escape(value); }
 public static string h(int value) { return h(to_s(value)); }
 public static string h(uint value) { return h(to_s(value)); }
@@ -21,6 +26,14 @@ public static string h(double value) { return h(to_s(value)); }
 public static string h(bool value) { return h(to_s(value)); }
 public static string h(char value) { return h(to_s(value)); }
 
+public static string link_to(string name, string url, string opt="") {
+	string format = "";
+	if(controller.request.was_format_specified)
+		format = "." ~ controller.request.format;
+	return "<a href=\"" ~ url ~ format ~ "\"" ~ opt ~ ">" ~ name ~ "</a>";
+}
+
+// FIXME: remove the  UI class. Just have everything dumped into the namespace.
 public class UI {
 	// FIXME: This should not need the named passed in.
 	// FIXME: This should say updated for already saved models
@@ -45,3 +58,5 @@ public class UI {
 		return retval;
 	}
 }
+
+

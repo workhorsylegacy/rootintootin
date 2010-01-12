@@ -3,6 +3,6 @@
 <p><b>Email:</b> <%=controller._user.email%></p>
 <p><b>Comments:</b> <%=controller._user.comments.length%></p>
 
-<a href="/users/edit/<%=controller._user.id%>">Edit</a> | 
-<a href="/users">Back</a>
+<%#link_to("Edit", "/users/edit/" ~ to_s(controller._user.id))%> | 
+<%#link_to("Back", "/users")%>
 

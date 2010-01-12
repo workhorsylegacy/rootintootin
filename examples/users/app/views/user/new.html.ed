@@ -16,5 +16,5 @@
 	<input id="user_submit" name="commit" type="submit" value="Create" />
 </form>
 
-<a href="/users">Back</a>
+<%#link_to("Back", "/users")%>
 

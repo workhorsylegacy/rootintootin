@@ -473,6 +473,7 @@ def generate_views(routes):
 			"private import view_layouts_default;" +
 			"public class " + controller.capitalize() + member.capitalize() + "View { " +
 			"public static string render(" + controller.capitalize() + "Controller controller) { " +
+			"set_controller(controller);"
 			"AutoStringArray b = new AutoStringArray();")
 
 			process_template_body(body, output)
