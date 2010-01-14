@@ -297,8 +297,8 @@ class Generator(object):
 		controller_name = self.singularize(controller_name)
 
 		# Make sure the view dir exists
-		if not os.path.isdir('app/views/' + controller_name):
-			os.mkdir('app/views/' + controller_name)
+		if not os.path.isdir('app/views/' + self.pluralize(controller_name)):
+			os.mkdir('app/views/' + self.pluralize(controller_name))
 
 		# Get the files and parameters
 		params = {
@@ -320,25 +320,25 @@ class Generator(object):
 		self.generate_template(
 			params, 
 			rootintootin_path + 'src/templates/index.html.ed.mako', 
-			'app/views/' + controller_name + '/index.html.ed')
+			'app/views/' + self.pluralize(controller_name) + '/index.html.ed')
 
 		# Generate edit.html.ed
 		self.generate_template(
 			params, 
 			rootintootin_path + 'src/templates/edit.html.ed.mako', 
-			'app/views/' + controller_name + '/edit.html.ed')
+			'app/views/' + self.pluralize(controller_name) + '/edit.html.ed')
 
 		# Generate new.html.ed
 		self.generate_template(
 			params, 
 			rootintootin_path + 'src/templates/new.html.ed.mako', 
-			'app/views/' + controller_name + '/new.html.ed')
+			'app/views/' + self.pluralize(controller_name) + '/new.html.ed')
 
 		# Generate show.html.ed
 		self.generate_template(
 			params, 
 			rootintootin_path + 'src/templates/show.html.ed.mako', 
-			'app/views/' + controller_name + '/show.html.ed')
+			'app/views/' + self.pluralize(controller_name) + '/show.html.ed')
 
 	def migrate(self):
 		self.connect_to_database()

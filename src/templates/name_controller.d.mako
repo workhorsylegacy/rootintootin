@@ -31,7 +31,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 		if(_${controller_name}.save()) {
 			flash_notice("The ${controller_name} was saved.");
-			respond_with_redirect(_${controller_name}, "show", 200, ["html", "json"]);
+			respond_with_redirect(_${controller_name}, "/${pluralize(controller_name)}/" ~ to_s(_${controller_name}.id), 200, ["html", "json"]);
 		} else {
 			respond_with(_${controller_name}, "edit", 200, ["html", "json"]);
 		}
@@ -51,7 +51,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 		if(_${controller_name}.save()) {
 			flash_notice("The ${controller_name} was updated.");
-			respond_with_redirect(_${controller_name}, "show", 200, ["html", "json"]);
+			respond_with_redirect(_${controller_name}, "/${pluralize(controller_name)}/" ~ to_s(_${controller_name}.id), 200, ["html", "json"]);
 		} else {
 			respond_with(_${controller_name}, "edit", 200, ["html", "json"]);
 		}
@@ -62,7 +62,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 
 		if(_${controller_name}.destroy()) {
 			flash_notice("The ${controller_name} was destroyed.");
-			respond_with_redirect("index", 200, ["html", "json"]);
+			respond_with_redirect("/${pluralize(controller_name)}", 200, ["html", "json"]);
 		} else {
 			flash_error(_${controller_name}.errors()[0]);
 			respond_with(_${controller_name}, "index", 422, ["html", "json"]);
