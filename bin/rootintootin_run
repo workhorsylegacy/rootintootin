@@ -32,15 +32,9 @@ os.chdir(os.sys.path[0])
 def generate_run(routes, table_map, reference_map):
 	generator = Generator()
 
-	# Get the names of all the controllers
-	controller_names = []
-	for entry in os.listdir('app/controllers/'):
-		if entry.endswith('.d'):
-			controller_names.append(str.split(entry, '_controller.d')[0])
-
 	# Get the names of all the views
 	view_names = []
-	for controller_name in controller_names:
+	for controller_name, route_maps in routes.items():
 		for entry in os.listdir('app/views/' + controller_name):
 			if entry.endswith('.html.ed'):
 				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
@@ -65,8 +59,8 @@ def generate_run(routes, table_map, reference_map):
 		"private import ui;\n\n"
 	)
 
-	for controller_name in controller_names:
-		out_file.write("private import " + controller_name + "_controller;\n")
+	for controller_name, route_maps in routes.items():
+		out_file.write("private import " + generator.singularize(controller_name) + "_controller;\n")
 	out_file.write("\n")
 
 	for view_name in view_names:
@@ -78,24 +72,21 @@ def generate_run(routes, table_map, reference_map):
 	"public class Runner : RunnerBase {\n")
 
 	# Write the render view function
-	for controller, actions in routes.items():
+	for controller, route_maps in routes.items():
 		out_file.write(
-		"	private string generate_view(" + controller.capitalize() + "Controller controller, string controller_name, string view_name) {\n")
+		"	private string generate_view(" + generator.singularize(controller).capitalize() + "Controller controller, string controller_name, string view_name) {\n")
 
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
 
-		all_actions = {}
-		all_actions.update(actions['member'])
-		all_actions.update(actions['collection'])
-		for action, method in all_actions.items():
-			if method == "get":
-				out_file.write(
-				"			if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
-				"				return " + controller.capitalize() + action.capitalize() + "View.render(controller);\n"
-				)
-
-				out_file.write("			}\n")
+		for action, route_map in route_maps.items():
+			for uri, method in route_map.items():
+				if method == "get":
+					out_file.write(
+					"			if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
+					"				return " + controller.capitalize() + action.capitalize() + "View.render(controller);\n" +
+					"			}\n"
+					)
 
 		out_file.write("		}\n")
 		out_file.write("		return \"Unknown view '\" ~ view_name ~ \"'\";\n")
@@ -105,10 +96,10 @@ def generate_run(routes, table_map, reference_map):
 	# Write the run action function
 	out_file.write(
 	"	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {\n")
-	for controller, actions in routes.items():
+	for controller, route_maps in routes.items():
 		out_file.write(
 		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
-		"			" + controller.capitalize() + "Controller controller = new " + controller.capitalize() + "Controller();\n" + 
+		"			" + generator.singularize(controller).capitalize() + "Controller controller = new " + generator.singularize(controller).capitalize() + "Controller();\n" + 
 		"			controller.action_name = action_name;\n" + 
 		"			controller.controller_name = controller_name;\n" + 
 		"			controller.request = request;\n" + 
@@ -116,10 +107,7 @@ def generate_run(routes, table_map, reference_map):
 		"				switch(action_name) {\n"
 		)
 
-		all_actions = {}
-		all_actions.update(actions['member'])
-		all_actions.update(actions['collection'])
-		for action, method in all_actions.items():
+		for action, route_map in route_maps.items():
 			real_action = action
 			if action == "new":
 				real_action = "New"
@@ -140,8 +128,8 @@ def generate_run(routes, table_map, reference_map):
 		out_file.write("		}\n")
 
 	links = []
-	for controller_name in controller_names:
-		links.append("\"" + generator.pluralize(controller_name) + "\"")
+	for controller_name, route_maps in routes.items():
+		links.append("\"" + controller_name + "\"")
 
 	out_file.write(
 	"		throw new RenderNoControllerException([" + str.join(', ', links) + "]);\n"
@@ -158,15 +146,28 @@ def generate_run(routes, table_map, reference_map):
 	db_password = globals()['database_configuration']['password']
 	db_name = globals()['database_configuration']['name']
 
-	# Write the main function
+	# Write the main function header
 	out_file.write(
-	"\n\nint main() {\n" + 
+	"\n\nint main() {\n")
+
+	# Write the routes
+	out_file.write(
+	"	// Create the routes\n" + 
+	"	string[string][string][string] routes;\n")
+	for controller_name, route_maps in routes.iteritems():
+		for action_name, route_map in route_maps.iteritems():
+			for uri, method in route_map.iteritems():
+				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][\"" + uri + "\"] = \"" + method + "\";\n")
+
+	# Write the server start in main
+	out_file.write("\n" + 
+	"	// Create and start the sever\n" + 
 	"	ushort port = " + port + ";\n" + 
 	"	int max_waiting_clients = " + str(max_waiting_clients) + ";\n" + 
 	"	char[" + str(header_max_size) + "] buffer;\n" + 
 	"	RunnerBase runner = new Runner();\n" + 
-	"\n" + 
-	"	auto server = new RootinTootinServer(runner, \n" + 
+	"	auto server = new RootinTootinServer(\n" + 
+	"				runner, routes, \n" + 
 	"				port, max_waiting_clients, buffer, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
@@ -452,23 +453,16 @@ def generate_controllers():
 				f_out.write(f_in.read())
 
 def generate_views(routes):
+	generator = Generator()
+
 	# Get the names of all the models
 	model_names = []
 	for entry in os.listdir('app/models/'):
 		if entry.endswith('.d'):
 			model_names.append(str.split(entry, '.')[0])
 
-	# Get the names of all the controllers
-	controller_names = []
-	for entry in os.listdir('app/controllers/'):
-		if entry.endswith('.d'):
-			controller_names.append(str.split(entry, '.')[0])
-
-	for controller, actions in routes.items():
-		all_actions = {}
-		all_actions.update(actions['member'])
-		all_actions.update(actions['collection'])
-		for member, http_method in all_actions.items():
+	for controller, route_maps in routes.items():
+		for member, route_map in route_maps.items():
 			# If there is no template, then skip it
 			if not os.path.exists('app/views/' + controller + '/' + member + '.html.ed'):
 				continue
@@ -485,15 +479,15 @@ def generate_views(routes):
 			"private import ui;")
 
 			for model_name in model_names:
-				output.append("private import " + model_name + ";")
+				output.append("private import " + generator.singularize(model_name) + ";")
 
-			for controller_name in controller_names:
-				output.append("private import " + controller_name + ";")
+			for controller_name, route_maps in routes.items():
+				output.append("private import " + generator.singularize(controller_name) + "_controller;")
 
 			output.append(
 			"private import view_layouts_default;" +
 			"public class " + controller.capitalize() + member.capitalize() + "View { " +
-			"public static string render(" + controller.capitalize() + "Controller controller) { " +
+			"public static string render(" + generator.singularize(controller).capitalize() + "Controller controller) { " +
 			"set_controller(controller);"
 			"AutoStringArray b = new AutoStringArray();")
 
@@ -550,7 +544,8 @@ def generate_layouts():
 			out_file.write(fragment)
 		out_file.close()
 
-def get_link_files():
+def get_link_files(routes):
+	generator = Generator()
 	files = []
 
 	# Get the names of all the models
@@ -559,15 +554,9 @@ def get_link_files():
 		if entry.endswith('.d'):
 			model_names.append(str.split(entry, '.')[0])
 
-	# Get the names of all the controllers
-	controller_names = []
-	for entry in os.listdir('app/controllers/'):
-		if entry.endswith('.d'):
-			controller_names.append(str.split(entry, '_controller.d')[0])
-
 	# Get the names of all the views
 	view_names = []
-	for controller_name in controller_names:
+	for controller_name, route_maps in routes.items():
 		for entry in os.listdir('app/views/' + controller_name):
 			if entry.endswith('.html.ed'):
 				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
@@ -576,8 +565,8 @@ def get_link_files():
 		files.append(model_name + '_base.d')
 	for model_name in model_names:
 		files.append(model_name + '.d')
-	for controller_name in controller_names:
-		files.append(controller_name + '_controller.d')
+	for controller_name, route_maps in routes.items():
+		files.append(generator.singularize(controller_name) + '_controller.d')
 	for view_name in view_names:
 		files.append(view_name + '.d')
 	files.append('view_layouts_default.d')
@@ -747,7 +736,7 @@ class BuilderThread(threading.Thread):
 		generate_run(routes, table_map, reference_map)
 
 		# Compile the application into an executable
-		additional_imports = get_link_files()
+		additional_imports = get_link_files(routes)
 		result = ""
 		result += pexpect.run("gcc -g -c db.c -o db.o")
 		result += pexpect.run("ar rcs db.a db.o")

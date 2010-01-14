@@ -407,21 +407,19 @@ class Generator(object):
 		self.save_configuration()
 
 	def configure_routes(self, model_name, pairs):
-		# Get the name singularized
-		model_name = self.singularize(model_name)
+		model_name = self.pluralize(model_name)
 
 		f = open('config/routes.py', 'w')
 
 		f.write(
-			"routes = {'" + model_name + "' : { 'member' : { 'show' : 'get',\n" + 
-			"								'new' : 'get',\n" + 
-			"								'create' : 'post',\n" + 
-			"								'edit' : 'get',\n" + 
-			"								'update' : 'put',\n" + 
-			"								'destroy' : 'delete' }\n" + 
-			"					,\n" + 
-			"					'collection' : { 'index' : 'get' }\n" + 
-			"					}\n" + 
+			"routes = 	{'" + model_name + "' : \n" + 
+			"		{'index'  : {'/" + model_name + "'        : 'get'}, \n" + 
+			"		 'create' : {'/" + model_name + "'        : 'post'}, \n" + 
+			"		 'new'    : {'/" + model_name + "/new'    : 'get'}, \n" + 
+			"		 'show'   : {'/" + model_name + "/#'      : 'get'}, \n" + 
+			"		 'update' : {'/" + model_name + "/#'      : 'put'}, \n" + 
+			"		 'edit'   : {'/" + model_name + "/#;edit' : 'get'}, \n" + 
+			"		 'create' : {'/" + model_name + "/#'      : 'delete'}}\n" + 
 			"}"
 		)
 

@@ -22,16 +22,29 @@ private import rootintootin;
 
 public class RootinTootinServer : HttpServer {
 	private RunnerBase _runner = null;
+	private string[string][string][string] _routes = null;
 
-	public this(RunnerBase runner, ushort port, int max_waiting_clients, string buffer, 
+	public this(RunnerBase runner, string[string][string][string] routes, 
+				ushort port, int max_waiting_clients, string buffer, 
 				string db_host, string db_user, string db_password, string db_name) {
 		super(port, max_waiting_clients, buffer);
+		_routes = routes;
 		_runner = runner;
 
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
 	}
-
+/*
+	protected void get_request_route(Request request, string[] route, string controller, string action, string id) {
+		route = split(before(request.uri, "?"), "/");
+		route[length-1] = before(route[length-1], ".");
+		if(route[length-1] == "") route = route[0 .. length-1];
+		controller = route.length > 1 ? route[1] : null;
+		action = route.length > 2 ? route[2] : "index";
+		id = route.length > 3 ? route[3] : null;
+		if(id != null) request._params["id"] = id;
+	}
+*/
 	protected void on_started() {
 		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
@@ -58,9 +71,13 @@ public class RootinTootinServer : HttpServer {
 		route[length-1] = before(route[length-1], ".");
 		if(route[length-1] == "") route = route[0 .. length-1];
 		string controller = route.length > 1 ? route[1] : null;
+
 		string action = route.length > 2 ? route[2] : "index";
 		string id = route.length > 3 ? route[3] : null;
 		if(id != null) request._params["id"] = id;
+
+
+
 
 		Stdout.format("uri: {}\n", request.uri).flush;
 		Stdout.format("format: {}\n", request.format).flush;

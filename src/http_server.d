@@ -148,44 +148,31 @@ public class HttpServer : TcpServer {
 			}
 		}
 
-/*
-		// Get the file from a miltipart encoded body
-		// FIXME: This will put the whole post body into ram. It should put the body into a file
-		if(("Content-Type" in fields) != null) {
-			string content_type = fields["Content-Type"];
-			if(tango.text.Util.locatePattern(content_type, "multipart/form-data; boundary=", 0) == 0) {
-				string boundary = split(content_type, "; boundary=")[1];
-				Stdout.format("Boundary [[{}]]\n", boundary).flush;
-
-				File raw_body_file = new File("raw_body", File.ReadExisting);
-				string raw_body = "";
-				char[100] buf;
-				int len = 0;
-				while((len = raw_body_file.read(buf)) > 0) {
-					raw_body ~= buf[0 .. len];
-				}
-
-				// Add any params
-				foreach(string part ; split(raw_body, boundary)) {
-					if(tango.text.Util.locatePattern(part, "Content-Disposition: form-data; ", 0) == 0) {
-						string data = between("Content-Disposition: form-data; ", "\r\n");
-						foreach(string variable ; split(data, "; ")) {
-							string pair = split(variable, "=");
-							if(pair[0] == "name")
-								request._params[pair[1]] = pair[1];
-						}
-					}
-				}
-				//string meta = split(parts[1], "\r\n\r\n")[0];
-				//string file = split(parts[1], "\r\n\r\n")[1][0 .. length-2];
-			}
-		}
-*/
-
 		this.on_request_post(socket, request, raw_header, raw_body);
 	}
 
 	protected void trigger_on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
+		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
+		if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
+			this.render_text(socket, request, "Content-Length is required for HTTP POST and PUT.", 411);
+			return;
+		}
+
+		// Get the content length
+		request.content_length = to_uint(between(raw_header, "Content-Length: ", "\r\n"));
+
+		// Get the params from a url encoded body
+		if(("Content-Type" in request._fields) != null) {
+			if(request._fields["Content-Type"] == "application/x-www-form-urlencoded") {
+				foreach(string param ; split(raw_body, "&")) {
+					string[] pair = split(param, "=");
+					if(pair.length == 2) {
+						request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+					}
+				}
+			}
+		}
+
 		this.on_request_put(socket, request, raw_header, raw_body);
 	}
 
@@ -228,6 +215,20 @@ public class HttpServer : TcpServer {
 		request.was_format_specified = (request.format != "");
 		if(!request.was_format_specified) request.format = "html";
 		request.http_version = first_line[2];
+
+		// Monkey Patch the http method
+		// This lets browsers fake post, put, and delete
+		if(("method" in request._params) != null) {
+			switch(request._params["method"]) {
+				case "GET":
+				case "POST":
+				case "PUT":
+				case "DELETE":
+				case "OPTIONS":
+					request.method = request._params["method"]; break;
+				default: break;
+			}
+		}
 
 		// Get all the fields
 		foreach(string line ; header_lines) {
