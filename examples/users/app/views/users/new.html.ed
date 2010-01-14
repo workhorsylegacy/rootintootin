@@ -1,5 +1,5 @@
 
-<form action="/users/create" class="new_user" id="new_user" method="post">
+<form action="/users" class="new_user" id="new_user" method="post">
 	<h1>New User</h1>
 
 	<%# UI.errors_for(controller._user, "user") %>

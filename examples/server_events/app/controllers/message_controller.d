@@ -28,7 +28,7 @@ public class MessageController : ControllerBase {
 		if(_message.save()) {
 			trigger_event("on_create");
 			flash_notice("The message was saved.");
-			respond_with_redirect(_message, "show", 200, ["html", "json"]);
+			respond_with_redirect(_message, "/messages/" ~ to_s(_message.id), 200, ["html", "json"]);
 		} else {
 			respond_with(_message, "new", 422, ["html", "json"]);
 		}
@@ -45,7 +45,7 @@ public class MessageController : ControllerBase {
 
 		if(_message.save()) {
 			flash_notice("The message was updated.");
-			respond_with_redirect(_message, "show", 200, ["html", "json"]);
+			respond_with_redirect(_message, "/messages/" ~ to_s(_message.id), 200, ["html", "json"]);
 		} else {
 			respond_with(_message, "edit", 200, ["html", "json"]);
 		}
@@ -55,7 +55,7 @@ public class MessageController : ControllerBase {
 		_message = Message.find(to_ulong(_request._params["id"]));
 		if(_message.destroy()) {
 			flash_notice("The message was destroyed.");
-			respond_with_redirect("index", 200, ["html", "json"]);
+			respond_with_redirect("/messages", 200, ["html", "json"]);
 		} else {
 			flash_error(_message.errors()[0]);
 			respond_with(_message, "index", 422, ["html", "json"]);

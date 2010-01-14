@@ -1,5 +1,5 @@
 
-<form action="/files/create" class="new_file" id="new_file" enctype="multipart/form-data" method="post">
+<form action="/files" class="new_file" id="new_file" enctype="multipart/form-data" method="post">
 	<h1>New File</h1>
 
 	<%# UI.errors_for(controller._file, "file") %>

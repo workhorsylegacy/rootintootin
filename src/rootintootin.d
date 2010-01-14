@@ -359,18 +359,18 @@ public class ControllerBase {
 		}
 	}
 
-	public void respond_with_redirect(ModelBase model, string view_name, ushort status, string[] formats) {
+	public void respond_with_redirect(ModelBase model, string url, ushort status, string[] formats) {
 		switch(_request.format) {
-			case("html"): redirect_to("/" ~ controller_name ~ "/" ~ view_name ~ "/" ~ to_s(model.id)); break;
+			case("html"): redirect_to(url); break;
 			case("json"): render_text(model.to_json(), status); break;
 			case("xml"): render_text(model.to_xml(), status); break;
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
 		}
 	}
 
-	public void respond_with_redirect(string view_name, ushort status, string[] formats) {
+	public void respond_with_redirect(string url, ushort status, string[] formats) {
 		switch(_request.format) {
-			case("html"): redirect_to("/" ~ controller_name ~ "/" ~ view_name); break;
+			case("html"): redirect_to(url); break;
 			case("json"): render_text("", status); break;
 			case("xml"): render_text("", status); break;
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;

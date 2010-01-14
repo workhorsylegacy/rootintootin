@@ -1,12 +1,12 @@
 
 # FIXME: This needs to be simpler than rails, but allow for things like "http://localhost/titles/A. I. Artificial Intelligence"
 routes = 	{'messages' : 
-					{'index'     : {'/messages'             : 'get'}, 
-					 'create'    : {'/messages'             : 'post'}, 
-					 'new'       : {'/messages/new'         : 'get'}, 
-					 'show'      : {'/messages/#'           : 'get'}, 
-					 'update'    : {'/messages/#'           : 'put'}, 
-					 'edit'      : {'/messages/#;edit'      : 'get'}, 
-					 'create'    : {'/messages/#'           : 'delete'}}, 
-					 'on_create' : {'/messages/#;on_create' : 'get'}
+					{'index'  : {'/messages'        : 'GET'}, 
+					 'create' : {'/messages'        : 'POST'}, 
+					 'new'    : {'/messages/new'    : 'GET'}, 
+					 'show'   : {'/messages/\d*'      : 'GET'}, 
+					 'update' : {'/messages/\d*'      : 'PUT'}, 
+					 'edit'   : {'/messages/\d*;edit' : 'GET'}, 
+					 'destroy' : {'/messages/\d*'      : 'DELETE'}, 
+					 'on_create' : {'/messages/\d*;on_create' : 'GET'}}
 			}

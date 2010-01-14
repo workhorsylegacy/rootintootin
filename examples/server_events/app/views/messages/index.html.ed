@@ -9,9 +9,9 @@
 	<% foreach(Message message ; controller._messages) { %>
 		<tr>
 			<td><%= message.text %></td>
-			<td><%#link_to("Show", "/messages/show/" ~ to_s(message.id))%></td>
-			<td><%#link_to("Edit", "/messages/edit/" ~ to_s(message.id))%></td>
-			<td><%#link_to("Destroy", "/messages/destroy/" ~ to_s(message.id), "onclick=\"post_href('delete'); return false;\"")%></td>
+			<td><%#link_to("Show", "/messages/" ~ to_s(message.id))%></td>
+			<td><%#link_to("Edit", "/messages/" ~ to_s(message.id) ~ ";edit")%></td>
+			<td><%#link_to("Destroy", "/messages/" ~ to_s(message.id) ~ "?method=DELETE", "onclick=\"post_href('delete'); return false;\"")%></td>
 		</tr>
 	<% } %>
 	</table>

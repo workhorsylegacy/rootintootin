@@ -9,9 +9,9 @@
 <% foreach(File file ; controller._files) { %>
 	<tr>
 		<td><%= file.name %></td>
-		<td><%#link_to("Show", "/files/show/" ~ to_s(file.id))%></td>
-		<td><%#link_to("Edit", "/files/edit/" ~ to_s(file.id))%></td>
-		<td><%#link_to("Destroy", "/files/destroy/" ~ to_s(file.id), "\"post_href('delete'); return false;\"")%></td>
+		<td><%#link_to("Show", "/files/" ~ to_s(file.id))%></td>
+		<td><%#link_to("Edit", "/files/" ~ to_s(file.id) ~ ";edit")%></td>
+		<td><%#link_to("Destroy", "/files/" ~ to_s(file.id) ~ "?method=DELETE", "\"post_href('delete'); return false;\"")%></td>
 	</tr>
 <% } %>
 </table>

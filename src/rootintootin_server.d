@@ -9,6 +9,7 @@
 
 private import tango.net.device.Socket;
 private import tango.text.Util;
+private import TangoRegex = tango.text.Regex;
 
 private import tango.io.device.File;
 private import Path = tango.io.Path;
@@ -34,17 +35,48 @@ public class RootinTootinServer : HttpServer {
 		// Connect to the database
 		db_connect(db_host, db_user, db_password, db_name);
 	}
-/*
-	protected void get_request_route(Request request, string[] route, string controller, string action, string id) {
-		route = split(before(request.uri, "?"), "/");
+
+	private bool get_route_info(Request request, out string controller, out string action, out string id) {
+		// Get the controller, action, and id
+		string[] route = split(before(request.uri, "?"), "/");
+		string raw_uri = before(request.uri, "?");
 		route[length-1] = before(route[length-1], ".");
-		if(route[length-1] == "") route = route[0 .. length-1];
-		controller = route.length > 1 ? route[1] : null;
-		action = route.length > 2 ? route[2] : "index";
-		id = route.length > 3 ? route[3] : null;
-		if(id != null) request._params["id"] = id;
+		string new_controller = route.length > 1 ? route[1] : null;
+		string new_action, new_id;
+
+		// Make sure the route exists
+		bool has_valid_request = false;
+		foreach(string route_controller, string[string][string] route_maps ; _routes) {
+			foreach(string route_action, string[string] route_map; route_maps) {
+				foreach(string route_regex, string method; route_map) {
+					if(request.method == method) {
+						// FIXME: Have this regex generated when the server starts for performance.
+						auto r = new TangoRegex.Regex(route_regex);
+						if(r.test(raw_uri)) {
+							Stdout.format("route_regex: {}\n", route_regex).flush;
+							Stdout.format("request.uri: {}\n", request.uri).flush;
+							Stdout.format("method: {}\n", method).flush;
+							Stdout.format("request.method: {}\n", request.method).flush;
+							Stdout("\n\n").flush;
+							new_action = route_action;
+							if(split(route_regex, r"\d*").length > 1)
+								new_id = before(after_last(raw_uri, "/"), ";");
+							has_valid_request = true;
+						}
+					}
+				}
+			}
+		}
+
+		// Set the out return values
+		if(has_valid_request) {
+			controller = new_controller;
+			action = new_action;
+			id = new_id;
+		}
+		return has_valid_request;
 	}
-*/
+
 	protected void on_started() {
 		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
@@ -67,22 +99,8 @@ public class RootinTootinServer : HttpServer {
 
 	protected void on_request_all(Socket socket, Request request, string raw_header, string raw_body) {
 		// Get the controller, action, and id
-		string[] route = split(before(request.uri, "?"), "/");
-		route[length-1] = before(route[length-1], ".");
-		if(route[length-1] == "") route = route[0 .. length-1];
-		string controller = route.length > 1 ? route[1] : null;
-
-		string action = route.length > 2 ? route[2] : "index";
-		string id = route.length > 3 ? route[3] : null;
-		if(id != null) request._params["id"] = id;
-
-
-
-
-		Stdout.format("uri: {}\n", request.uri).flush;
-		Stdout.format("format: {}\n", request.format).flush;
-		Stdout.format("controller: {}\n", controller).flush;
-		Stdout.format("action: {}\n", action).flush;
+		string controller, action, id;
+		bool has_valid_request = get_route_info(request, controller, action, id);
 
 		// Send any files
 		string normalized = Path.normalize(request.uri);
@@ -108,6 +126,14 @@ public class RootinTootinServer : HttpServer {
 			}
 			return;
 		}
+
+		// Add the id to the params if we have one
+		if(id != null) request._params["id"] = id;
+
+		Stdout.format("uri: {}\n", request.uri).flush;
+		Stdout.format("format: {}\n", request.format).flush;
+		Stdout.format("controller: {}\n", controller).flush;
+		Stdout.format("action: {}\n", action).flush;
 
 		// Generate and send the request
 		string[] events_to_trigger;

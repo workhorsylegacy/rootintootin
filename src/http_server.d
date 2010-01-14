@@ -216,20 +216,6 @@ public class HttpServer : TcpServer {
 		if(!request.was_format_specified) request.format = "html";
 		request.http_version = first_line[2];
 
-		// Monkey Patch the http method
-		// This lets browsers fake post, put, and delete
-		if(("method" in request._params) != null) {
-			switch(request._params["method"]) {
-				case "GET":
-				case "POST":
-				case "PUT":
-				case "DELETE":
-				case "OPTIONS":
-					request.method = request._params["method"]; break;
-				default: break;
-			}
-		}
-
 		// Get all the fields
 		foreach(string line ; header_lines) {
 			// Break if we are at the end of the fields
@@ -258,6 +244,20 @@ public class HttpServer : TcpServer {
 			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
 				string[] pair = tango.text.Util.split(param, "=");
 				request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+			}
+		}
+
+		// Monkey Patch the http method
+		// This lets browsers fake post, put, and delete
+		if(("method" in request._params) != null) {
+			switch(request._params["method"]) {
+				case "GET":
+				case "POST":
+				case "PUT":
+				case "DELETE":
+				case "OPTIONS":
+					request.method = request._params["method"]; break;
+				default: break;
 			}
 		}
 

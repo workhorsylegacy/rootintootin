@@ -1,5 +1,5 @@
 
-<form action="/messages/update/<%=controller._message.id%>" class="edit_message" id="edit_message_<%=controller._message.id%>" method="post">
+<form action="/messages/<%=controller._message.id%>?method=PUT" class="edit_message" id="edit_message_<%=controller._message.id%>" method="post">
 	<h1>Editing Message</h1>
 
 	<%# UI.errors_for(controller._message, "message") %>
@@ -12,6 +12,6 @@
 	<input id="message_submit" name="commit" type="submit" value="Update" />
 </form>
 
-<%#link_to("Show", "/messages/show/" ~ to_s(controller._message.id))%> | 
+<%#link_to("Show", "/messages/" ~ to_s(controller._message.id))%> | 
 <%#link_to("Back", "/messages")%>
 

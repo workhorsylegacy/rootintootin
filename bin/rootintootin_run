@@ -81,7 +81,7 @@ def generate_run(routes, table_map, reference_map):
 
 		for action, route_map in route_maps.items():
 			for uri, method in route_map.items():
-				if method == "get":
+				if method == "GET":
 					out_file.write(
 					"			if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
 					"				return " + controller.capitalize() + action.capitalize() + "View.render(controller);\n" +
@@ -157,7 +157,7 @@ def generate_run(routes, table_map, reference_map):
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
 			for uri, method in route_map.iteritems():
-				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][\"" + uri + "\"] = \"" + method + "\";\n")
+				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][r\"" + uri + "\"] = \"" + method + "\";\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 

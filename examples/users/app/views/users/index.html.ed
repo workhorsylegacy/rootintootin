@@ -12,9 +12,9 @@
 		<td><%= user.name %></td>
 		<td><%= user.email %></td>
 		<td><%= user.comments.length %></td>
-		<td><%#link_to("Show", "/users/show/" ~ to_s(user.id))%></td>
-		<td><%#link_to("Edit", "/users/edit/" ~ to_s(user.id))%></td>
-		<td><%#link_to("Destroy", "/users/destroy/" ~ to_s(user.id), "onclick=\"post_href('delete'); return false;\"")%></td>
+		<td><%#link_to("Show", "/users/" ~ to_s(user.id))%></td>
+		<td><%#link_to("Edit", "/users/" ~ to_s(user.id) ~ ";edit")%></td>
+		<td><%#link_to("Destroy", "/users/" ~ to_s(user.id) ~ "?method=DELETE", "onclick=\"post_href('delete'); return false;\"")%></td>
 	</tr>
 <% } %>
 </table>
@@ -24,4 +24,5 @@
 
 <br />
 <%#link_to("New user", "/users/new")%>
+
 
