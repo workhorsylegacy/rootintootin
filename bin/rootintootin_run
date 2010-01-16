@@ -179,7 +179,9 @@ def generate_run(routes, table_map, reference_map):
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
 	# Add class opening
-	properties = "private import rootintootin;\n"
+	properties = \
+			"private import rootintootin;\n" + \
+			"private import tango.text.json.Json;\n"
 
 	for entry in model_names:
 		properties += "private import " + entry + ";\n"
@@ -332,23 +334,32 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 	# Add the to_json method
 	properties += \
 				"	public string to_json() {\n" + \
-				"		string retval = \"{\\\"\" ~ _model_name ~ \"\\\" : {\\n\";\n"
+				"		auto json = new Json!(char);\n" + \
+				"		with(json)\n" + \
+				"			value = object(pair(\"" + model_name + "\", object(\n"
 
+	model_map_len = len(model_map)
 	for field, values in model_map.items():
+		comma = ", "
+		if model_map_len == 1:
+			comma = ""
 		if field.endswith('_id'):
 			reference_type = field.split('_id')[0]
 			properties += \
-				"		retval ~= \"	\\\"" + field + "\\\" : \" ~ (_" + reference_type + " is null ? null : to_s(_" + reference_type + ".id)) ~ \", \\n\";\n"
+				"						pair(\"" + field + "\", value(_" + reference_type + ".id))" + comma + "\n"
 		else:
-			escape = ''
-			if sql_type_to_d_type(values['type']) == 'string': escape = "\\\""
-			value_to_string = convert_d_type_to_string(sql_type_to_d_type(values['type']), "this." + field)
 			properties += \
-				"		retval ~= \"	\\\"" + field + "\\\" : " + escape + "\" ~ " + value_to_string + " ~ \"" + escape + ", \\n\";\n"
+				"						pair(\"" + field + "\", value(_" + field + "))" + comma + "\n"
+		model_map_len -= 1
 
 	properties += \
-				"		retval ~= \"}}\";\n" + \
-				"		return retval;\n" + \
+				"			)));\n" + \
+				"\n" + \
+				"		char[] data = \"\";\n" + \
+				"		json.print((char[] s) {\n" + \
+				"			data ~= s;\n" + \
+				"		});\n" + \
+				"		return data;\n" + \
 				"	}\n"
 
 	# Add class closing
@@ -750,6 +761,7 @@ class BuilderThread(threading.Thread):
 		if len(result) != 0:
 			self._compile_error = result
 			print "Build failed!"
+			print self._compile_error
 			return
 		else:
 			self._compile_error = None

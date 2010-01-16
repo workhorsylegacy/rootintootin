@@ -77,6 +77,10 @@ public static string to_s(double value) {
 	return tango.text.convert.Float.toString(value);
 }
 
+public static string to_s(real value) {
+	return tango.text.convert.Float.toString(value);
+}
+
 public static string to_s(bool value) {
 	return value ? "true" : "false";
 }
@@ -116,6 +120,10 @@ public static double to_double(string value) {
 	return tango.text.convert.Float.parse(value);
 }
 
+public static real to_real(string value) {
+	return tango.text.convert.Float.parse(value);
+}
+
 public static bool to_bool(string value) {
 	return value=="true" || value=="1";
 }
@@ -131,6 +139,7 @@ public static string to_string(long value) { return to_s(value); }
 public static string to_string(ulong value) { return to_s(value); }
 public static string to_string(float value) { return to_s(value); }
 public static string to_string(double value) { return to_s(value); }
+public static string to_string(real value) { return to_s(value); }
 public static string to_string(bool value) { return to_s(value); }
 public static string to_string(string value) { return to_s(value); }
 public static string to_string(char value) { return to_s(value); }
@@ -147,6 +156,7 @@ public class AutoStringArray {
 	public void opCatAssign(ulong value) { _value ~= to_s(value); }
 	public void opCatAssign(float value) { _value ~= to_s(value); }
 	public void opCatAssign(double value) { _value ~= to_s(value); }
+	public void opCatAssign(real value) { _value ~= to_s(value); }
 	public void opCatAssign(bool value) { _value ~= to_s(value); }
 	public void opCatAssign(char value) { _value ~= to_s(value); }
 }

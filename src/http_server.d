@@ -15,6 +15,7 @@ private import tango.io.Stdout;
 
 private import tango.net.device.Socket;
 private import tango.math.random.engines.Twister;
+private import tango.text.json.Json;
 
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
@@ -127,28 +128,7 @@ public class HttpServer : TcpServer {
 	}
 
 	protected void trigger_on_request_post(Socket socket, Request request, string raw_header, string raw_body) {
-		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
-		if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
-			this.render_text(socket, request, "Content-Length is required for HTTP POST and PUT.", 411);
-			return;
-		}
-
-		// Get the content length
-		request.content_length = to_uint(between(raw_header, "Content-Length: ", "\r\n"));
-
-		// Get the params from a url encoded body
-		if(("Content-Type" in request._fields) != null) {
-			if(request._fields["Content-Type"] == "application/x-www-form-urlencoded") {
-				foreach(string param ; split(raw_body, "&")) {
-					string[] pair = split(param, "=");
-					if(pair.length == 2) {
-						request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
-					}
-				}
-			}
-		}
-
-		this.on_request_post(socket, request, raw_header, raw_body);
+		this.trigger_on_request_post(socket, request, raw_header, raw_body);
 	}
 
 	protected void trigger_on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
@@ -161,7 +141,7 @@ public class HttpServer : TcpServer {
 		// Get the content length
 		request.content_length = to_uint(between(raw_header, "Content-Length: ", "\r\n"));
 
-		// Get the params from a url encoded body
+		// Get the params from the body
 		if(("Content-Type" in request._fields) != null) {
 			if(request._fields["Content-Type"] == "application/x-www-form-urlencoded") {
 				foreach(string param ; split(raw_body, "&")) {
@@ -170,6 +150,10 @@ public class HttpServer : TcpServer {
 						request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
 					}
 				}
+			} else if(request._fields["Content-Type"] == "application/json") {
+				auto json = new Json!(char);
+				json.parse(raw_body);
+				json_to_params(request._params, json.value());
 			}
 		}
 
@@ -205,6 +189,8 @@ public class HttpServer : TcpServer {
 		int header_end = tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0);
 		string raw_header = buffer[0 .. buffer_length][0 .. header_end];
 		string raw_body = buffer[0 .. buffer_length][header_end+4 .. length];
+		Stdout.format("raw_header: {}\n", raw_header).flush;
+		Stdout.format("raw_body: {}\n", raw_body).flush;
 
 		// Get the header info
 		string[] header_lines = tango.text.Util.splitLines(raw_header);
@@ -395,6 +381,39 @@ public class HttpServer : TcpServer {
 		text];
 
 		return tango.text.Util.join(reply, "");
+	}
+
+	private void json_to_params(ref char[][char[]] collection, Json!(char).Value value, char[] name = "") {
+		switch(value.type) {
+			case Json!(char).Type.Null:
+				collection[name] = to_s("null");
+				break;
+			case Json!(char).Type.String:
+				collection[name] = to_s(value.toString());
+				break;
+			case Json!(char).Type.RawString:
+				collection[name] = to_s(value.toString());
+				break;
+			case Json!(char).Type.True:
+				collection[name] = to_s(value.toBool());
+				break;
+			case Json!(char).Type.False:
+				collection[name] = to_s(value.toBool());
+				break;
+			case Json!(char).Type.Number:
+				collection[name] = to_s(value.toNumber());
+				break;
+			case Json!(char).Type.Object:
+				foreach(char[] sub_name, Json!(char).Value sub_value ; value.toObject.attributes()) {
+					json_to_params(collection, sub_value, sub_name);
+				}
+				break;
+			case Json!(char).Type.Array:
+				foreach(Json!(char).Value sub_value ; value.toArray()) {
+					json_to_params(collection, sub_value, name);
+				}
+				break;
+		}
 	}
 }
 
