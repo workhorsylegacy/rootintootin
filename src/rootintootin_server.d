@@ -128,7 +128,7 @@ public class RootinTootinServer : HttpServer {
 		}
 
 		// Add the id to the params if we have one
-		if(id != null) request._params["id"] = id;
+		if(id != null) request._params["id"].value = to_s(id);
 
 		Stdout.format("uri: {}\n", request.uri).flush;
 		Stdout.format("format: {}\n", request.format).flush;

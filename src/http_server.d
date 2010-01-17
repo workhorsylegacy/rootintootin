@@ -15,8 +15,6 @@ private import tango.io.Stdout;
 
 private import tango.net.device.Socket;
 private import tango.math.random.engines.Twister;
-private import tango.text.json.Json;
-private import tango.text.xml.Document;
 
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
@@ -33,13 +31,13 @@ public class Request {
 	private string _uri = null;
 	private string _format = null;
 	private string _http_version = null;
-	public string[string] _params;
+	public Dictionary _params;
 	public string[string] _fields;
 	public string[string] _cookies;
 	public string[string] _sessions;
 	public uint _content_length = 0;
 
-	public this(string method, string uri, string format, string http_version, string[string] params, string[string] fields, string[string] cookies) {
+	public this(string method, string uri, string format, string http_version, Dictionary params, string[string] fields, string[string] cookies) {
 		_method = method;
 		_uri = uri;
 		_format = format;
@@ -66,7 +64,8 @@ public class Request {
 	public void content_length(uint value) { _content_length = value; }
 
 	public static Request new_blank() {
-		string[string] params, cookies, fields;
+		string[string] cookies, fields;
+		Dictionary params = new Dictionary();
 		return new Request("", "", "", "", params, fields, cookies);
 	}
 }
@@ -146,13 +145,13 @@ public class HttpServer : TcpServer {
 		if(("Content-Type" in request._fields) != null) {
 			switch(request._fields["Content-Type"]) {
 				case "application/x-www-form-urlencoded":
-					urlencode_to_params(request._params, raw_body);
+					urlencode_to_dict(request._params, raw_body);
 					break;
 				case "application/json":
-					json_to_params(request._params, raw_body);
+					json_to_dict(request._params, raw_body);
 					break;
 				case "application/xml":
-					xml_to_params(request._params, raw_body);
+					xml_to_dict(request._params, raw_body);
 					break;
 			}
 		}
@@ -229,20 +228,20 @@ public class HttpServer : TcpServer {
 		if(tango.text.Util.contains(request.uri, '?')) {
 			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
 				string[] pair = tango.text.Util.split(param, "=");
-				request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+				request._params[Helper.unescape_value(pair[0])].value = Helper.unescape_value(pair[1]);
 			}
 		}
 
 		// Monkey Patch the http method
 		// This lets browsers fake post, put, and delete
-		if(("method" in request._params) != null) {
-			switch(request._params["method"]) {
+		if(request._params.has_key("method")) {
+			switch(request._params["method"].value) {
 				case "GET":
 				case "POST":
 				case "PUT":
 				case "DELETE":
 				case "OPTIONS":
-					request.method = request._params["method"]; break;
+					request.method = request._params["method"].value; break;
 				default: break;
 			}
 		}
@@ -383,65 +382,18 @@ public class HttpServer : TcpServer {
 		return tango.text.Util.join(reply, "");
 	}
 
-	private void urlencode_to_params(ref char[][char[]] collection, string urlencode_in_a_string) {
-		foreach(string param ; split(urlencode_in_a_string, "&")) {
+	private void urlencode_to_dict(ref Dictionary dict, string urlencode_in_a_string) {
+		string data = Helper.unescape_value(urlencode_in_a_string);
+		foreach(string param ; split(data, "&")) {
 			string[] pair = split(param, "=");
 			if(pair.length == 2) {
-				collection[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+				string start = before(pair[0], "[");
+				string middle = after(before(pair[0], "]"), "[");
+				if(start.length > 0 && middle.length > 0)
+					dict[start][middle].value = pair[1];
+				else
+					dict[pair[0]].value = pair[1];
 			}
-		}
-	}
-
-	private void xml_to_params(ref char[][char[]] collection, string xml_in_a_string) {
-//		public enum XmlNodeType {Element, Data, Attribute, CData, 
-//		Comment, PI, Doctype, Document};
-		auto doc = new Document!(char);
-		doc.parse(xml_in_a_string);
-
-		foreach(noded ; doc.tree.children) {
-			Stdout.format("XML name: {} value: {}\n", noded.name, noded.value);
-			foreach(child ; noded.children) {
-				Stdout.format("XML name: {} value: {}\n", child.name, child.value);
-			}
-		}
-	}
-
-	private void json_to_params(ref char[][char[]] collection, string json_in_a_string) {
-		auto json = new Json!(char);
-		json.parse(json_in_a_string);
-		json_to_params(collection, json.value());
-	}
-
-	private void json_to_params(ref char[][char[]] collection, Json!(char).Value value, char[] name = "") {
-		switch(value.type) {
-			case Json!(char).Type.Null:
-				collection[name] = to_s("null");
-				break;
-			case Json!(char).Type.String:
-				collection[name] = to_s(value.toString());
-				break;
-			case Json!(char).Type.RawString:
-				collection[name] = to_s(value.toString());
-				break;
-			case Json!(char).Type.True:
-				collection[name] = to_s(value.toBool());
-				break;
-			case Json!(char).Type.False:
-				collection[name] = to_s(value.toBool());
-				break;
-			case Json!(char).Type.Number:
-				collection[name] = to_s(value.toNumber());
-				break;
-			case Json!(char).Type.Object:
-				foreach(char[] sub_name, Json!(char).Value sub_value ; value.toObject.attributes()) {
-					json_to_params(collection, sub_value, sub_name);
-				}
-				break;
-			case Json!(char).Type.Array:
-				foreach(Json!(char).Value sub_value ; value.toArray()) {
-					json_to_params(collection, sub_value, name);
-				}
-				break;
 		}
 	}
 }

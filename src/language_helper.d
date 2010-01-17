@@ -12,6 +12,9 @@ private import tango.text.Ascii;
 private import tango.text.convert.Integer;
 private import tango.text.convert.Float;
 
+private import tango.text.json.Json;
+private import tango.text.xml.Document;
+
 
 public alias char[] string;
 
@@ -159,6 +162,128 @@ public class AutoStringArray {
 	public void opCatAssign(real value) { _value ~= to_s(value); }
 	public void opCatAssign(bool value) { _value ~= to_s(value); }
 	public void opCatAssign(char value) { _value ~= to_s(value); }
+}
+
+public class Dictionary {
+	public string value = null;
+	public Dictionary[string] named_items = null;
+	public Dictionary[size_t] array_items = null;
+
+	public Dictionary opIndex(string key) {
+		if((key in this.named_items) == null)
+			this.named_items[key] = new Dictionary();
+		return this.named_items[key];
+	}
+
+	public Dictionary opIndex(size_t i) {
+		if((i in this.array_items) == null)
+			this.array_items[i] = new Dictionary();
+		return this.array_items[i];
+	}
+
+	public bool has_key(string key) {
+		return(this.named_items != null && (key in this.named_items) != null);
+	}
+
+	public bool has_key(string[] keys) {
+		Dictionary[string] curr_items = this.named_items;
+		foreach(string key ; keys) {
+			if((key in curr_items) == null) {
+				return false;
+			} else {
+				curr_items = curr_items[key].named_items;
+			}
+		}
+		return true;
+	}
+}
+
+public static void json_to_dict(ref Dictionary dict, string json_in_a_string) {
+	auto json = new Json!(char);
+	json.parse(json_in_a_string);
+	json_to_dict(dict, json.value());
+}
+
+public static void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
+	switch(value.type) {
+		case Json!(char).Type.Null:
+			dict.value = to_s("null");
+			break;
+		case Json!(char).Type.String:
+			dict.value = to_s(value.toString());
+			break;
+		case Json!(char).Type.RawString:
+			dict.value = to_s(value.toString());
+			break;
+		case Json!(char).Type.True:
+			dict.value = to_s(value.toBool());
+			break;
+		case Json!(char).Type.False:
+			dict.value = to_s(value.toBool());
+			break;
+		case Json!(char).Type.Number:
+			dict.value = to_s(value.toNumber());
+			break;
+		case Json!(char).Type.Object:
+			foreach(string sub_key, Json!(char).Value sub_value ; value.toObject.attributes()) {
+				Dictionary d = dict[sub_key];
+				json_to_dict(d, sub_value);
+			}
+			break;
+		case Json!(char).Type.Array:
+			foreach(Json!(char).Value sub_value ; value.toArray()) {
+				size_t i = dict.array_items.length;
+				Dictionary d = dict[i];
+				json_to_dict(d, sub_value);
+			}
+			break;
+	}
+}
+
+public static void xml_to_dict(ref Dictionary dict, string xml_in_a_string) {
+	auto doc = new Document!(char);
+	doc.parse(xml_in_a_string);
+	xml_to_dict(dict, doc.tree);
+}
+
+public static void xml_to_dict(ref Dictionary dict, Document!(char).Node node) {
+	switch(node.type) {
+		case XmlNodeType.Data:
+			dict.value = to_s(node.value);
+		case XmlNodeType.Attribute:
+		case XmlNodeType.CData:
+		case XmlNodeType.Comment:
+		case XmlNodeType.PI:
+		case XmlNodeType.Doctype:
+			Dictionary d = dict[node.name];
+			foreach(child ; node.children) {
+				xml_to_dict(d, child);
+			}
+			break;
+		case XmlNodeType.Document:
+			// use dict as the root element
+			foreach(child ; node.children) {
+				xml_to_dict(dict, child);
+			}
+			break;
+		case XmlNodeType.Element:
+			Dictionary d = null;
+			// Array
+			foreach(attribute ; node.attributes) {
+				if(attribute.name == "type" && attribute.value == "array") {
+					size_t i = dict.array_items.length;
+					d = dict[node.name][i];
+				}
+			}
+
+			// Object
+			if(d is null)
+				d = dict[node.name];
+			foreach(child ; node.children) {
+				xml_to_dict(d, child);
+			}
+			break;
+	}
 }
 
 // Add string helpers
