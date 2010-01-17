@@ -134,8 +134,18 @@ public class ModelBase {
 		return "[" ~ tango.text.Util.join(retval, ", ") ~ "]";
 	}
 
-	public static string to_xml(ModelBase[] models) {
-		return null;
+	public static string to_xml(ModelBase[] models, string table_name) {
+		string[] retval;
+		foreach(ModelBase model ; models) {
+			retval ~= model.to_xml();
+		}
+
+		string name = table_name;
+
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" ~ 
+				"<" ~ name ~ " type=\"array\">" ~ 
+				tango.text.Util.join(retval, "") ~ 
+				"</" ~ name ~ ">";
 	}
 }
 
@@ -350,11 +360,13 @@ public class ControllerBase {
 		}
 	}
 
-	public void respond_with(ModelBase[] models, string view_name, ushort status, string[] formats) {
+	// FIXME: table_name is needed here to know how to pluralize the model name: <blahs type="array"><blah /></blah>
+	// This should be gotten from ModelBase somehow.
+	public void respond_with(string table_name, ModelBase[] models, string view_name, ushort status, string[] formats) {
 		switch(_request.format) {
 			case("html"): render_view(view_name, status); break;
 			case("json"): render_text(ModelBase.to_json(models), status); break;
-			case("xml"): render_text(ModelBase.to_xml(models), status); break;
+			case("xml"): render_text(ModelBase.to_xml(models, table_name), status); break;
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
 		}
 	}

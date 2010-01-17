@@ -57,6 +57,20 @@ def is_valid_migration_type(migration_type):
 	except:
 		return False
 
+def sql_type_to_xml_type(sql_type):
+	type_map = {'tinyint(1)' : 'boolean',
+				'date' : 'date',
+				'datetime' : 'dateTime',
+				'decimal(10,0)' : 'decimal',
+				'float' : 'float',
+				'int(11)' : 'long',
+				'varchar(255)' : 'string',
+				'text' : 'string',
+				'time' : 'time',
+				'timestamp' : 'dateTime'}
+
+	return type_map[sql_type]
+
 def sql_type_to_d_type(sql_type):
 	type_map = {'tinyint(1)' : 'bool',
 				'date' : 'string',

@@ -10,18 +10,18 @@ public class CommentController : ControllerBase {
 
 	public void index() {
 		_comments = Comment.find_all();
-		respond_with(_comments, "index", 200, ["html", "json"]);
+		respond_with("comments", _comments, "index", 200, ["html", "json", "xml"]);
 	}
 
 	public void show() {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
-		respond_with(_comment, "show", 200, ["html", "json"]);
+		respond_with(_comment, "show", 200, ["html", "json", "xml"]);
 	}
 
 	public void New() {
 		_comment = new Comment();
 		_users = User.find_all();
-		respond_with(_comment, "new", 200, ["html", "json"]);
+		respond_with(_comment, "new", 200, ["html", "json", "xml"]);
 	}
 
 	public void create() {
@@ -32,16 +32,16 @@ public class CommentController : ControllerBase {
 
 		if(_comment.save()) {
 			flash_notice("The comment was created.");
-			respond_with_redirect(_comment, "show", 200, ["html", "json"]);
+			respond_with_redirect(_comment, "show", 200, ["html", "json", "xml"]);
 		} else {
-			respond_with(_comment, "new", 422, ["html", "json"]);
+			respond_with(_comment, "new", 422, ["html", "json", "xml"]);
 		}
 	}
 
 	public void edit() {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
 		_users = User.find_all();
-		respond_with(_comment, "edit", 200, ["html", "json"]);
+		respond_with(_comment, "edit", 200, ["html", "json", "xml"]);
 	}
 
 	public void update() {
@@ -52,9 +52,9 @@ public class CommentController : ControllerBase {
 
 		if(_comment.save()) {
 			flash_notice("The comment was updated.");
-			respond_with_redirect(_comment, "show", 200, ["html", "json"]);
+			respond_with_redirect(_comment, "show", 200, ["html", "json", "xml"]);
 		} else {
-			respond_with(_comment, "edit", 200, ["html", "json"]);
+			respond_with(_comment, "edit", 200, ["html", "json", "xml"]);
 		}
 	}
 
@@ -62,10 +62,10 @@ public class CommentController : ControllerBase {
 		_comment = Comment.find(to_ulong(_request._params["id"]));
 		if(_comment.destroy()) {
 			flash_notice("The comment was destroyed.");
-			respond_with_redirect("index", 200, ["html", "json"]);
+			respond_with_redirect("index", 200, ["html", "json", "xml"]);
 		} else {
 			flash_error(_comment.errors()[0]);
-			respond_with(_comment, "index", 422, ["html", "json"]);
+			respond_with(_comment, "index", 422, ["html", "json", "xml"]);
 		}
 	}
 }

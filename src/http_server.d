@@ -16,6 +16,7 @@ private import tango.io.Stdout;
 private import tango.net.device.Socket;
 private import tango.math.random.engines.Twister;
 private import tango.text.json.Json;
+private import tango.text.xml.Document;
 
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
@@ -128,7 +129,7 @@ public class HttpServer : TcpServer {
 	}
 
 	protected void trigger_on_request_post(Socket socket, Request request, string raw_header, string raw_body) {
-		this.trigger_on_request_post(socket, request, raw_header, raw_body);
+		this.trigger_on_request_put(socket, request, raw_header, raw_body);
 	}
 
 	protected void trigger_on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
@@ -143,17 +144,16 @@ public class HttpServer : TcpServer {
 
 		// Get the params from the body
 		if(("Content-Type" in request._fields) != null) {
-			if(request._fields["Content-Type"] == "application/x-www-form-urlencoded") {
-				foreach(string param ; split(raw_body, "&")) {
-					string[] pair = split(param, "=");
-					if(pair.length == 2) {
-						request._params[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
-					}
-				}
-			} else if(request._fields["Content-Type"] == "application/json") {
-				auto json = new Json!(char);
-				json.parse(raw_body);
-				json_to_params(request._params, json.value());
+			switch(request._fields["Content-Type"]) {
+				case "application/x-www-form-urlencoded":
+					urlencode_to_params(request._params, raw_body);
+					break;
+				case "application/json":
+					json_to_params(request._params, raw_body);
+					break;
+				case "application/xml":
+					xml_to_params(request._params, raw_body);
+					break;
 			}
 		}
 
@@ -381,6 +381,35 @@ public class HttpServer : TcpServer {
 		text];
 
 		return tango.text.Util.join(reply, "");
+	}
+
+	private void urlencode_to_params(ref char[][char[]] collection, string urlencode_in_a_string) {
+		foreach(string param ; split(urlencode_in_a_string, "&")) {
+			string[] pair = split(param, "=");
+			if(pair.length == 2) {
+				collection[Helper.unescape_value(pair[0])] = Helper.unescape_value(pair[1]);
+			}
+		}
+	}
+
+	private void xml_to_params(ref char[][char[]] collection, string xml_in_a_string) {
+//		public enum XmlNodeType {Element, Data, Attribute, CData, 
+//		Comment, PI, Doctype, Document};
+		auto doc = new Document!(char);
+		doc.parse(xml_in_a_string);
+
+		foreach(noded ; doc.tree.children) {
+			Stdout.format("XML name: {} value: {}\n", noded.name, noded.value);
+			foreach(child ; noded.children) {
+				Stdout.format("XML name: {} value: {}\n", child.name, child.value);
+			}
+		}
+	}
+
+	private void json_to_params(ref char[][char[]] collection, string json_in_a_string) {
+		auto json = new Json!(char);
+		json.parse(json_in_a_string);
+		json_to_params(collection, json.value());
 	}
 
 	private void json_to_params(ref char[][char[]] collection, Json!(char).Value value, char[] name = "") {

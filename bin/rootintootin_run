@@ -181,7 +181,9 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 	# Add class opening
 	properties = \
 			"private import rootintootin;\n" + \
-			"private import tango.text.json.Json;\n"
+			"private import tango.text.json.Json;\n" + \
+			"private import tango.text.xml.Document;\n" + \
+			"private import tango.text.xml.DocPrinter;\n\n"
 
 	for entry in model_names:
 		properties += "private import " + entry + ";\n"
@@ -360,6 +362,32 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 				"			data ~= s;\n" + \
 				"		});\n" + \
 				"		return data;\n" + \
+				"	}\n"
+
+	# Add the to_xml method
+	properties += \
+				"	public string to_xml() {\n" + \
+				"		auto doc = new Document!(char);\n" + \
+				"		auto top = doc.tree.element(null, \"" + model_name + "\");\n" + \
+				"\n"
+
+	for field, values in model_map.items():
+		if field.endswith('_id'):
+			reference_type = field.split('_id')[0]
+			properties += \
+				"		top.element(null, \"" + field + "\")\n" + \
+				"			.data(to_s(_" + reference_type + ".id))\n" + \
+				"			.attribute(null, \"type\", \"" + sql_type_to_xml_type(values['type']) + "\");\n"
+		else:
+			properties += \
+				"		top.element(null, \"" + field + "\")\n" + \
+				"			.data(to_s(_" + field + "))\n" + \
+				"			.attribute(null, \"type\", \"" + sql_type_to_xml_type(values['type']) + "\");\n"
+
+	properties += \
+				"\n" + \
+				"		auto print = new DocPrinter!(char);\n" + \
+				"		return print(doc);\n" + \
 				"	}\n"
 
 	# Add class closing
