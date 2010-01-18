@@ -58,7 +58,8 @@ public class MessageController : ControllerBase {
 			respond_with_redirect("/messages", 200, ["html", "json", "xml"]);
 		} else {
 			flash_error(_message.errors()[0]);
-			respond_with(_message, "index", 422, ["html", "json", "xml"]);
+			_messages = Message.find_all();
+			respond_with("messages", _messages, "index", 422, ["html", "json", "xml"]);
 		}
 	}
 

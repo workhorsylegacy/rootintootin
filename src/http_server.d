@@ -188,15 +188,15 @@ public class HttpServer : TcpServer {
 		int header_end = tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0);
 		string raw_header = buffer[0 .. buffer_length][0 .. header_end];
 		string raw_body = buffer[0 .. buffer_length][header_end+4 .. length];
-		Stdout.format("raw_header: {}\n", raw_header).flush;
-		Stdout.format("raw_body: {}\n", raw_body).flush;
+		//Stdout.format("raw_header: {}\n", raw_header).flush;
+		//Stdout.format("raw_body: {}\n", raw_body).flush;
 
 		// Get the header info
 		string[] header_lines = tango.text.Util.splitLines(raw_header);
 		string[] first_line = split(header_lines[0], " ");
 		request.method = first_line[0];
 		request.uri = first_line[1];
-		request.format = after_last(after_last(request.uri, "/"), ".");
+		request.format = before(after_last(after_last(request.uri, "/"), "."), "?");
 		request.was_format_specified = (request.format != "");
 		if(!request.was_format_specified) request.format = "html";
 		request.http_version = first_line[2];
@@ -233,7 +233,7 @@ public class HttpServer : TcpServer {
 		}
 
 		// Monkey Patch the http method
-		// This lets browsers fake post, put, and delete
+		// This lets browsers fake http put, and delete
 		if(request._params.has_key("method")) {
 			switch(request._params["method"].value) {
 				case "GET":

@@ -1,5 +1,5 @@
 
-<form action="/comments/create" class="new_comment" id="new_comment" method="post">
+<form action="/comments" class="new_comment" id="new_comment" method="post">
 	<h1>New Comments</h1>
 	<p>
 		<label for="comment_user">User</label><br />
@@ -17,5 +17,5 @@
 	<input id="comment_submit" name="commit" type="submit" value="Create" />
 </form>
 
-<a href="/comments">Back</a>
+<%#link_to("Back", "/comments")%>
 

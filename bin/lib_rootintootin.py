@@ -426,14 +426,14 @@ class Generator(object):
 		f = open('config/routes.py', 'w')
 
 		f.write(
-			"routes = 	{'" + model_name + "' : \n" + 
-			"		{'index'  : {'/" + model_name + "'        : 'GET'}, \n" + 
-			"		 'create' : {'/" + model_name + "'        : 'POST'}, \n" + 
-			"		 'new'    : {'/" + model_name + "/new'    : 'GET'}, \n" + 
-			"		 'show'   : {'/" + model_name + "/\d*'      : 'GET'}, \n" + 
-			"		 'update' : {'/" + model_name + "/\d*'      : 'PUT'}, \n" + 
-			"		 'edit'   : {'/" + model_name + "/\d*;edit' : 'GET'}, \n" + 
-			"		 'destroy' : {'/" + model_name + "/\d*'      : 'DELETE'}}\n" + 
+			"routes = 	{'" + model_name + "$' : \n" + 
+			"		{'index'  : {'^/" + model_name + "$'        : 'GET'}, \n" + 
+			"		 'create' : {'^/" + model_name + "$'        : 'POST'}, \n" + 
+			"		 'new'    : {'^/" + model_name + "/new$'    : 'GET'}, \n" + 
+			"		 'show'   : {'^/" + model_name + "/\d*$'      : 'GET'}, \n" + 
+			"		 'update' : {'^/" + model_name + "/\d*$'      : 'PUT'}, \n" + 
+			"		 'edit'   : {'^/" + model_name + "/\d*;edit$' : 'GET'}, \n" + 
+			"		 'destroy' : {'^/" + model_name + "/\d*$'      : 'DELETE'}}\n" + 
 			"}"
 		)
 

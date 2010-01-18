@@ -39,7 +39,7 @@ public class RootinTootinServer : HttpServer {
 	private bool get_route_info(Request request, out string controller, out string action, out string id) {
 		// Get the controller, action, and id
 		string[] route = split(before(request.uri, "?"), "/");
-		string raw_uri = before(request.uri, "?");
+		string raw_uri = before(before(request.uri, "?"), ".");
 		route[length-1] = before(route[length-1], ".");
 		string new_controller = route.length > 1 ? route[1] : null;
 		string new_action, new_id;

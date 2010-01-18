@@ -57,7 +57,8 @@ public class FileController : ControllerBase {
 			respond_with_redirect("/files", 200, ["html", "json", "xml"]);
 		} else {
 			flash_error(_file.errors()[0]);
-			respond_with(_file, "index", 422, ["html", "json", "xml"]);
+			_files = File.find_all();
+			respond_with("files", _files, "index", 422, ["html", "json", "xml"]);
 		}
 	}
 }

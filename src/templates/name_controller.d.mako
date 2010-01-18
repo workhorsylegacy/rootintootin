@@ -66,6 +66,10 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 		} else {
 			flash_error(_${controller_name}.errors()[0]);
 			respond_with(_${controller_name}, "index", 422, ["html", "json", "xml"]);
+
+			flash_error(_${controller_name}.errors()[0]);
+			_${pluralize(controller_name)} = ${controller_name.capitalize()}.find_all();
+			respond_with("${pluralize(controller_name)}", _${pluralize(controller_name)}, "index", 422, ["html", "json", "xml"]);
 		}
 	}
 }

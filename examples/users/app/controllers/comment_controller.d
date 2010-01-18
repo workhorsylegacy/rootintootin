@@ -65,7 +65,8 @@ public class CommentController : ControllerBase {
 			respond_with_redirect("/comments", 200, ["html", "json", "xml"]);
 		} else {
 			flash_error(_comment.errors()[0]);
-			respond_with(_comment, "index", 422, ["html", "json", "xml"]);
+			_comments = Comment.find_all();
+			respond_with("comments", _comments, "index", 422, ["html", "json", "xml"]);
 		}
 	}
 }

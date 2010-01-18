@@ -3,6 +3,6 @@
 <p><b>User:</b> <%=controller._comment.parent is null ? "" : to_s(controller._comment.parent.id)%></p>
 <p><b>Value:</b> <%=controller._comment.value%></p>
 
-<a href="/comments/edit/<%=controller._comment.id%>">Edit</a> | 
-<a href="/comments">Back</a>
+<%#link_to("Edit", "/comments/" ~ to_s(controller._comment.id) ~ ";edit")%> | 
+<%#link_to("Back", "/comments")%>
 

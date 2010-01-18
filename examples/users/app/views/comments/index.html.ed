@@ -11,9 +11,9 @@
 	<tr>
 		<td><%= comment.parent.name %></td>
 		<td><%= comment.value %></td>
-		<td><a href="/comments/show/<%=comment.id%>">Show</a></td>
-		<td><a href="/comments/edit/<%=comment.id%>">Edit</a></td>
-		<td><a href="/comments/destroy/<%=comment.id%>" onclick="post_href('delete'); return false;">Destroy</a></td>
+		<td><%#link_to("Show", "/comments/" ~ to_s(comment.id))%></td>
+		<td><%#link_to("Edit", "/comments/" ~ to_s(comment.id) ~ ";edit")%></td>
+		<td><%#link_to("Destroy", "/comments/" ~ to_s(comment.id) ~ "?method=DELETE", "onclick=\"post_href('delete'); return false;\"")%></td>
 	</tr>
 <% } %>
 </table>
@@ -22,5 +22,5 @@
 <% } %>
 
 <br />
-<a href="/comments/new">New comment</a>
+<%#link_to("New comment", "/comments/new")%>
 

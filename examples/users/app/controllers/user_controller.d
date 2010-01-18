@@ -59,7 +59,8 @@ public class UserController : ControllerBase {
 			respond_with_redirect("/users", 200, ["html", "json", "xml"]);
 		} else {
 			flash_error(_user.errors()[0]);
-			respond_with(_user, "index", 422, ["html", "json", "xml"]);
+			_users = User.find_all();
+			respond_with("users", _users, "index", 422, ["html", "json", "xml"]);
 		}
 	}
 }

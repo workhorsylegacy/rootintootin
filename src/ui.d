@@ -30,7 +30,11 @@ public static string link_to(string name, string url, string opt="") {
 	string format = "";
 	if(controller.request.was_format_specified)
 		format = "." ~ controller.request.format;
-	return "<a href=\"" ~ url ~ format ~ "\"" ~ opt ~ ">" ~ name ~ "</a>";
+	string uri_before = before(url, "?");
+	string uri_after = after(url, "?");
+	if(uri_after.length > 0)
+		uri_after = "?" ~ uri_after;
+	return "<a href=\"" ~ uri_before ~ format ~ uri_after ~ "\"" ~ opt ~ ">" ~ name ~ "</a>";
 }
 
 // FIXME: remove the  UI class. Just have everything dumped into the namespace.
