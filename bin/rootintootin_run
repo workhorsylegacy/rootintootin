@@ -50,6 +50,7 @@ def generate_run(routes, table_map, reference_map):
 		"private import tango.io.Stdout;\n" +
 		"private import tango.time.chrono.Gregorian;\n" +
 		"private import tango.time.WallClock;\n" +
+		"private import TangoRegex = tango.text.Regex;\n" +
 
 		"\n" +
 		"private import language_helper;\n" +
@@ -153,11 +154,11 @@ def generate_run(routes, table_map, reference_map):
 	# Write the routes
 	out_file.write(
 	"	// Create the routes\n" + 
-	"	string[string][string][string] routes;\n")
+	"	string[TangoRegex.Regex][string][string] routes;\n")
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
 			for uri, method in route_map.iteritems():
-				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][r\"" + uri + "\"] = \"" + method + "\";\n")
+				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new TangoRegex.Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 

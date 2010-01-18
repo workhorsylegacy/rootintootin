@@ -23,9 +23,9 @@ private import rootintootin;
 
 public class RootinTootinServer : HttpServer {
 	private RunnerBase _runner = null;
-	private string[string][string][string] _routes = null;
+	private string[TangoRegex.Regex][string][string] _routes = null;
 
-	public this(RunnerBase runner, string[string][string][string] routes, 
+	public this(RunnerBase runner, string[TangoRegex.Regex][string][string] routes, 
 				ushort port, int max_waiting_clients, string buffer, 
 				string db_host, string db_user, string db_password, string db_name) {
 		super(port, max_waiting_clients, buffer);
@@ -46,20 +46,18 @@ public class RootinTootinServer : HttpServer {
 
 		// Make sure the route exists
 		bool has_valid_request = false;
-		foreach(string route_controller, string[string][string] route_maps ; _routes) {
-			foreach(string route_action, string[string] route_map; route_maps) {
-				foreach(string route_regex, string method; route_map) {
+		foreach(string route_controller, string[TangoRegex.Regex][string] routes_maps ; _routes) {
+			foreach(string route_action, string[TangoRegex.Regex] routes_map ; routes_maps) {
+				foreach(TangoRegex.Regex regex, string method ; routes_map) {
 					if(request.method == method) {
-						// FIXME: Have this regex generated when the server starts for performance.
-						auto r = new TangoRegex.Regex(route_regex);
-						if(r.test(raw_uri)) {
-							Stdout.format("route_regex: {}\n", route_regex).flush;
+						if(regex.test(raw_uri)) {
+							Stdout.format("regex: {}\n", regex.pattern).flush;
 							Stdout.format("request.uri: {}\n", request.uri).flush;
 							Stdout.format("method: {}\n", method).flush;
 							Stdout.format("request.method: {}\n", request.method).flush;
 							Stdout("\n\n").flush;
 							new_action = route_action;
-							if(split(route_regex, r"\d*").length > 1)
+							if(split(regex.pattern, r"\d*").length > 1)
 								new_id = before(after_last(raw_uri, "/"), ";");
 							has_valid_request = true;
 						}
