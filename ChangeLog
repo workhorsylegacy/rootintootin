@@ -1,11 +1,15 @@
 *-*-*  Release 0.3.0
-	* The './gen create scaffolding' now gives model fields expected default values, instead of null.
+	* Actions can be rendered in html, json, or xml.
+	* Routes are more RESTful and use regular expressions.
+	* Models can be converted to json and xml via their to_json & to_xml methods.
+	* Views can use the link_to function to render links.
+	* The './gen create scaffolding' now gives model fields default values, instead of null.
 	* The './gen create scaffolding' now gives each field a proper html control, instead of a textbox.
 	* The './gen create scaffolding' now only allows valid field types.
 	* The server now rebuilds only when files under the app dir change, instead of any file changing.
 	* Templates now use <%= for print with escape, and <%# for just print.
 	* The web server now returns 'building ...' while compiling.
-	* Added the 'recreate database' command to the gen script.
+	* The'./gen recreate database' command recreates a database.
 	* Fixed bug #503179: 'DB data is not formatted correctly when rendered'.
 	* Fixed bug #502003: 'Not providing an argument for show crashes the server'.
 	* Fixed bug #503190: 'Having the same plural and singular word for a noun fails'.
