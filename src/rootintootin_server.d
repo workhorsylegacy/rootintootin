@@ -52,10 +52,6 @@ public class RootinTootinServer : HttpServer {
 					if(request.method == method) {
 						if(regex.test(raw_uri)) {
 							Stdout.format("regex: {}\n", regex.pattern).flush;
-							Stdout.format("request.uri: {}\n", request.uri).flush;
-							Stdout.format("method: {}\n", method).flush;
-							Stdout.format("request.method: {}\n", request.method).flush;
-							Stdout("\n\n").flush;
 							new_action = route_action;
 							if(split(regex.pattern, r"\d*").length > 1)
 								new_id = before(after_last(raw_uri, "/"), ";");
