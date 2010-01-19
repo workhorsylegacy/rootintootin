@@ -29,7 +29,7 @@ public class Helper {
 		value = tango.text.Util.substitute(value, " ", "+");
 
 		foreach(string normal, string escaped ; escape_map) {
-			value = tango.text.Util.substitute(value, escaped, normal);
+			value = tango.text.Util.substitute(value, normal, escaped);
 		}
 
 		return value;
