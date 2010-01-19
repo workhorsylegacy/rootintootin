@@ -1,4 +1,4 @@
-*-*-*  Release 0.3.0
+2010-01-19  Release 0.3.0
 	* Actions can be rendered in html, json, or xml.
 	* Routes are more RESTful and use regular expressions.
 	* Models can be converted to json and xml via their to_json & to_xml methods.
