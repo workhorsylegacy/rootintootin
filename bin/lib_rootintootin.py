@@ -426,7 +426,7 @@ class Generator(object):
 		f = open('config/routes.py', 'w')
 
 		f.write(
-			"routes = 	{'" + model_name + "$' : \n" + 
+			"routes = 	{'" + model_name + "' : \n" + 
 			"		{'index'  : {'^/" + model_name + "$'        : 'GET'}, \n" + 
 			"		 'create' : {'^/" + model_name + "$'        : 'POST'}, \n" + 
 			"		 'new'    : {'^/" + model_name + "/new$'    : 'GET'}, \n" + 
