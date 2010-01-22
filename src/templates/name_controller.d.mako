@@ -33,7 +33,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 			flash_notice("The ${controller_name} was saved.");
 			respond_with_redirect(_${controller_name}, "/${pluralize(controller_name)}/" ~ to_s(_${controller_name}.id), 200, ["html", "json", "xml"]);
 		} else {
-			respond_with(_${controller_name}, "edit", 200, ["html", "json", "xml"]);
+			respond_with(_${controller_name}, "new", 200, ["html", "json", "xml"]);
 		}
 	}
 
