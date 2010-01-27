@@ -32,76 +32,72 @@ public int pow(int x, uint n) {
 }
 
 public class FixedPoint {
-	private ulong _before_point;
-	private ulong _after_point;
-	private uint _before_precision;
-	private uint _after_precision;
+	private ulong _precision;
+	private ulong _scale;
+	private uint _max_precision_width;
+	private uint _max_scale_width;
 
-	public ulong before_point() { return _before_point; }
-	public ulong after_point() { return _after_point; }
-	public uint before_precision() { return _before_precision; }
-	public uint after_precision() { return _after_precision; }
+	public ulong precision() { return _precision; }
+	public ulong scale() { return _scale; }
+	public uint max_precision_width() { return _max_precision_width; }
+	public uint max_scale_width() { return _max_scale_width; }
 
-	public this(ulong before_point, ulong after_point, uint before_precision, uint after_precision) {
+	public this(ulong precision, ulong scale, uint max_precision_width, uint max_scale_width) {
 		uint max_precision = to_s(ulong.max).length-1;
-		// Make sure the before precision is not too big
-		if(before_precision > max_precision) {
-			throw new Exception("The before_precision of '" ~ 
-				to_s(before_precision) ~ "' is bigger than '" ~ 
+		// Make sure the max_precision_width is not too big
+		if(max_precision_width > max_precision) {
+			throw new Exception("The max_precision_width of '" ~ 
+				to_s(max_precision_width) ~ "' is bigger than '" ~ 
 				to_s(max_precision) ~ "' the max precision.");
 		}
 
-		// Make sure the after precision is not too big
-		if(after_precision > max_precision) {
-			throw new Exception("The after_precision of '" ~ 
-				to_s(after_precision) ~ "' is bigger than '" ~ 
+		// Make sure the max_scale_width is not too big
+		if(max_scale_width > max_precision) {
+			throw new Exception("The max_scale_width of '" ~ 
+				to_s(max_scale_width) ~ "' is bigger than '" ~ 
 				to_s(max_precision) ~ "' the max precision.");
 		}
 
-		// Make sure the before_precision is not zero
-		if(before_precision == 0) {
-			throw new Exception("The before_precision cannot be zero.");
+		// Make sure the max_precision_width is not zero
+		if(max_precision_width == 0) {
+			throw new Exception("The max_precision_width cannot be zero.");
 		}
 
-		// Make sure the after_precision is not zero
-		if(after_precision == 0) {
-			throw new Exception("The after_precision cannot be zero.");
+		// Make sure the max_scale_width is not zero
+		if(max_scale_width == 0) {
+			throw new Exception("The max_scale_width cannot be zero.");
 		}
 
-		// Make sure the value will fit in the before precision
-		if(to_s(before_point).length > before_precision) {
-			throw new Exception("The value '" ~ to_s(before_point) ~ 
-			"' will not fit in the before_precision '" ~ to_s(before_precision) ~ "'.");
+		// Make sure the value will fit in the max_precision_width
+		if(to_s(precision).length > max_precision_width) {
+			throw new Exception("The value '" ~ to_s(precision) ~ 
+			"' will not fit in the max_precision_width '" ~ to_s(max_precision_width) ~ "'.");
 		}
 
-		// Make sure the value will fit in the after precision
-		if(to_s(after_point).length > after_precision) {
-			throw new Exception("The value '" ~ to_s(after_point) ~ 
-			"' will not fit in the after_precision '" ~ to_s(after_precision) ~ "'.");
+		// Make sure the value will fit in the max_scale_width
+		if(to_s(scale).length > max_scale_width) {
+			throw new Exception("The value '" ~ to_s(scale) ~ 
+			"' will not fit in the max_scale_width '" ~ to_s(max_scale_width) ~ "'.");
 		}
 
-		_before_point = before_point;
-		_after_point = after_point;
-		_before_precision = before_precision;
-		_after_precision = after_precision;
+		_precision = precision;
+		_scale = scale;
+		_max_precision_width = max_precision_width;
+		_max_scale_width = max_scale_width;
 	}
 
-	public ulong max_before_point() {
-		return pow(10, _before_precision) - 1;
-	}
-
-	public ulong max_after_point() {
-		return pow(10, _after_precision) - 1;
+	public ulong max_scale() {
+		return pow(10, _max_scale_width) - 1;
 	}
 
 	public string toString() {
-		return to_s(_before_point) ~ "." ~ rjust(to_s(_after_point), _after_precision, "0");
+		return to_s(_precision) ~ "." ~ rjust(to_s(_scale), _max_scale_width, "0");
 	}
 
 	public double toDouble() {
-		double before = _before_point;
-		double after = (cast(double)_after_point) / (this.max_after_point+1);
-		return before + after;
+		double new_precision = _precision;
+		double new_scale = (cast(double)_scale) / (this.max_scale+1);
+		return new_precision + new_scale;
 	}
 
 	public ulong toUlong() {
@@ -109,50 +105,50 @@ public class FixedPoint {
 	}
 
 	public void opAddAssign(FixedPoint a) {
-		// Get the new before and after
-		ulong max = this.max_after_point();
-		ulong before = _before_point + a._before_point;
-		ulong after = _after_point + a._after_point;
+		// Get the new precision and scale
+		ulong max = this.max_scale();
+		ulong new_precision = _precision + a._precision;
+		ulong new_scale = _scale + a._scale;
 
 		// Perform the rounding
-		if(after > max) {
-			ulong after_extra = after - max;
-			ulong before_extra = (after / (max+1));
-			before += before_extra;
-			after = after - (before_extra * (max+1));
+		if(new_scale > max) {
+			ulong new_scale_extra = new_scale - max;
+			ulong new_precision_extra = (new_scale / (max+1));
+			new_precision += new_precision_extra;
+			new_scale = new_scale - (new_precision_extra * (max+1));
 		}
 
-		// Make sure the before does not overflow
-		if(to_s(before).length > _before_precision) {
+		// Make sure the new_precision does not overflow
+		if(to_s(new_precision).length > _max_precision_width) {
 			string[] buffer;
-			for(size_t i=0; i<_before_precision; i++)
+			for(size_t i=0; i<_max_precision_width; i++)
 				buffer ~= "9";
-			before = to_ulong(tango.text.Util.join(buffer, ""));
+			new_precision = to_ulong(tango.text.Util.join(buffer, ""));
 		}
 
-		// Make sure the after does not overflow
-		if(to_s(after).length > _after_precision) {
+		// Make sure the new_scale does not overflow
+		if(to_s(new_scale).length > _max_scale_width) {
 			string[] buffer;
-			for(size_t i=0; i<_after_precision; i++)
+			for(size_t i=0; i<_max_scale_width; i++)
 				buffer ~= "9";
-			after = to_ulong(tango.text.Util.join(buffer, ""));
+			new_scale = to_ulong(tango.text.Util.join(buffer, ""));
 		}
 
 		// Save the result
-		_before_point = before;
-		_after_point = after;
+		_precision = new_precision;
+		_scale = new_scale;
 	}
 
 	public void opAddAssign(double a) {
 		string[] pair = tango.text.Util.split(to_s(a), ".");
-		ulong before = to_ulong(pair[0]);
-		ulong after = to_ulong(pair[1]);
-		auto other = new FixedPoint(before, after, this.before_precision, this.after_precision);
+		ulong new_precision = to_ulong(pair[0]);
+		ulong new_scale = to_ulong(pair[1]);
+		auto other = new FixedPoint(new_precision, new_scale, this.max_precision_width, this.max_scale_width);
 		this += other;
 	}
 
 	public void opAddAssign(int a) {
-		_before_point += a;
+		_precision += a;
 	}
 
 	public bool opEquals(ulong a) {
@@ -168,11 +164,11 @@ public class FixedPoint {
 
 		// Test properties
 		auto a = new FixedPoint(11, 3, 10, 2);
-		assert(a.before_point == 11, to_s(a.before_point) ~ " != 11");
-		assert(a.after_point == 3, to_s(a.after_point) ~ " != 3");
-		assert(a.after_precision == 2, to_s(a.after_precision) ~ " != 2");
-		assert(a.before_precision == 10, to_s(a.before_precision) ~ " != 10");
-		assert(a.max_after_point == 99, to_s(a.max_after_point) ~ " != 99");
+		assert(a.precision == 11, to_s(a.precision) ~ " != 11");
+		assert(a.scale == 3, to_s(a.scale) ~ " != 3");
+		assert(a.max_scale_width == 2, to_s(a.max_scale_width) ~ " != 2");
+		assert(a.max_precision_width == 10, to_s(a.max_precision_width) ~ " != 10");
+		assert(a.max_scale == 99, to_s(a.max_scale) ~ " != 99");
 
 		// Test converters
 		assert(a.toDouble == 11.03, to_s(a.toDouble) ~ " != 11.03");
@@ -225,41 +221,41 @@ public class FixedPoint {
 		a += i;
 		assert(a == 99.0, a.toString ~ " != 99.0");
 
-		// Make sure the before_precision breaks at zero
+		// Make sure the max_precision_width breaks at zero
 		has_thrown = false;
 		try {
 			auto j = new FixedPoint(0, 0, 1, 0);
 		} catch(Exception err) {
 			has_thrown = true;
 		}
-		assert(has_thrown == true, "FixedPoint before precision did not break at 0.");
+		assert(has_thrown == true, "FixedPoint max_precision_width did not break at 0.");
 
-		// Make sure the after_precision breaks at zero
+		// Make sure the max_scale_width breaks at zero
 		has_thrown = false;
 		try {
 			auto k = new FixedPoint(0, 0, 0, 1);
 		} catch(Exception err) {
 			has_thrown = true;
 		}
-		assert(has_thrown == true, "FixedPoint after precision did not break at 0.");
+		assert(has_thrown == true, "FixedPoint max_scale_width did not break at 0.");
 
-		// Make sure the before_precision breaks at > 19
+		// Make sure the max_precision_width breaks at > 19
 		has_thrown = false;
 		try {
 			auto l = new FixedPoint(0, 0, 20, 1);
 		} catch(Exception err) {
 			has_thrown = true;
 		}
-		assert(has_thrown == true, "FixedPoint before precision did not break at > 19.");
+		assert(has_thrown == true, "FixedPoint max_precision_width did not break at > 19.");
 
-		// Make sure the after_precision breaks at > 19
+		// Make sure the max_scale_width breaks at > 19
 		has_thrown = false;
 		try {
 			auto m = new FixedPoint(0, 0, 1, 20);
 		} catch(Exception err) {
 			has_thrown = true;
 		}
-		assert(has_thrown == true, "FixedPoint after precision did not break at > 19.");
+		assert(has_thrown == true, "FixedPoint max_scale_width did not break at > 19.");
 	}
 }
 
@@ -577,3 +573,4 @@ template Array(T) {
 	}
 }
 
+//void main(){}
