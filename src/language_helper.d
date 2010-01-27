@@ -32,31 +32,70 @@ public int pow(int x, uint n) {
 }
 
 public class FixedPoint {
-	private uint _before_point;
-	private uint _after_point;
-	private uint _precision;
+	private ulong _before_point;
+	private ulong _after_point;
+	private uint _before_precision;
+	private uint _after_precision;
 
-	public uint before_point() { return _before_point; }
-	public uint after_point() { return _after_point; }
-	public uint precision() { return _precision; }
+	public ulong before_point() { return _before_point; }
+	public ulong after_point() { return _after_point; }
+	public uint before_precision() { return _before_precision; }
+	public uint after_precision() { return _after_precision; }
 
-	public this(uint before_point, uint after_point, uint precision) {
-		// Make sure the value will fit in the precision
-		if(to_s(after_point).length > precision)
+	public this(ulong before_point, ulong after_point, uint before_precision, uint after_precision) {
+		uint max_precision = to_s(ulong.max).length-1;
+		// Make sure the before precision is not too big
+		if(before_precision > max_precision) {
+			throw new Exception("The before_precision of '" ~ 
+				to_s(before_precision) ~ "' is bigger than '" ~ 
+				to_s(max_precision) ~ "' the max precision.");
+		}
+
+		// Make sure the after precision is not too big
+		if(after_precision > max_precision) {
+			throw new Exception("The after_precision of '" ~ 
+				to_s(after_precision) ~ "' is bigger than '" ~ 
+				to_s(max_precision) ~ "' the max precision.");
+		}
+
+		// Make sure the before_precision is not zero
+		if(before_precision == 0) {
+			throw new Exception("The before_precision cannot be zero.");
+		}
+
+		// Make sure the after_precision is not zero
+		if(after_precision == 0) {
+			throw new Exception("The after_precision cannot be zero.");
+		}
+
+		// Make sure the value will fit in the before precision
+		if(to_s(before_point).length > before_precision) {
+			throw new Exception("The value '" ~ to_s(before_point) ~ 
+			"' will not fit in the before_precision '" ~ to_s(before_precision) ~ "'.");
+		}
+
+		// Make sure the value will fit in the after precision
+		if(to_s(after_point).length > after_precision) {
 			throw new Exception("The value '" ~ to_s(after_point) ~ 
-			"' will not fit in the precision '" ~ to_s(precision) ~ "'.");
+			"' will not fit in the after_precision '" ~ to_s(after_precision) ~ "'.");
+		}
 
 		_before_point = before_point;
 		_after_point = after_point;
-		_precision = precision;
+		_before_precision = before_precision;
+		_after_precision = after_precision;
 	}
 
-	public uint max_after_point() {
-		return pow(10, _precision) - 1;
+	public ulong max_before_point() {
+		return pow(10, _before_precision) - 1;
+	}
+
+	public ulong max_after_point() {
+		return pow(10, _after_precision) - 1;
 	}
 
 	public string toString() {
-		return to_s(_before_point) ~ "." ~ rjust(to_s(_after_point), _precision, "0");
+		return to_s(_before_point) ~ "." ~ rjust(to_s(_after_point), _after_precision, "0");
 	}
 
 	public double toDouble() {
@@ -65,22 +104,38 @@ public class FixedPoint {
 		return before + after;
 	}
 
-	public uint toUint() {
-		return cast(uint) this.toDouble();
+	public ulong toUlong() {
+		return cast(ulong) this.toDouble();
 	}
 
 	public void opAddAssign(FixedPoint a) {
 		// Get the new before and after
-		uint max = this.max_after_point();
-		uint before = _before_point + a._before_point;
-		uint after = _after_point + a._after_point;
+		ulong max = this.max_after_point();
+		ulong before = _before_point + a._before_point;
+		ulong after = _after_point + a._after_point;
 
 		// Perform the rounding
 		if(after > max) {
-			uint after_extra = after - max;
-			uint before_extra = (after / (max+1));
+			ulong after_extra = after - max;
+			ulong before_extra = (after / (max+1));
 			before += before_extra;
 			after = after - (before_extra * (max+1));
+		}
+
+		// Make sure the before does not overflow
+		if(to_s(before).length > _before_precision) {
+			string[] buffer;
+			for(size_t i=0; i<_before_precision; i++)
+				buffer ~= "9";
+			before = to_ulong(tango.text.Util.join(buffer, ""));
+		}
+
+		// Make sure the after does not overflow
+		if(to_s(after).length > _after_precision) {
+			string[] buffer;
+			for(size_t i=0; i<_after_precision; i++)
+				buffer ~= "9";
+			after = to_ulong(tango.text.Util.join(buffer, ""));
 		}
 
 		// Save the result
@@ -90,9 +145,9 @@ public class FixedPoint {
 
 	public void opAddAssign(double a) {
 		string[] pair = tango.text.Util.split(to_s(a), ".");
-		uint before = to_uint(pair[0]);
-		uint after = to_uint(pair[1]);
-		auto other = new FixedPoint(before, after, this.precision);
+		ulong before = to_ulong(pair[0]);
+		ulong after = to_ulong(pair[1]);
+		auto other = new FixedPoint(before, after, this.before_precision, this.after_precision);
 		this += other;
 	}
 
@@ -100,8 +155,8 @@ public class FixedPoint {
 		_before_point += a;
 	}
 
-	public bool opEquals(uint a) {
-		return this.toUint() == a;
+	public bool opEquals(ulong a) {
+		return this.toUlong() == a;
 	}
 
 	public bool opEquals(double a) {
@@ -109,30 +164,33 @@ public class FixedPoint {
 	}
 
 	unittest {
+		bool has_thrown = false;
+
 		// Test properties
-		auto a = new FixedPoint(11, 3, 2);
-		assert(a.before_point ==  11, to_s(a.before_point) ~ " != 11");
-		assert(a.after_point ==  3, to_s(a.after_point) ~ " != 3");
-		assert(a.precision ==  2, to_s(a.precision) ~ " != 2");
-		assert(a.max_after_point ==  99, to_s(a.max_after_point) ~ " != 99");
+		auto a = new FixedPoint(11, 3, 10, 2);
+		assert(a.before_point == 11, to_s(a.before_point) ~ " != 11");
+		assert(a.after_point == 3, to_s(a.after_point) ~ " != 3");
+		assert(a.after_precision == 2, to_s(a.after_precision) ~ " != 2");
+		assert(a.before_precision == 10, to_s(a.before_precision) ~ " != 10");
+		assert(a.max_after_point == 99, to_s(a.max_after_point) ~ " != 99");
 
 		// Test converters
 		assert(a.toDouble == 11.03, to_s(a.toDouble) ~ " != 11.03");
-		assert(a.toUint == 11, to_s(a.toUint) ~ " != 11");
+		assert(a.toUlong == 11, to_s(a.toUlong) ~ " != 11");
 		assert(a.toString ==  "11.03", a.toString ~ " != 11.03");
 
 		// Test += FixedPoint
-		auto b = new FixedPoint(34, 1, 2);
+		auto b = new FixedPoint(34, 1, 10, 2);
 		a += b;
 		assert(a == 45.04, a.toString ~ " != 45.04");
 
 		// Test += FixedPoint
-		auto c = new FixedPoint(12, 99, 2);
+		auto c = new FixedPoint(12, 99, 10, 2);
 		a += c;
 		assert(a == 58.03, a.toString ~ " != 58.03");
 
 		// Test += FixedPoint with round
-		auto d = new FixedPoint(12, 99, 2);
+		auto d = new FixedPoint(12, 99, 10, 2);
 		a += d;
 		assert(a == 71.02, a.toString ~ " != 71.02");
 
@@ -160,6 +218,48 @@ public class FixedPoint {
 		double i = 1.99;
 		a += i;
 		assert(a == 81.12, a.toString ~ " != 81.12");
+
+		// Precision overflow
+		i = 1;
+		a = new FixedPoint(99, 0, 2, 1);
+		a += i;
+		assert(a == 99.0, a.toString ~ " != 99.0");
+
+		// Make sure the before_precision breaks at zero
+		has_thrown = false;
+		try {
+			auto j = new FixedPoint(0, 0, 1, 0);
+		} catch(Exception err) {
+			has_thrown = true;
+		}
+		assert(has_thrown == true, "FixedPoint before precision did not break at 0.");
+
+		// Make sure the after_precision breaks at zero
+		has_thrown = false;
+		try {
+			auto k = new FixedPoint(0, 0, 0, 1);
+		} catch(Exception err) {
+			has_thrown = true;
+		}
+		assert(has_thrown == true, "FixedPoint after precision did not break at 0.");
+
+		// Make sure the before_precision breaks at > 19
+		has_thrown = false;
+		try {
+			auto l = new FixedPoint(0, 0, 20, 1);
+		} catch(Exception err) {
+			has_thrown = true;
+		}
+		assert(has_thrown == true, "FixedPoint before precision did not break at > 19.");
+
+		// Make sure the after_precision breaks at > 19
+		has_thrown = false;
+		try {
+			auto m = new FixedPoint(0, 0, 1, 20);
+		} catch(Exception err) {
+			has_thrown = true;
+		}
+		assert(has_thrown == true, "FixedPoint after precision did not break at > 19.");
 	}
 }
 
