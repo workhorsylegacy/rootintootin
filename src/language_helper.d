@@ -32,18 +32,18 @@ public int pow(int x, uint n) {
 }
 
 public class FixedPoint {
-	private ulong _precision;
+	private long _precision;
 	private ulong _scale;
 	private uint _max_precision_width;
 	private uint _max_scale_width;
 
-	public ulong precision() { return _precision; }
+	public long precision() { return _precision; }
 	public ulong scale() { return _scale; }
 	public uint max_precision_width() { return _max_precision_width; }
 	public uint max_scale_width() { return _max_scale_width; }
 
-	public this(ulong precision, ulong scale, uint max_precision_width, uint max_scale_width) {
-		uint max_precision = to_s(ulong.max).length-1;
+	public this(long precision, ulong scale, uint max_precision_width, uint max_scale_width) {
+		uint max_precision = to_s(long.max).length-1;
 		// Make sure the max_precision_width is not too big
 		if(max_precision_width > max_precision) {
 			throw new Exception("The max_precision_width of '" ~ 
@@ -97,23 +97,43 @@ public class FixedPoint {
 	public double toDouble() {
 		double new_precision = _precision;
 		double new_scale = (cast(double)_scale) / (this.max_scale+1);
-		return new_precision + new_scale;
+		if(new_precision >= 0) {
+			return new_precision + new_scale;
+		} else {
+			return new_precision + (-new_scale);
+		}
 	}
 
-	public ulong toUlong() {
-		return cast(ulong) this.toDouble();
+	public long toLong() {
+		return cast(long) this.toDouble();
+	}
+
+	public void opSubAssign(FixedPoint a){
+		// Negative the number so we can add it
+		auto other = new FixedPoint(-a.precision, a.scale, a.max_precision_width, a.max_scale_width);
+		this += other;
 	}
 
 	public void opAddAssign(FixedPoint a) {
 		// Get the new precision and scale
 		ulong max = this.max_scale();
-		ulong new_precision = _precision + a._precision;
-		ulong new_scale = _scale + a._scale;
+		long new_precision = _precision + a._precision;
+		ulong new_scale;
+		if(a._precision >= 0) {
+			new_scale = _scale + a._scale;
+		} else {
+			if(a._scale > _scale) {
+				new_precision -= 1;
+				new_scale = (100 + _scale) - a._scale;
+			} else {
+				new_scale = _scale - a._scale;
+			}
+		}
 
 		// Perform the rounding
 		if(new_scale > max) {
 			ulong new_scale_extra = new_scale - max;
-			ulong new_precision_extra = (new_scale / (max+1));
+			long new_precision_extra = (cast(long)new_scale / (cast(long)max+1));
 			new_precision += new_precision_extra;
 			new_scale = new_scale - (new_precision_extra * (max+1));
 		}
@@ -141,7 +161,7 @@ public class FixedPoint {
 
 	public void opAddAssign(double a) {
 		string[] pair = tango.text.Util.split(to_s(a), ".");
-		ulong new_precision = to_ulong(pair[0]);
+		long new_precision = to_long(pair[0]);
 		ulong new_scale = to_ulong(pair[1]);
 		auto other = new FixedPoint(new_precision, new_scale, this.max_precision_width, this.max_scale_width);
 		this += other;
@@ -151,8 +171,8 @@ public class FixedPoint {
 		_precision += a;
 	}
 
-	public bool opEquals(ulong a) {
-		return this.toUlong() == a;
+	public bool opEquals(long a) {
+		return this.toLong() == a;
 	}
 
 	public bool opEquals(double a) {
@@ -170,12 +190,28 @@ public class FixedPoint {
 		assert(a.max_precision_width == 10, to_s(a.max_precision_width) ~ " != 10");
 		assert(a.max_scale == 99, to_s(a.max_scale) ~ " != 99");
 
+		// Test properties negative
+		a = new FixedPoint(-9, 4, 10, 2);
+		assert(a.precision == -9, to_s(a.precision) ~ " != -9");
+		assert(a.scale == 4, to_s(a.scale) ~ " != 4");
+		assert(a.max_scale_width == 2, to_s(a.max_scale_width) ~ " != 2");
+		assert(a.max_precision_width == 10, to_s(a.max_precision_width) ~ " != 10");
+		assert(a.max_scale == 99, to_s(a.max_scale) ~ " != 99");
+
 		// Test converters
+		a = new FixedPoint(11, 3, 10, 2);
 		assert(a.toDouble == 11.03, to_s(a.toDouble) ~ " != 11.03");
-		assert(a.toUlong == 11, to_s(a.toUlong) ~ " != 11");
+		assert(a.toLong == 11, to_s(a.toLong) ~ " != 11");
 		assert(a.toString ==  "11.03", a.toString ~ " != 11.03");
 
+		// Test converters negative
+		a = new FixedPoint(-9, 4, 10, 2);
+		assert(a.toDouble == -9.04, to_s(a.toDouble) ~ " != -9.04");
+		assert(a.toLong == -9, to_s(a.toLong) ~ " != -9");
+		assert(a.toString ==  "-9.04", a.toString ~ " != -9.04");
+
 		// Test += FixedPoint
+		a = new FixedPoint(11, 3, 10, 2);
 		auto b = new FixedPoint(34, 1, 10, 2);
 		a += b;
 		assert(a == 45.04, a.toString ~ " != 45.04");
@@ -214,6 +250,27 @@ public class FixedPoint {
 		double i = 1.99;
 		a += i;
 		assert(a == 81.12, a.toString ~ " != 81.12");
+
+		// Test += FixedPoint negative
+		b = new FixedPoint(-13, 5, 10, 2);
+		a += b;
+		assert(a == 68.07, a.toString ~ " != 68.07");
+
+		// Test -= FixedPoint
+		b = new FixedPoint(13, 5, 10, 2);
+		a -= b;
+		assert(a == 55.02, a.toString ~ " != 55.02");
+
+		// Test -= FixedPoint negative
+		b = new FixedPoint(-13, 4, 10, 2);
+		a -= b;
+		assert(a == 68.06, a.toString ~ " != 68.06");
+
+		// Test += double negative
+		i = -1.99;
+		a  = new FixedPoint(68, 6, 10, 2);
+		a += i;
+		assert(a == 66.07, a.toString ~ " != 66.07");
 
 		// Precision overflow
 		i = 1;
