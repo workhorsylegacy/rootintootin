@@ -23,6 +23,10 @@ def camelize(word):
 	return ''.join(w[0].upper() + w[1:] for w in re.sub('[^A-Z^a-z^0-9^:]+', ' ', word).split(' '))
 
 def migration_type_default_sql_value(migration_type):
+	p = re.compile("^decimal\[\d+\,\d+\]$")
+	if p.match(migration_type):
+		return 'not null default 0'
+
 	type_map = {'boolean' : 'not null default 0',
 				'date' : 'not null default 0',
 				'datetime' : 'not null default 0',
@@ -37,10 +41,16 @@ def migration_type_default_sql_value(migration_type):
 	return type_map[migration_type]
 
 def sql_type_to_default_d_value(migration_type):
+	p = re.compile("^decimal\(\d+\,\d+\)$")
+	if p.match(migration_type):
+		precision = migration_type.split('(')[1].split(',')[0]
+		scale = migration_type.split(',')[1].split(')')[0]
+		return 'null'
+
 	type_map = {'tinyint(1)' : 'false',
 				'date' : '"0"',
 				'datetime' : '"0"',
-				'decimal(20,2)' : '0',
+				'decimal' : 'null',
 				'float' : '0',
 				'int(11)' : '0',
 				'varchar(255)' : 'null',
@@ -58,10 +68,14 @@ def is_valid_migration_type(migration_type):
 		return False
 
 def sql_type_to_xml_type(sql_type):
+	p = re.compile("^decimal\(\d+\,\d+\)$")
+	if p.match(sql_type):
+		return 'decimal'
+
 	type_map = {'tinyint(1)' : 'boolean',
 				'date' : 'date',
 				'datetime' : 'dateTime',
-				'decimal(20,2)' : 'decimal',
+				'decimal' : 'decimal',
 				'float' : 'float',
 				'int(11)' : 'long',
 				'varchar(255)' : 'string',
@@ -72,10 +86,16 @@ def sql_type_to_xml_type(sql_type):
 	return type_map[sql_type]
 
 def sql_type_to_d_type(sql_type):
+	p = re.compile("^decimal\(\d+\,\d+\)$")
+	if p.match(sql_type):
+		precision = sql_type.split('(')[1].split(',')[0]
+		scale = sql_type.split(',')[1].split(')')[0]
+		return 'FixedPoint'
+
 	type_map = {'tinyint(1)' : 'bool',
 				'date' : 'string',
 				'datetime' : 'string',
-				'decimal(20,2)' : 'double',
+				'decimal' : 'FixedPoint',
 				'float' : 'float',
 				'int(11)' : 'ulong',
 				'varchar(255)' : 'string',
@@ -86,6 +106,12 @@ def sql_type_to_d_type(sql_type):
 	return type_map[sql_type]
 
 def migration_type_to_sql_type(migration_type):
+	p = re.compile("^decimal\[\d+\,\d+\]$")
+	if p.match(migration_type):
+		precision = migration_type.split('[')[1].split(',')[0]
+		scale = migration_type.split(',')[1].split(']')[0]
+		return 'decimal(' + precision + ',' + scale + ')'
+
 	type_map = {'boolean' : 'tinyint(1)',
 				'date' : 'date',
 				'datetime' : 'datetime',
@@ -100,6 +126,10 @@ def migration_type_to_sql_type(migration_type):
 	return type_map[migration_type]
 
 def migration_type_to_html_type(migration_type):
+	p = re.compile("^decimal\[\d+\,\d+\]$")
+	if p.match(migration_type):
+		return 'double'
+
 	type_map = {'boolean' : 'bool', 
 				'date' : 'string', 
 				'datetime' : 'string', 
@@ -124,7 +154,8 @@ def convert_string_to_d_type(d_type, d_string_variable_name):
 				'double' : 'to_double(#)',
 				'bool' : 'to_bool(#)',
 				'char' : '#',
-				'string' : 'to_s(#)' }
+				'string' : 'to_s(#)',
+				'FixedPoint' : 'to_FixedPoint(#)' }
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 
@@ -136,7 +167,8 @@ def convert_d_type_to_string(d_type, d_string_variable_name):
 				'double' : 'to_s(#)',
 				'bool' : 'to_s(#)',
 				'char' : '#',
-				'string' : 'to_s(#)' }
+				'string' : 'to_s(#)',
+				'FixedPoint' : 'to_s(#)' }
 
 	return cast_map[d_type].replace('#', d_string_variable_name)
 

@@ -26,7 +26,7 @@ public class ${controller_name.capitalize()}Controller : ControllerBase {
 		_${controller_name} = new ${controller_name.capitalize()}();
 % for field in pairs:
 <%field_name, field_type = field.split(':') %>\
-		_${controller_name}.${field_name} = to_${migration_type_to_html_type(field_type)}(_request._params["${controller_name}"]["${field_name}"].value);
+		_${controller_name}.${field_name} = to_${migration_type_to_d_type(field_type)}(_request._params["${controller_name}"]["${field_name}"].value);
 % endfor
 
 		if(_${controller_name}.save()) {

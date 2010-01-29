@@ -416,6 +416,13 @@ public static string to_s(char value) {
 	return new_value;
 }
 
+public static string to_s(FixedPoint value) {
+	if(value)
+		return value.toString();
+	else
+		return "0.0";
+}
+
 // Add a to_# function for strings
 public static int to_int(string value) {
 	return tango.text.convert.Integer.toInt(value);
@@ -449,6 +456,20 @@ public static bool to_bool(string value) {
 	return value=="true" || value=="1";
 }
 
+// FIXME: This has 18, 2 hard coded
+public static FixedPoint to_FixedPoint(string value) {
+	try {
+		string[] pair = tango.text.Util.split(value, ".");
+		if(pair.length == 2) {
+			return new FixedPoint(to_long(pair[0]), to_ulong(pair[1]), 18, 2);
+		} else if(pair.length == 1) {
+			return new FixedPoint(to_long(pair[0]), 0, 18, 2);
+		}
+	} catch {
+	}
+	return new FixedPoint(0, 0, 18, 2);
+}
+
 // Add alternate named methods
 public static int to_integer(string value) { return to_int(value); }
 public static int to_boolean(string value) { return to_bool(value); }
@@ -464,6 +485,7 @@ public static string to_string(real value) { return to_s(value); }
 public static string to_string(bool value) { return to_s(value); }
 public static string to_string(string value) { return to_s(value); }
 public static string to_string(char value) { return to_s(value); }
+public static string to_string(FixedPoint value) { return to_s(value); }
 
 
 // Can collect strings by auto converting any type you try to add
@@ -480,6 +502,7 @@ public class AutoStringArray {
 	public void opCatAssign(real value) { _value ~= to_s(value); }
 	public void opCatAssign(bool value) { _value ~= to_s(value); }
 	public void opCatAssign(char value) { _value ~= to_s(value); }
+	public void opCatAssign(FixedPoint value) { _value ~= to_s(value); }
 }
 
 public class Dictionary {

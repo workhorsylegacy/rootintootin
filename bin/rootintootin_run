@@ -350,6 +350,9 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 			reference_type = field.split('_id')[0]
 			properties += \
 				"						pair(\"" + field + "\", value(_" + reference_type + ".id))" + comma + "\n"
+		elif values['type'].startswith('decimal'):
+			properties += \
+				"						pair(\"" + field + "\", value(_" + field + ".toDouble()))" + comma + "\n"
 		else:
 			properties += \
 				"						pair(\"" + field + "\", value(_" + field + "))" + comma + "\n"

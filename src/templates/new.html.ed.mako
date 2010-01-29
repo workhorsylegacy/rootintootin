@@ -31,7 +31,7 @@
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<textarea id="${model_name}_${field_name}" name="${model_name}[${field_name}]"><@@=controller._${model_name}.${field_name}@@></textarea>
 	</p>
-% elif field_type=='decimal' or field_type=='float' or field_type=='integer':
+% elif field_type=='float' or field_type=='integer' or field_type.startswith('decimal'):
 	<p>
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="text" value="<@@=controller._${model_name}.${field_name}@@>" />

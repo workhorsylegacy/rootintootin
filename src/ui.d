@@ -25,6 +25,7 @@ public static string h(float value) { return h(to_s(value)); }
 public static string h(double value) { return h(to_s(value)); }
 public static string h(bool value) { return h(to_s(value)); }
 public static string h(char value) { return h(to_s(value)); }
+public static string h(FixedPoint value) { return h(to_s(value)); }
 
 public static string link_to(string name, string url, string opt="") {
 	string format = "";
