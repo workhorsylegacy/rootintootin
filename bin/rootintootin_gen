@@ -17,6 +17,8 @@ def print_usage():
 	print "./gen create noun [singular:user] [plural:users]"
 	print "./gen create migration [name] [field:type] ..."
 	print "./gen create scaffold [name] [field:type] ..."
+	print "    types: boolean, date, datetime, decimal, decimal[18,2]"
+	print "    more: float, integer, string, text, time, timestamp'"
 	print "./gen migrate"
 	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
 	print "./gen configure server [port:number] [max_waiting_clients:number] [header_max_size:number]"
