@@ -53,7 +53,7 @@ public class RootinTootinServer : HttpServer {
 						if(regex.test(raw_uri)) {
 							Stdout.format("regex: {}\n", regex.pattern).flush;
 							new_action = route_action;
-							if(split(regex.pattern, r"\d*").length > 1)
+							if(split(regex.pattern, r"\d*").length > 1 || split(regex.pattern, r"\d+").length > 1)
 								new_id = before(after_last(raw_uri, "/"), ";");
 							has_valid_request = true;
 						}

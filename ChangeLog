@@ -3,6 +3,7 @@
 	* Fixed bug #509711: 'Decimal datatype has zero precision'.
 	* Fixed bug #509707: 'Decimal database type mapped to D double'.
 	* Fixed bug #514143: 'Annoying obsolete FIXME in the routes'.
+	* Fixed bug #513483: 'routes use zero-or-more instead of one-or-more.'
 
 2010-01-19  Release 0.3.0
 	* Actions can be rendered in html, json, or xml.
