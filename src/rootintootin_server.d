@@ -99,6 +99,7 @@ public class RootinTootinServer : HttpServer {
 		// Send any files
 		string normalized = Path.normalize(request.uri);
 		if(normalized != "/" && Path.exists("public" ~ normalized)) {
+			Stdout.format("file: {}\n", normalized).flush;
 			bool read_file_broke = false;
 			File file = null;
 			// FIXME: Use the existing buffer instead of creating a new one here
