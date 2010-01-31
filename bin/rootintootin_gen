@@ -59,12 +59,17 @@ elif str.join(' ', sys.argv[2:4]) == "create migration":
 
 # create scaffold [name] [field:type] ...
 elif str.join(' ', sys.argv[2:4]) == "create scaffold":
+	pairs = []
+	for pair in sys.argv:
+		if pair == 'validates': break
+		pairs.append(pair)
+
 	controller_name = sys.argv[4]
 	generator.check_pluralization(controller_name)
-	generator.create_scaffold(controller_name, sys.argv[5:])
+	generator.create_scaffold(controller_name, pairs[5:])
 	generator.create_model(controller_name, sys.argv[5:])
-	generator.create_migration(controller_name, sys.argv[5:])
-	generator.configure_routes(controller_name, sys.argv[4:])
+	generator.create_migration(controller_name, pairs[5:])
+	generator.configure_routes(controller_name, pairs[4:])
 
 # migrate
 elif str.join(' ', sys.argv[2:]) == "migrate":

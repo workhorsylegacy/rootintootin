@@ -106,11 +106,11 @@ public class ModelBase {
 		return _id;
 	}
 
-	protected void reset_validation_errors() {
+	public void validate() {
 	}
 
 	public bool is_valid() {
-		this.reset_validation_errors();
+		this.validate();
 		return this._errors.length == 0;
 	}
 

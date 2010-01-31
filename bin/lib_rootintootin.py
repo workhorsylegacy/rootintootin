@@ -321,9 +321,22 @@ class Generator(object):
 		# Get the name singularized
 		model_name = self.singularize(model_name)
 
+		# Add the validates params
+		validates = {}
+		has_validates = False
+		for pair in pairs:
+			if pair == 'validates':
+				has_validates = True
+			elif has_validates:
+				key, value = pair.split(':')
+				if not value in validates:
+					validates[value] = []
+				validates[value].append(key)
+
 		# Get the files and parameters
 		params = {
-			'model_name' : model_name
+			'model_name' : model_name, 
+			'validates' : validates
 		}
 		template_file = rootintootin_path + 'src/templates/model.d.mako'
 		out_file = 'app/models/' + model_name + '.d'

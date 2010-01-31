@@ -3,9 +3,10 @@
 private import file_base;
 
 public class File : FileBase {
-	void reset_validation_errors() {
-		if(this._name.length == 0)
-			this._errors ~= "The name cannot be blank.";
+	void validate() {
+		_errors = [];
+		if(_name.length == 0)
+			_errors ~= "The name cannot be blank.";
 	}
 }
 
