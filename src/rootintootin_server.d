@@ -115,7 +115,7 @@ public class RootinTootinServer : HttpServer {
 			}
 
 			if(read_file_broke) {
-				this.render_text(socket, request, "404 Failed to read the file.", 404);
+				this.render_text(socket, request, "404 Failed to read the file.", 404, "html");
 			} else {
 				this.render_text(socket, request, buf[0 .. len], 200);
 			}
@@ -143,12 +143,13 @@ public class RootinTootinServer : HttpServer {
 		} catch(RenderNoActionException e) {
 			this.render_text(socket, request, e.msg, 404);
 		} catch(RenderNoControllerException e) {
-			string response = "<h1>Unknown Controller</h1>\n<ul>\n";
+			string response = "<h1>404 Unknown Resource</h1>\n<ul>\n";
+			response ~= "<p>Resources we know about:</p>";
 			foreach(string controller_name ; e._controllers) {
 				response ~= "	<li><a href=\"/" ~ controller_name ~ "\">" ~ controller_name ~ "</a></li>\n";
 			}
 			response ~= "</ul>\n";
-			this.render_text(socket, request, response, 404);
+			this.render_text(socket, request, response, 404, "html");
 		}
 
 		// FIXME: Here we need to trigger all the events in events_to_trigger

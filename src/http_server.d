@@ -333,8 +333,9 @@ public class HttpServer : TcpServer {
 		socket.write(header);
 	}
 
-	protected void render_text(Socket socket, Request request, string text, ushort status_code = 200) {
-		string content_type = Helper.mimetype_map[request.format];
+	protected void render_text(Socket socket, Request request, string text, ushort status_code = 200, string format = null) {
+		if(format==null) format = request.format;
+		string content_type = Helper.mimetype_map[format];
 		socket.write(generate_text(request, text, status_code, content_type));
 	}
 
