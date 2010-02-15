@@ -40,11 +40,11 @@ def migration_type_default_sql_value(migration_type):
 
 	return type_map[migration_type]
 
-def sql_type_to_default_d_value(migration_type):
+def sql_type_to_default_d_value(sql_type):
 	p = re.compile("^decimal\(\d+\,\d+\)$")
-	if p.match(migration_type):
-		precision = migration_type.split('(')[1].split(',')[0]
-		scale = migration_type.split(',')[1].split(')')[0]
+	if p.match(sql_type):
+		precision = sql_type.split('(')[1].split(',')[0]
+		scale = sql_type.split(',')[1].split(')')[0]
 		return 'null'
 
 	type_map = {'tinyint(1)' : 'false',
@@ -58,7 +58,7 @@ def sql_type_to_default_d_value(migration_type):
 				'time' : '"0"',
 				'timestamp' : '"0"' }
 
-	return type_map[migration_type]
+	return type_map[sql_type]
 
 def is_valid_migration_type(migration_type):
 	try:
