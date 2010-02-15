@@ -1,6 +1,9 @@
 
 <form action="/comments/<%=controller._comment.id%>?method=PUT" class="edit_comment" id="edit_comment_<%=controller._comment.id%>" method="post">
 	<h1>Editing Comment</h1>
+
+	<%# UI.errors_for(controller._comment, "comment") %>
+
 	<p>
 		<label for="comment_user">User</label><br />
 		<select id="comment_user" name="comment[user]">

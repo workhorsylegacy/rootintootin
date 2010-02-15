@@ -59,10 +59,23 @@ elif str.join(' ', sys.argv[2:4]) == "create migration":
 
 # create scaffold [name] [field:type] ...
 elif str.join(' ', sys.argv[2:4]) == "create scaffold":
+	# Get all the pairs
 	pairs = []
 	for pair in sys.argv:
 		if pair == 'validates': break
 		pairs.append(pair)
+
+	# Convert any validation to long format
+	i = 0
+	while i < len(sys.argv):
+		if sys.argv[i].startswith('presence_of:'):
+			names = sys.argv[i].split(':')[1].split(',')
+			sys.argv.pop(i)
+			for name in names:
+				sys.argv.insert(i, 'presence_of:' + name)
+				i += 1
+		else:
+			i += 1
 
 	controller_name = sys.argv[4]
 	generator.check_pluralization(controller_name)

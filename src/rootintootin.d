@@ -318,6 +318,20 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			return false;
 		}
 	}
+
+	void validates_presence_of(string[] field_names) {
+		foreach(string field_name; field_names) {
+			validates_presence_of(field_name);
+		}
+	}
+
+	void validates_presence_of(string field_name) {
+		char[] field = this.get_field_by_name(field_name);
+
+		if(field == null || tango.text.Util.trim(field).length == 0) {
+			_errors ~= "The " ~ field_name ~ " cannot be blank.";
+		}
+	}
 }
 
 public class ControllerBase {

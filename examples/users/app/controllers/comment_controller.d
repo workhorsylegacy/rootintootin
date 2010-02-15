@@ -34,6 +34,7 @@ public class CommentController : ControllerBase {
 			flash_notice("The comment was created.");
 			respond_with_redirect(_comment, "/comments/" ~ to_s(_comment.id), 200, ["html", "json", "xml"]);
 		} else {
+			_users = User.find_all();
 			respond_with(_comment, "new", 422, ["html", "json", "xml"]);
 		}
 	}
@@ -54,6 +55,7 @@ public class CommentController : ControllerBase {
 			flash_notice("The comment was updated.");
 			respond_with_redirect(_comment, "/comments/" ~ to_s(_comment.id), 200, ["html", "json", "xml"]);
 		} else {
+			_users = User.find_all();
 			respond_with(_comment, "edit", 200, ["html", "json", "xml"]);
 		}
 	}

@@ -1,6 +1,9 @@
 
 <form action="/comments" class="new_comment" id="new_comment" method="post">
 	<h1>New Comments</h1>
+
+	<%# UI.errors_for(controller._comment, "comment") %>
+
 	<p>
 		<label for="comment_user">User</label><br />
 		<select id="comment_user" name="comment[user]">
