@@ -11,27 +11,27 @@
 	<@@# UI.errors_for(controller._${model_name}, "${model_name}") @@>
 % for field in pairs:
 <% field_name, field_type = field.split(':') %>
-% if field_type=='binary':
+% if field_type in ['binary']:
 	<p>
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="text" value="<@@=controller._${model_name}.${field_name}@@>" />
 	</p>
-% elif field_type=='boolean':
+% elif field_type in ['boolean']:
 	<p>
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="checkbox" <@@=controller._${model_name}.${field_name} ? "checked" : ""@@> />
 	</p>
-% elif field_type=='string' or field_type=='date' or field_type=='datetime' or field_type=='time' or field_type=='timestamp':
+% elif field_type in ['string', 'date', 'datetime', 'time', 'timestamp', 'unique_date', 'unique_datetime', 'unique_string', 'unique_time', 'unique_timestamp']:
 	<p>
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="text" value="<@@=controller._${model_name}.${field_name}@@>" />
 	</p>
-% elif field_type=='text':
+% elif field_type in ['text']:
 	<p>
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<textarea id="${model_name}_${field_name}" name="${model_name}[${field_name}]"><@@=controller._${model_name}.${field_name}@@></textarea>
 	</p>
-% elif field_type=='float' or field_type=='integer' or field_type.startswith('decimal'):
+% elif field_type in ['float', 'integer', 'unique_float', 'unique_integer'] or field_type.startswith('decimal') or field_type.startswith('unique_decimal'):
 	<p>
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="text" value="<@@=controller._${model_name}.${field_name}@@>" />

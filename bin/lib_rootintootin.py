@@ -27,16 +27,28 @@ def migration_type_default_sql_value(migration_type):
 	if p.match(migration_type):
 		return 'not null default 0'
 
-	type_map = {'boolean' : 'not null default 0',
-				'date' : 'not null default 0',
-				'datetime' : 'not null default 0',
-				'decimal' : 'not null default 0',
-				'float' : 'not null default 0',
-				'integer' : 'not null default 0',
-				'string' : 'default null',
-				'text' : 'default null',
-				'time' : 'not null default 0',
-				'timestamp' : 'not null default 0' }
+	p = re.compile("^unique_decimal\[\d+\,\d+\]$")
+	if p.match(migration_type):
+		return 'not null default 0'
+
+	type_map = {'boolean'             : 'not null default 0',
+				'date'                : 'not null default 0',
+				'datetime'            : 'not null default 0',
+				'decimal'             : 'not null default 0',
+				'float'               : 'not null default 0',
+				'integer'             : 'not null default 0',
+				'string'              : 'default null',
+				'text'                : 'default null',
+				'time'                : 'not null default 0',
+				'timestamp'           : 'not null default 0',
+				'unique_date'         : 'not null default 0',
+				'unique_datetime'     : 'not null default 0',
+				'unique_decimal'      : 'not null default 0',
+				'unique_float'        : 'not null default 0',
+				'unique_integer'      : 'not null default 0',
+				'unique_string'       : 'not null',
+				'unique_time'         : 'not null default 0',
+				'unique_timestamp'    : 'not null default 0'}
 
 	return type_map[migration_type]
 
@@ -47,16 +59,16 @@ def sql_type_to_default_d_value(sql_type):
 		scale = sql_type.split(',')[1].split(')')[0]
 		return 'null'
 
-	type_map = {'tinyint(1)' : 'false',
-				'date' : '"0"',
-				'datetime' : '"0"',
-				'decimal' : 'null',
-				'float' : '0',
-				'int(11)' : '0',
+	type_map = {'tinyint(1)'   : 'false',
+				'date'         : '"0"',
+				'datetime'     : '"0"',
+				'decimal'      : 'null',
+				'float'        : '0',
+				'int(11)'      : '0',
 				'varchar(255)' : 'null',
-				'text' : 'null',
-				'time' : '"0"',
-				'timestamp' : '"0"' }
+				'text'         : 'null',
+				'time'         : '"0"',
+				'timestamp'    : '"0"' }
 
 	return type_map[sql_type]
 
@@ -72,16 +84,16 @@ def sql_type_to_xml_type(sql_type):
 	if p.match(sql_type):
 		return 'decimal'
 
-	type_map = {'tinyint(1)' : 'boolean',
-				'date' : 'date',
-				'datetime' : 'dateTime',
-				'decimal' : 'decimal',
-				'float' : 'float',
-				'int(11)' : 'long',
+	type_map = {'tinyint(1)'   : 'boolean',
+				'date'         : 'date',
+				'datetime'     : 'dateTime',
+				'decimal'      : 'decimal',
+				'float'        : 'float',
+				'int(11)'      : 'long',
 				'varchar(255)' : 'string',
-				'text' : 'string',
-				'time' : 'time',
-				'timestamp' : 'dateTime'}
+				'text'         : 'string',
+				'time'         : 'time',
+				'timestamp'    : 'dateTime'}
 
 	return type_map[sql_type]
 
@@ -92,16 +104,16 @@ def sql_type_to_d_type(sql_type):
 		scale = sql_type.split(',')[1].split(')')[0]
 		return 'FixedPoint'
 
-	type_map = {'tinyint(1)' : 'bool',
-				'date' : 'string',
-				'datetime' : 'string',
-				'decimal' : 'FixedPoint',
-				'float' : 'float',
-				'int(11)' : 'ulong',
+	type_map = {'tinyint(1)'   : 'bool',
+				'date'         : 'string',
+				'datetime'     : 'string',
+				'decimal'      : 'FixedPoint',
+				'float'        : 'float',
+				'int(11)'      : 'ulong',
 				'varchar(255)' : 'string',
-				'text' : 'string',
-				'time' : 'string',
-				'timestamp' : 'string'}
+				'text'         : 'string',
+				'time'         : 'string',
+				'timestamp'    : 'string'}
 
 	return type_map[sql_type]
 
@@ -112,16 +124,30 @@ def migration_type_to_sql_type(migration_type):
 		scale = migration_type.split(',')[1].split(']')[0]
 		return 'decimal(' + precision + ',' + scale + ')'
 
-	type_map = {'boolean' : 'tinyint(1)',
-				'date' : 'date',
-				'datetime' : 'datetime',
-				'decimal' : 'decimal(20,2)',
-				'float' : 'float',
-				'integer' : 'int(11)',
-				'string' : 'varchar(255)',
-				'text' : 'text',
-				'time' : 'time',
-				'timestamp' : 'datetime' }
+	p = re.compile("^unique_decimal\[\d+\,\d+\]$")
+	if p.match(migration_type):
+		precision = migration_type.split('[')[1].split(',')[0]
+		scale = migration_type.split(',')[1].split(']')[0]
+		return 'decimal(' + precision + ',' + scale + ')'
+
+	type_map = {'boolean'          : 'tinyint(1)',
+				'date'             : 'date',
+				'datetime'         : 'datetime',
+				'decimal'          : 'decimal(20,2)',
+				'float'            : 'float',
+				'integer'          : 'int(11)',
+				'string'           : 'varchar(255)',
+				'text'             : 'text',
+				'time'             : 'time',
+				'timestamp'        : 'datetime',
+				'unique_date'      : 'date',
+				'unique_datetime'  : 'datetime',
+				'unique_decimal'   : 'decimal(20,2)',
+				'unique_float'     : 'float',
+				'unique_integer'   : 'int(11)',
+				'unique_string'    : 'varchar(255)',
+				'unique_time'      : 'time',
+				'unique_timestamp' : 'datetime'}
 
 	return type_map[migration_type]
 
@@ -130,16 +156,28 @@ def migration_type_to_html_type(migration_type):
 	if p.match(migration_type):
 		return 'double'
 
-	type_map = {'boolean' : 'bool', 
-				'date' : 'string', 
-				'datetime' : 'string', 
-				'decimal' : 'double', 
-				'float' : 'float', 
-				'integer' : 'integer', 
-				'string' : 'string', 
-				'text' : 'string', 
-				'time' : 'string', 
-				'timestamp' : 'string'}
+	p = re.compile("^unique_decimal\[\d+\,\d+\]$")
+	if p.match(migration_type):
+		return 'double'
+
+	type_map = {'boolean'          : 'bool', 
+				'date'             : 'string', 
+				'datetime'         : 'string', 
+				'decimal'          : 'double', 
+				'float'            : 'float', 
+				'integer'          : 'integer', 
+				'string'           : 'string', 
+				'text'             : 'string', 
+				'time'             : 'string', 
+				'timestamp'        : 'string',
+				'unique_date'      : 'string', 
+				'unique_datetime'  : 'string', 
+				'unique_decimal'   : 'double', 
+				'unique_float'     : 'float', 
+				'unique_integer'   : 'integer', 
+				'unique_string'    : 'string', 
+				'unique_time'      : 'string', 
+				'unique_timestamp' : 'string'}
 
 	return type_map[migration_type]
 
@@ -232,6 +270,9 @@ class Generator(object):
 				query += "foreign key(`" + field_name + "_id`) references `" + self.pluralize(field_name) + "`(`id`), "
 			else:
 				query += "`" + field_name + "` " + migration_type_to_sql_type(field_type) + " " + migration_type_default_sql_value(field_type) + ", "
+		for field_name, field_type in field_map.items():
+			if field_type.startswith('unique_'):
+				query += "CONSTRAINT uc_" + field_name + " UNIQUE(`" + field_name + "`),"
 		query = str.rstrip(query, ', ')
 		query += ") ENGINE=innoDB;"
 
