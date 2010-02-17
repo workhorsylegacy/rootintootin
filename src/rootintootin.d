@@ -271,6 +271,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			return false;
 
 		string query = "";
+		db.query_result result;
 
 		// If there is no id, use an insert query
 		if(this._id < 1) {
@@ -280,7 +281,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		 	query ~= ");";
 
 			// Run the query, and save the id
-			_id = db.db_insert_query_with_result_id(query);
+			_id = db.db_insert_query_with_result_id(query, result);
 		} else {
 		// If there is an id, use an update query
 			query ~= "update " ~ typeof(this)._table_name ~ " set ";
@@ -295,10 +296,16 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 			// Run the query
-			db.db_update_query(query);
+			db.db_update_query(query, result);
 		}
 
-		return true;
+		if(result == db.query_result.success) {
+			return true;
+		} else if(result == db.query_result.not_unique_error) {
+			string word = this._id < 1 ? "save" : "update";
+			this._errors ~= "Failed to " ~ word ~ " because the field was not unique.";
+			return false;
+		}
 	}
 
 	bool destroy() {
@@ -313,7 +320,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		if(result == db.query_result.success) {
 			return true;
-		} else if(result == db.query_result.foreign_key_constraint_failed) {
+		} else if(result == db.query_result.foreign_key_constraint_error) {
 			this._errors ~= "Failed to delete because of foreign key constraints.";
 			return false;
 		}

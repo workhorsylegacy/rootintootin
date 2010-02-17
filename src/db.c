@@ -22,7 +22,8 @@ MYSQL_ROW row;
 enum query_result { 
 	query_result_unknown, 
 	query_result_success, 
-	query_result_foreign_key_constraint_failed
+	query_result_foreign_key_constraint_error, 
+	query_result_not_unique_error
 };
 
 void c_db_connect(char* server, char* user_name, char* password, char* database) {
@@ -35,7 +36,8 @@ void c_db_connect(char* server, char* user_name, char* password, char* database)
 }
 
 // Runs the query and returns the id of the last inserted row
-unsigned long long c_db_insert_query_with_result_id(char* query) {
+unsigned long long c_db_insert_query_with_result_id(char* query, enum query_result *result) {
+	*result = query_result_unknown;
 	unsigned long long id = -1;
 
 	// Run the query and get the result
@@ -47,6 +49,14 @@ unsigned long long c_db_insert_query_with_result_id(char* query) {
 
 	// Free the resources for the result
 	mysql_free_result(res);
+
+	// Check for duplicate error
+	unsigned int errno = mysql_errno(&mysql);
+	if(errno == 0) {
+		*result = query_result_success;
+	} else if(errno == ER_DUP_ENTRY) {
+		*result = query_result_not_unique_error;
+	}
 
 	return id;
 }
@@ -61,7 +71,7 @@ void c_db_delete_query(char* query, enum query_result *result) {
 	} else if(status != 0 && mysql_errno(&mysql) == ER_ROW_IS_REFERENCED_2) {
 		printf("errno: %d\n", ER_ROW_IS_REFERENCED_2);
 		fflush(stdout);
-		*result = query_result_foreign_key_constraint_failed;
+		*result = query_result_foreign_key_constraint_error;
 	}
 	res = mysql_store_result(&mysql);
 
@@ -70,13 +80,22 @@ void c_db_delete_query(char* query, enum query_result *result) {
 }
 
 // Runs the query and returns nothing
-void c_db_update_query(char* query) {
+void c_db_update_query(char* query, enum query_result *result) {
+	*result = query_result_unknown;
 	// Run the query and get the result
 	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
 	res = mysql_store_result(&mysql);
 
 	// Free the resources for the result
 	mysql_free_result(res);
+
+	// Check for duplicate error
+	unsigned int errno = mysql_errno(&mysql);
+	if(errno == 0) {
+		*result = query_result_success;
+	} else if(errno == ER_DUP_ENTRY) {
+		*result = query_result_not_unique_error;
+	}
 }
 
 // Runs the query and returns it as a 3D array of characters
