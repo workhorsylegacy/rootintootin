@@ -18,6 +18,11 @@
 MYSQL mysql;
 MYSQL_RES *res;
 MYSQL_ROW row;
+char* error_message;
+
+char* c_db_get_error_message() {
+	return error_message;
+}
 
 enum query_result { 
 	query_result_unknown, 
@@ -38,6 +43,7 @@ void c_db_connect(char* server, char* user_name, char* password, char* database)
 // Runs the query and returns the id of the last inserted row
 unsigned long long c_db_insert_query_with_result_id(char* query, enum query_result *result) {
 	*result = query_result_unknown;
+	error_message = NULL;
 	unsigned long long id = -1;
 
 	// Run the query and get the result
@@ -55,6 +61,7 @@ unsigned long long c_db_insert_query_with_result_id(char* query, enum query_resu
 	if(errno == 0) {
 		*result = query_result_success;
 	} else if(errno == ER_DUP_ENTRY) {
+		error_message = (char*) mysql_error(&mysql);
 		*result = query_result_not_unique_error;
 	}
 
@@ -63,6 +70,7 @@ unsigned long long c_db_insert_query_with_result_id(char* query, enum query_resu
 
 void c_db_delete_query(char* query, enum query_result *result) {
 	*result = query_result_unknown;
+	error_message = NULL;
 
 	// Run the query and get the result
 	int status = mysql_real_query(&mysql, query, (unsigned int)strlen(query));
@@ -72,6 +80,7 @@ void c_db_delete_query(char* query, enum query_result *result) {
 		printf("errno: %d\n", ER_ROW_IS_REFERENCED_2);
 		fflush(stdout);
 		*result = query_result_foreign_key_constraint_error;
+		error_message = (char*) mysql_error(&mysql);
 	}
 	res = mysql_store_result(&mysql);
 
@@ -82,6 +91,7 @@ void c_db_delete_query(char* query, enum query_result *result) {
 // Runs the query and returns nothing
 void c_db_update_query(char* query, enum query_result *result) {
 	*result = query_result_unknown;
+	error_message = NULL;
 	// Run the query and get the result
 	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
 	res = mysql_store_result(&mysql);
@@ -95,12 +105,14 @@ void c_db_update_query(char* query, enum query_result *result) {
 		*result = query_result_success;
 	} else if(errno == ER_DUP_ENTRY) {
 		*result = query_result_not_unique_error;
+		error_message = (char*) mysql_error(&mysql);
 	}
 }
 
 // Runs the query and returns it as a 3D array of characters
 char*** c_db_query_with_result(char* query, int* row_len, int* col_len) {
 	char*** retval;
+	error_message = NULL;
 
 	// Run the query and get the result
 	mysql_real_query(&mysql, query, (unsigned int)strlen(query));

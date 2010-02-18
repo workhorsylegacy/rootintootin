@@ -18,6 +18,10 @@ enum query_result {
 	not_unique_error
 }
 
+char[] db_get_error_message() {
+	return fromStringz(c_db_get_error_message());
+}
+
 void db_connect(char[] server, char[] user_name, char[] password, char[] database) {
 	c_db_connect(toStringz(server), toStringz(user_name), toStringz(password), toStringz(database));
 }
@@ -46,6 +50,7 @@ private:
 
 extern (C):
 
+char* c_db_get_error_message();
 void c_db_connect(char* server, char* user_name, char* password, char* database);
 
 ulong c_db_insert_query_with_result_id(char* query, query_result *result);

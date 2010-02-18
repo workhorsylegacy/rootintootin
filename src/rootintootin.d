@@ -302,8 +302,9 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		if(result == db.query_result.success) {
 			return true;
 		} else if(result == db.query_result.not_unique_error) {
-			string word = this._id < 1 ? "save" : "update";
-			this._errors ~= "Failed to " ~ word ~ " because the field was not unique.";
+			char[] message = db.db_get_error_message();
+			char[] field = tango.text.Util.split(tango.text.Util.split(message, "for key 'uc_")[1], "'")[0];
+			this._errors ~= "The " ~ field ~ " is already used.";
 			return false;
 		}
 	}
