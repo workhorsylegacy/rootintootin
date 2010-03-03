@@ -1,5 +1,5 @@
 
-<form action="/users/<%=controller._user.id%>?method=PUT" class="edit_user" id="edit_user_<%=controller._user.id%>" method="post">
+<%# form_start("users/" ~ to_s(controller._user.id) ~ "?method=PUT", "edit_user_" ~ to_s(controller._user.id), "edit_user", "post"); %>
 	<h1>Editing User</h1>
 
 	<%# UI.errors_for(controller._user, "user") %>
@@ -14,7 +14,7 @@
 	</p>
 
 	<input id="user_submit" name="commit" type="submit" value="Update" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Show", "/users/" ~ to_s(controller._user.id))%> | 
 <%#link_to("Back", "/users")%>

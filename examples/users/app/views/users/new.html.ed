@@ -1,5 +1,5 @@
 
-<form action="/users" class="new_user" id="new_user" method="post">
+<%# form_start("users", "new_user", "new_user", "post"); %>
 	<h1>New User</h1>
 
 	<%# UI.errors_for(controller._user, "user") %>
@@ -14,7 +14,7 @@
 	</p>
 
 	<input id="user_submit" name="commit" type="submit" value="Create" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Back", "/users")%>
 

@@ -7,6 +7,7 @@
 	* Fixed bug #510452: 'Requests for files do not show in server output'.
 	* Fixed bug #510450: 'The unknown controller 404 page uses the wrong content type'.
 	* Fixed bug #511027: 'Validation is missing in generated crud'.
+	* Fixed bug #510488: 'html is dropped on create and update'.
 
 2010-01-19  Release 0.3.0
 	* Actions can be rendered in html, json, or xml.

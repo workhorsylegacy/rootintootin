@@ -5,7 +5,7 @@
     mako is run, these symbols are replaced with others: \
     @@ is replaced with % \
 </%doc>\
-<form action="/${pluralize(model_name)}/<@@=controller._${model_name}.id@@>?method=PUT" class="edit_${model_name}" id="edit_${model_name}_<@@=controller._${model_name}.id@@>" method="post">
+<@@# form_start("${pluralize(model_name)}/" ~ to_s(controller._${model_name}.id) ~ "?method=PUT", "edit_${model_name}_" ~ to_s(controller._${model_name}.id), "edit_${model_name}", "post"); @@>
 	<h1>Editing ${model_name.capitalize()}</h1>
 
 	<@@# UI.errors_for(controller._${model_name}, "${model_name}") @@>
@@ -40,7 +40,7 @@
 % endfor
 
 	<input id="${model_name}_submit" name="commit" type="submit" value="Update" />
-</form>
+<@@# form_end(); @@>
 
 <@@#link_to("Show", "/${pluralize(model_name)}/" ~ to_s(controller._${model_name}.id))@@> | 
 <@@#link_to("Back", "/${pluralize(model_name)}")@@>

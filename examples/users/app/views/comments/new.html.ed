@@ -1,5 +1,5 @@
 
-<form action="/comments" class="new_comment" id="new_comment" method="post">
+<%# form_start("comments", "new_comment", "new_comment", "post"); %>
 	<h1>New Comments</h1>
 
 	<%# UI.errors_for(controller._comment, "comment") %>
@@ -18,7 +18,7 @@
 	</p>
 
 	<input id="comment_submit" name="commit" type="submit" value="Create" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Back", "/comments")%>
 

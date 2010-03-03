@@ -8,7 +8,7 @@
 	<br />
 
 	<input name="commit" type="submit" value="Upload file" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Show", "/files/" ~ to_s(controller._file.id))%> | 
 <%#link_to("Back", "/files")%>

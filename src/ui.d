@@ -28,14 +28,17 @@ public static string h(char value) { return h(to_s(value)); }
 public static string h(FixedPoint value) { return h(to_s(value)); }
 
 public static string link_to(string name, string url, string opt="") {
-	string format = "";
-	if(controller.request.was_format_specified)
-		format = "." ~ controller.request.format;
-	string uri_before = before(url, "?");
-	string uri_after = after(url, "?");
-	if(uri_after.length > 0)
-		uri_after = "?" ~ uri_after;
-	return "<a href=\"" ~ uri_before ~ format ~ uri_after ~ "\"" ~ opt ~ ">" ~ name ~ "</a>";
+	string real_url = get_real_url(url);
+	return "<a href=\"" ~ real_url ~ "\"" ~ opt ~ ">" ~ name ~ "</a>";
+}
+
+public static string form_start(string action, string id, string css_class, string method) {
+	string real_url = get_real_url(action);
+	return "<form action=\"/" ~ real_url ~ "\" class=\"" ~ css_class ~ "\" id=\"" ~ id ~ "\" method=\"" ~ method ~ "\">";
+}
+
+public static string form_end() {
+	return "</form>";
 }
 
 // FIXME: remove the  UI class. Just have everything dumped into the namespace.
@@ -64,4 +67,7 @@ public class UI {
 	}
 }
 
+private static string get_real_url(string url) {
+	return base_get_real_url(controller, url);
+}
 

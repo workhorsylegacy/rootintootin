@@ -8,6 +8,6 @@
 	<br />
 
 	<input name="commit" type="submit" value="Upload file" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Back", "/files")%>

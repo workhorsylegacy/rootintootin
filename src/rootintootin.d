@@ -394,8 +394,9 @@ public class ControllerBase {
 	}
 
 	public void respond_with_redirect(ModelBase model, string url, ushort status, string[] formats) {
+		string real_url = base_get_real_url(this, url);
 		switch(_request.format) {
-			case("html"): redirect_to(url); break;
+			case("html"): redirect_to(real_url); break;
 			case("json"): render_text(model.to_json(), status); break;
 			case("xml"): render_text(model.to_xml(), status); break;
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
@@ -403,8 +404,9 @@ public class ControllerBase {
 	}
 
 	public void respond_with_redirect(string url, ushort status, string[] formats) {
+		string real_url = base_get_real_url(this, url);
 		switch(_request.format) {
-			case("html"): redirect_to(url); break;
+			case("html"): redirect_to(real_url); break;
 			case("json"): render_text("", status); break;
 			case("xml"): render_text("", status); break;
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
@@ -426,5 +428,20 @@ public class ControllerBase {
 	public void trigger_event(string event_name) {
 		this._events_to_trigger ~= event_name;
 	}
+}
+
+
+public static string base_get_real_url(ControllerBase controller, string url) {
+	// Get the format from the controller
+	string format = "";
+	if(controller.request.was_format_specified)
+		format = "." ~ controller.request.format;
+
+	// Get the url with the real format
+	string url_before = before(url, "?");
+	string url_after = after(url, "?");
+	if(url_after.length > 0)
+		url_after = "?" ~ url_after;
+	return url_before ~ format ~ url_after;
 }
 

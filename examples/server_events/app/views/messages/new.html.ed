@@ -1,5 +1,5 @@
 
-<form action="/messages" class="new_message" id="new_message" method="post">
+<%# form_start("messages", "new_message", "new_message", "post"); %>
 	<h1>New Message</h1>
 
 	<%# UI.errors_for(controller._message, "message") %>
@@ -10,7 +10,7 @@
 	</p>
 
 	<input id="message_submit" name="commit" type="submit" value="Create" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Back", "/messages")%>
 

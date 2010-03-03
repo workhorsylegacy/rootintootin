@@ -1,5 +1,5 @@
 
-<form action="/comments/<%=controller._comment.id%>?method=PUT" class="edit_comment" id="edit_comment_<%=controller._comment.id%>" method="post">
+<%# form_start("comments/" ~ to_s(controller._comment.id) ~ "?method=PUT", "edit_comment_" ~ to_s(controller._comment.id), "edit_comment", "post"); %>
 	<h1>Editing Comment</h1>
 
 	<%# UI.errors_for(controller._comment, "comment") %>
@@ -22,7 +22,7 @@
 	</p>
 
 	<input id="comment_submit" name="commit" type="submit" value="Update" />
-</form>
+<%# form_end(); %>
 
 <%#link_to("Show", "/comments/" ~ to_s(controller._comment.id))%> | 
 <%#link_to("Back", "/comments")%>
