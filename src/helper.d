@@ -13,9 +13,9 @@ private import tango.text.Util;
 private import tango.text.convert.Integer;
 private import language_helper;
 
-private import tango.io.digest.Digest;
-private import tango.io.digest.Sha256;
-private import tango.io.encode.Base64;
+private import tango.util.digest.Digest;
+private import tango.util.digest.Sha256;
+private import tango.util.encode.Base64;
 
 
 // Helper functions for the server
@@ -76,8 +76,8 @@ public class Helper {
 		sha_encoder.update(value ~ salt);
 		ubyte[] encoded = sha_encoder.binaryDigest();
 
-		string encodebuf = new char[tango.io.encode.Base64.allocateEncodeSize(encoded)];
-		return tango.io.encode.Base64.encode(encoded, encodebuf);
+		string encodebuf = new char[tango.util.encode.Base64.allocateEncodeSize(encoded)];
+		return tango.util.encode.Base64.encode(encoded, encodebuf);
 	}
 
 	public static this() {
