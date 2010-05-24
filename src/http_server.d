@@ -308,6 +308,23 @@ class HttpServer : TcpServer {
 		return response;
 	}
 
+	protected string redirect_to(Request request, string url) {
+		// If we have already rendered, show an error
+		if(request.has_rendered) {
+			throw new Exception("Something has already been rendered.");
+		}
+
+		string status = Helper.get_verbose_status_code(301);
+
+		string header = "HTTP/1.1 " ~ status ~ "\r\n" ~
+		"Location: " ~ url ~ "\r\n" ~
+		"Content-Type: text/html\r\n" ~
+		"Content-Length: 0" ~
+		"\r\n";
+
+		return header;
+	}
+
 	protected string render_text(Request request, string text, ushort status_code = 200, string format = null) {
 		if(format==null) format = request.format;
 		string content_type = Helper.mimetype_map[format];

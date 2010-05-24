@@ -7,7 +7,6 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.net.device.Socket;
 private import tango.text.Util;
 private import TangoRegex = tango.text.Regex;
 
@@ -26,9 +25,9 @@ public class RootinTootinServer : HttpServer {
 	private string[TangoRegex.Regex][string][string] _routes = null;
 
 	public this(RunnerBase runner, string[TangoRegex.Regex][string][string] routes, 
-				ushort port, int max_waiting_clients, string buffer, 
+				ushort port, int max_waiting_clients, 
 				string db_host, string db_user, string db_password, string db_name) {
-		super(port, max_waiting_clients, buffer);
+		super(port, max_waiting_clients, true);
 		_routes = routes;
 		_runner = runner;
 
@@ -75,23 +74,27 @@ public class RootinTootinServer : HttpServer {
 		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
 
-	protected void on_request_get(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_all(socket, request, raw_header, raw_body);
+	protected char[] on_request(char[] request) {
+		return this.trigger_on_request(request);
 	}
 
-	protected void on_request_post(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_all(socket, request, raw_header, raw_body);
+	protected string on_request_get(Request request, string raw_header, string raw_body) {
+		return this.on_request_all(request, raw_header, raw_body);
 	}
 
-	protected void on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_all(socket, request, raw_header, raw_body);
+	protected string on_request_post(Request request, string raw_header, string raw_body) {
+		return this.on_request_all(request, raw_header, raw_body);
 	}
 
-	protected void on_request_delete(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_all(socket, request, raw_header, raw_body);
+	protected string on_request_put(Request request, string raw_header, string raw_body) {
+		return this.on_request_all(request, raw_header, raw_body);
 	}
 
-	protected void on_request_all(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string on_request_delete(Request request, string raw_header, string raw_body) {
+		return this.on_request_all(request, raw_header, raw_body);
+	}
+
+	protected string on_request_all(Request request, string raw_header, string raw_body) {
 		// Get the controller, action, and id
 		string controller, action, id;
 		bool has_valid_request = get_route_info(request, controller, action, id);
@@ -115,11 +118,10 @@ public class RootinTootinServer : HttpServer {
 			}
 
 			if(read_file_broke) {
-				this.render_text(socket, request, "404 Failed to read the file.", 404, "html");
+				return this.render_text(request, "404 Failed to read the file.", 404, "html");
 			} else {
-				this.render_text(socket, request, buf[0 .. len], 200);
+				return this.render_text(request, buf[0 .. len], 200);
 			}
-			return;
 		}
 
 		// Add the id to the params if we have one
@@ -135,13 +137,13 @@ public class RootinTootinServer : HttpServer {
 		try {
 			// Run the action and get any event names to trigger
 			string response = _runner.run_action(request, controller, action, id, events_to_trigger);
-			this.render_text(socket, request, response, 200);
+			return this.render_text(request, response, 200);
 		} catch(RenderTextException e) {
-			this.render_text(socket, request, e._text, e._status);
+			return this.render_text(request, e._text, e._status);
 		} catch(RenderRedirectException e) {
-			this.redirect_to(socket, request, e._url);
+			return this.redirect_to(request, e._url);
 		} catch(RenderNoActionException e) {
-			this.render_text(socket, request, e.msg, 404);
+			return this.render_text(request, e.msg, 404);
 		} catch(RenderNoControllerException e) {
 			string response = "<h1>404 Unknown Resource</h1>\n<ul>\n";
 			response ~= "<p>Resources we know about:</p>";
@@ -149,7 +151,7 @@ public class RootinTootinServer : HttpServer {
 				response ~= "	<li><a href=\"/" ~ controller_name ~ "\">" ~ controller_name ~ "</a></li>\n";
 			}
 			response ~= "</ul>\n";
-			this.render_text(socket, request, response, 404, "html");
+			return this.render_text(request, response, 404, "html");
 		}
 
 		// FIXME: Here we need to trigger all the events in events_to_trigger

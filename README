@@ -9,7 +9,7 @@ similar to Ruby on Rails.
 # ubuntu
 sudo apt-get install mysql-client mysql-server libmysqlclient16-dev \
 python-mysqldb python-pexpect python-mako python-pyinotify \
-python-tornado build-essential bzr ldc libtango-ldc-dev
+build-essential bzr ldc libtango-ldc-dev
 sudo service mysql start
 
 # fedora

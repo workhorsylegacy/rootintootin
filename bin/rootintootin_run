@@ -13,8 +13,6 @@ import threading, time
 import pyinotify
 import errno
 import functools
-import socket
-from tornado import ioloop, iostream
 from lib_rootintootin import *
 
 
@@ -139,7 +137,7 @@ def generate_run(routes, table_map, reference_map):
 	out_file.write("	}\n")
 	out_file.write("}\n")
 
-	port = str(int(globals()['server_configuration']['port']) + 1)
+	port = str(int(globals()['server_configuration']['port']))
 	max_waiting_clients = globals()['server_configuration']['max_waiting_clients']
 	header_max_size = globals()['server_configuration']['header_max_size']
 	db_host = globals()['database_configuration']['host']
@@ -163,13 +161,14 @@ def generate_run(routes, table_map, reference_map):
 	# Write the server start in main
 	out_file.write("\n" + 
 	"	// Create and start the sever\n" + 
+	"	IOLoop.use_epoll = true;\n" + 
 	"	ushort port = " + port + ";\n" + 
 	"	int max_waiting_clients = " + str(max_waiting_clients) + ";\n" + 
 	"	char[" + str(header_max_size) + "] buffer;\n" + 
 	"	RunnerBase runner = new Runner();\n" + 
 	"	auto server = new RootinTootinServer(\n" + 
 	"				runner, routes, \n" + 
-	"				port, max_waiting_clients, buffer, \n" + 
+	"				port, max_waiting_clients, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
 	"	server.start();\n" + 
@@ -751,6 +750,7 @@ class BuilderThread(threading.Thread):
 		if os.path.exists(scratch):
 			shutil.rmtree(scratch)
 		shutil.copytree(os.sys.path[0]+'/../src/', scratch)
+		shutil.copytree(os.sys.path[0]+'/../dornado/', scratch+'dornado')
 
 		if os.path.exists(pwd+'/app/'):
 			shutil.copytree(pwd+'/app/', scratch+'app/')
@@ -785,7 +785,7 @@ class BuilderThread(threading.Thread):
 		result += pexpect.run("ar rcs db.a db.o")
 		command = "ldc -g -of run " + \
 					"language_helper.d helper.d rootintootin.d rootintootin_server.d http_server.d tcp_server.d ui.d run.d " + \
-					"db.d db.a " + \
+					"db.d db.a dornado/ioloop.d " + \
 					str.join(' ', additional_imports) + \
 					" -L=\"-lmysqlclient\""
 		result += pexpect.run(command)
@@ -799,89 +799,17 @@ class BuilderThread(threading.Thread):
 			self._compile_error = None
 			print "Build successful!"
 
-		# Run the real server in its own process
+		# Run the server in its own process
 		self._server_pid = subprocess.Popen([scratch + "run", ""]).pid
 
-class BufferServer(object):
-	def __init__(self):
-		self._io_loop = None
-		self._port = None
-		self._builder_thread = None
-
-	def connection_ready(self, sock, fd, events):
-		while True:
-			try:
-				connection, address = sock.accept()
-			except socket.error, e:
-				if e[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
-					raise
-				return
-			#connection.setblocking(0)
-
-			# If there was a compile error, write that instead
-			response = self._builder_thread.get_compile_error()
-			if response:
-				# Write the response to the client
-				stream = iostream.IOStream(connection)
-				stream.write(response, stream.close)
-				return
-
-			# Get the request
-			request = connection.recv(1024 * 8)
-
-			# Write the request to the rootin tootin server
-			# and read the response back
-			client = None
-			try:
-				client = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0);
-				client.connect(('0.0.0.0', self._port+1))
-				client.send(request)
-				response = client.recv(1024 * 8)
-				client.close()
-			except Exception, err:
-				response = "building ..."
-
-			# Write the response to the client
-			stream = iostream.IOStream(connection)
-			stream.write(response, stream.close)
-
-	def start(self):
-		self._builder_thread = BuilderThread()
-		self._builder_thread._setup_app()
-		self._port = int(globals()['server_configuration']['port'])
-		self._builder_thread.start()
-
-		# Create a new tcp socket that is nonblocking, and
-		# can reuse dangling addresses.
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		sock.setblocking(0)
-		sock.bind(('', self._port))
-		sock.listen(10000)
-
-		# Create a tornado loop that uses our 
-		# socket and callback to process requests
-		self._io_loop = ioloop.IOLoop.instance()
-		callback = functools.partial(self.connection_ready, sock)
-		self._io_loop.add_handler(sock.fileno(), callback, self._io_loop.READ)
-
-		# Exit the tornado loop if ctrl + c is pressed.
-		try:
-			print "Buffer Server running on http://localhost:" + str(self._port) + " ..."
-			self._io_loop.start()
-		except KeyboardInterrupt:
-			self.stop()
-
-	def stop(self):
-		print "Exiting ..."
-		if self._io_loop:
-			self._io_loop.stop()
-		if self._builder_thread:
-			self._builder_thread.set_is_running(False)
-
 # Start the buffer server
-server = BufferServer()
-server.start()
+builder_thread = BuilderThread()
+builder_thread._setup_app()
+try:
+	builder_thread.start()
+except KeyboardInterrupt:
+	builder_thread.set_is_running(False)
+
 
 
 

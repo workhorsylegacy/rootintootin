@@ -67,6 +67,10 @@ public class TcpServer {
 		this.connection_ready(_sock, fd, events);
 	}
 
+	protected void on_started() {
+		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
+	}
+
 	public void start() {
 		_sock = new ServerSocket(new InternetAddress("0.0.0.0", _port), _max_waiting_clients, _is_address_reusable);
 		_sock.socket.blocking(false);
@@ -74,7 +78,7 @@ public class TcpServer {
 		auto io_loop = IOLoop.instance();
 		auto callback = &this.call_connection_ready;
 		io_loop.add_handler(_sock.fileHandle, callback, io_loop.READ);
-		//Stdout.format("http://localhost:{}", _port).newline.flush;
+		this.on_started();
 		io_loop.start(_sock);
 	}
 
