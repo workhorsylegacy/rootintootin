@@ -1,0 +1,18 @@
+Dornado is a port of Tornado from Python to D. More info on Tornado 
+can be found at: http://www.tornadoweb.org
+
+Dornado is a barely working toy. The only demo that works is ioloop. The 
+httpserver and iostream demos are broken due to some stream related 
+bug in the Tango library (I think anyway).
+
+# To compile:
+cd demos/ioloop
+make
+./hello_ioloop
+
+# View the site at:
+http://localhost:3000
+
+You will need LDC and Tango installed to compile:
+http://dsource.org/projects/ldc
+http://dsource.org/projects/tango
