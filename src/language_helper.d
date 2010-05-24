@@ -638,8 +638,8 @@ public string capitalize(string value) {
 
 // Add array helpers
 template Array(T) {
-	// Remove an item from the array
-	void remove(ref T array, size_t i) {
+	// Remove an item at the index
+	void remove(ref T[] array, size_t i) {
 		// Get the length
 		size_t len = array.length;
 
@@ -650,6 +650,48 @@ template Array(T) {
 
 		// Decrease the length by one
 		array = array[0 .. len - 1];
+	}
+
+	// Remove an item
+	void remove_item(ref T[] array, T item) {
+		// Find the index of the item
+		for(size_t i=0; i<array.length; i++) {
+			if(array[i] == item) {
+				remove(array, i);
+				return;
+			}
+		}
+	}
+
+	// Return true if the item is in the array
+	bool contains(ref T[] array, ref T item) {
+		// Return true if the item is in it
+		foreach(T entry; array)
+			if(entry == item)
+				return true;
+
+		// Return false if not found
+		return false;
+	}
+
+	// Remove the item at the index and return it
+	T pop(ref T[] array, size_t i) {
+		// Get the item
+		T item = array[i];
+
+		// Remove the item
+		remove(array, i);
+
+		return item;
+	}
+
+	// Remove the item and return it
+	T pop_item(ref T[] array, ref T item) {
+		for(size_t i=0; i<array.length; i++)
+			if(array[i] == item)
+				return pop(array, i);
+
+		throw new Exception("No item to pop.");
 	}
 }
 

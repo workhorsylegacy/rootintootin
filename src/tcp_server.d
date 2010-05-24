@@ -7,88 +7,80 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.io.selector.EpollSelector;
+
 private import tango.net.device.Socket;
+private import tango.io.model.IConduit;
 private import tango.net.InternetAddress;
 private import tango.io.Stdout;
-private import language_helper;
+private import tango.io.Console;
+private import tango.sys.Process;
+public import dornado.ioloop;
 
 
 public class TcpServer {
+	private ServerSocket _sock;
+	private char[1024] _buffer;
+	private char[] _response;
 	protected ushort _port;
 	protected int _max_waiting_clients;
-	private ServerSocket _server = null;
-	private EpollSelector _selector = null;
-	private string _buffer;
+	protected bool _is_address_reusable;
 
-	public this(ushort port, int max_waiting_clients, string buffer) {
-		this._port = port;
-		this._max_waiting_clients = max_waiting_clients;
-		this._buffer = buffer;
+	public this(ushort port, int max_waiting_clients, bool is_address_reusable) {
+		_port = port;
+		_max_waiting_clients = max_waiting_clients;
+		_is_address_reusable = is_address_reusable;
 	}
 
-	public void start() {
-		// Create a server socket that is non-blocking, can re-use dangling addresses, and can hold many connections.
-		Socket client = null;
-		this._server = new ServerSocket(new InternetAddress("0.0.0.0", this._port), this._max_waiting_clients, true);
-		this._server.socket.blocking(false);
+	private void handle_connection(Socket connection, string address) {
+		// Get the request from the client
+		size_t buffer_length = connection.read(_buffer);
+		char[] request = _buffer[0 .. buffer_length];
 
-		// Create an epoll selector
-		this._selector = new EpollSelector();
-		this._selector.open(); //open(10, 3);
-		this.on_started();
+		// Process the request and get the response
+		char[] response = on_request(request);
 
+		// Write the response to the socket
+		connection.write(response);
+		connection.shutdown();
+		connection.detach();
+	}
+
+	private void connection_ready(ServerSocket sock, ISelectable.Handle fd, uint events) {
 		while(true) {
-			// Wait forever for any read, hangup, error, or invalid handle events
-			this._selector.register(this._server, Event.Read | Event.Hangup | Event.Error | Event.InvalidHandle);
-			if(this._selector.select(-1) == 0) {
-				continue;
-			}
-
-			// Respond to any accepts or errors
-			foreach(SelectionKey item; this._selector.selectedSet()) {
-				if(item.conduit is this._server) {
-					client = (cast(ServerSocket) item.conduit).accept();
-					try {
-						// Have the event process the request
-						this.trigger_on_request(client, _buffer);
-					} catch(Exception err) {
-						client.output.write(to_s(err.file) ~ "(" ~ to_s(err.line) ~ "): " ~ err.msg);
-					} finally {
-						client.shutdown();
-						client.detach();
-					}
-				} else if(item.isError() || item.isHangup() || item.isInvalidHandle()) {
-					Stdout("FIXME: error, hangup, or invalid handle").flush;
-					this._selector.unregister(item.conduit);
-				} else {
-					Stdout("FIXME: unexpected result from selector.selectedSet()").flush;
-				}
-			}
+			Socket connection;
+			// FIXME: How do we get the address?
+			string address = "";
+	//		try {
+				//connection, address = sock.accept();
+				connection = sock.accept();
+	//		} catch(socket.error e) {
+	//			if e[0] not in (errno.EWOULDBLOCK, errno.EAGAIN)
+	//				raise
+	//			return;
+	//		}
+			connection.socket.blocking(false);
+			this.handle_connection(connection, address);
 		}
 	}
 
-	protected void on_started() {
-		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
+	private void call_connection_ready(ISelectable.Handle fd, uint events) {
+		this.connection_ready(_sock, fd, events);
 	}
 
-	protected void on_request(Socket socket, string buffer) {
-		// Read the request from the client
-		int buffer_length = socket.input.read(buffer);
-		//Stdout.format("Request: {}", buffer[0 .. buffer_length]).flush;
+	public void start() {
+		_sock = new ServerSocket(new InternetAddress("0.0.0.0", _port), _max_waiting_clients, _is_address_reusable);
+		_sock.socket.blocking(false);
 
-		// Write the response to the client
-		socket.output.write("The 'normal' response goes here.");
+		auto io_loop = IOLoop.instance();
+		auto callback = &this.call_connection_ready;
+		io_loop.add_handler(_sock.fileHandle, callback, io_loop.READ);
+		//Stdout.format("http://localhost:{}", _port).newline.flush;
+		io_loop.start(_sock);
 	}
 
-	protected void trigger_on_started() {
-		this.on_started();
-	}
-
-	protected void trigger_on_request(Socket socket, string buffer) {
-		this.on_request(socket, buffer);
+	protected char[] on_request(char[] request) {
+		throw new Exception("The on_request method of TcpServer needs to be overloaded on children.");
 	}
 }
-
 
 

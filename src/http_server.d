@@ -7,22 +7,21 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.text.convert.Integer;
 private import tango.text.Util;
-private import tango.stdc.stringz;
-private import tango.io.device.File;
 private import tango.io.Stdout;
+private import tango.io.Console;
 
-private import tango.net.device.Socket;
 private import tango.math.random.engines.Twister;
-
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
 private import tango.time.Clock;
 
+public import dornado.ioloop;
 private import tcp_server;
+
 private import language_helper;
 private import helper;
+
 
 public class Request {
 	private bool _has_rendered = false;
@@ -70,13 +69,13 @@ public class Request {
 	}
 }
 
-public class HttpServer : TcpServer {
+class HttpServer : TcpServer {
 	private int _session_id = 0;
 	private string[string][string] _sessions;
 	private string _salt;
 
-	public this(ushort port, int max_waiting_clients, string buffer) {
-		super(port, max_waiting_clients, buffer);
+	public this(ushort port, int max_waiting_clients, bool is_address_reusable) {
+		super(port, max_waiting_clients, is_address_reusable);
 
 		// Get a random salt for salting sessions
 		Twister* random = new Twister();
@@ -85,31 +84,35 @@ public class HttpServer : TcpServer {
 		delete random;
 	}
 
+	protected char[] on_request(char[] request) {
+		return this.trigger_on_request(request);
+	}
+
 	protected void on_started() {
 		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
 	}
 
-	protected void on_request_get(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string on_request_get(Request request, string raw_header, string raw_body) {
 		string text = "200: Okay";
-		render_text(socket, request, text, 200);
+		return render_text(request, text, 200);
 	}
 
-	protected void on_request_post(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string on_request_post(Request request, string raw_header, string raw_body) {
 		string text = "200: Okay";
-		render_text(socket, request, text, 200);
+		return render_text(request, text, 200);
 	}
 
-	protected void on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string on_request_put(Request request, string raw_header, string raw_body) {
 		string text = "200: Okay";
-		render_text(socket, request, text, 200);
+		return render_text(request, text, 200);
 	}
 
-	protected void on_request_delete(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string on_request_delete(Request request, string raw_header, string raw_body) {
 		string text = "200: Okay";
-		render_text(socket, request, text, 200);
+		return render_text(request, text, 200);
 	}
 
-	protected void on_request_options(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string on_request_options(Request request, string raw_header, string raw_body) {
 		// Send a basic options header for access control
 		// See: https://developer.mozilla.org/En/HTTP_Access_Control
 		string response = 
@@ -120,22 +123,21 @@ public class HttpServer : TcpServer {
 		"Content-Length: 0\r\n" ~  
 		"\r\n";
 
-		socket.write(response);
+		return response;
 	}
 
-	protected void trigger_on_request_get(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_get(socket, request, raw_header, raw_body);
+	protected string trigger_on_request_get(Request request, string raw_header, string raw_body) {
+		return this.on_request_get(request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_request_post(Socket socket, Request request, string raw_header, string raw_body) {
-		this.trigger_on_request_put(socket, request, raw_header, raw_body);
+	protected string trigger_on_request_post(Request request, string raw_header, string raw_body) {
+		return this.trigger_on_request_put(request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_request_put(Socket socket, Request request, string raw_header, string raw_body) {
+	protected string trigger_on_request_put(Request request, string raw_header, string raw_body) {
 		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
 		if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
-			this.render_text(socket, request, "Content-Length is required for HTTP POST and PUT.", 411);
-			return;
+			return this.render_text(request, "Content-Length is required for HTTP POST and PUT.", 411);
 		}
 
 		// Get the content length
@@ -156,38 +158,26 @@ public class HttpServer : TcpServer {
 			}
 		}
 
-		this.on_request_put(socket, request, raw_header, raw_body);
+		return this.on_request_put(request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_request_delete(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_delete(socket, request, raw_header, raw_body);
+	protected string trigger_on_request_delete(Request request, string raw_header, string raw_body) {
+		return this.on_request_delete(request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_request_options(Socket socket, Request request, string raw_header, string raw_body) {
-		this.on_request_options(socket, request, raw_header, raw_body);
+	protected string trigger_on_request_options(Request request, string raw_header, string raw_body) {
+		return this.on_request_options(request, raw_header, raw_body);
 	}
 
-	protected void trigger_on_request(Socket socket, string buffer) {
+	protected string trigger_on_request(string raw_request) {
 		Request request = Request.new_blank();
-		int buffer_length = socket.input.read(buffer);
-
-		// Return blank for bad requests
-		if(buffer_length < 1) {
-			return;
-		}
-
-		// Show an 'HTTP 413 Request Entity Too Large' if the end of the header was not read
-		if(tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0) == buffer_length) {
-			string text = "The end of the HTTP header was not found when reading the first " ~ to_s(buffer.length) ~ " bytes.";
-			render_text(socket, request, text, 413);
-			return;
-		}
+		string response = null;
 
 		// Get the raw header body and header from the buffer
 		string[] buffer_pair = ["", ""];
-		int header_end = tango.text.Util.locatePattern(buffer[0 .. buffer_length], "\r\n\r\n", 0);
-		string raw_header = buffer[0 .. buffer_length][0 .. header_end];
-		string raw_body = buffer[0 .. buffer_length][header_end+4 .. length];
+		int header_end = tango.text.Util.locatePattern(raw_request, "\r\n\r\n", 0);
+		string raw_header = raw_request[0 .. header_end];
+		string raw_body = raw_request[header_end+4 .. length];
 		//Stdout.format("raw_header: {}\n", raw_header).flush;
 		//Stdout.format("raw_body: {}\n", raw_body).flush;
 
@@ -283,19 +273,19 @@ public class HttpServer : TcpServer {
 		// Process the remainder of the request based on its method
 		switch(request.method) {
 			case "GET":
-				this.trigger_on_request_get(socket, request, raw_header, raw_body);
+				response = this.trigger_on_request_get(request, raw_header, raw_body);
 				break;
 			case "POST":
-				this.trigger_on_request_post(socket, request, raw_header, raw_body);
+				response = this.trigger_on_request_post(request, raw_header, raw_body);
 				break;
 			case "PUT":
-				this.trigger_on_request_put(socket, request, raw_header, raw_body);
+				response = this.trigger_on_request_put(request, raw_header, raw_body);
 				break;
 			case "DELETE":
-				this.trigger_on_request_delete(socket, request, raw_header, raw_body);
+				response = this.trigger_on_request_delete(request, raw_header, raw_body);
 				break;
 			case "OPTIONS":
-				this.trigger_on_request_options(socket, request, raw_header, raw_body);
+				response = this.trigger_on_request_options(request, raw_header, raw_body);
 				break;
 		}
 
@@ -314,29 +304,14 @@ public class HttpServer : TcpServer {
 			Stdout.format("\t{} => {}\n", name, value).flush;
 		}
 		*/
+
+		return response;
 	}
 
-	protected void redirect_to(Socket socket, Request request, string url) {
-		// If we have already rendered, show an error
-		if(request.has_rendered) {
-			throw new Exception("Something has already been rendered.");
-		}
-
-		string status = Helper.get_verbose_status_code(301);
-
-		string header = "HTTP/1.1 " ~ status ~ "\r\n" ~
-		"Location: " ~ url ~ "\r\n" ~
-		"Content-Type: text/html\r\n" ~
-		"Content-Length: 0" ~
-		"\r\n";
-
-		socket.write(header);
-	}
-
-	protected void render_text(Socket socket, Request request, string text, ushort status_code = 200, string format = null) {
+	protected string render_text(Request request, string text, ushort status_code = 200, string format = null) {
 		if(format==null) format = request.format;
 		string content_type = Helper.mimetype_map[format];
-		socket.write(generate_text(request, text, status_code, content_type));
+		return generate_text(request, text, status_code, content_type);
 	}
 
 	private string generate_text(Request request, string text, ushort status_code, string content_type) {
@@ -398,6 +373,5 @@ public class HttpServer : TcpServer {
 		}
 	}
 }
-
 
 
