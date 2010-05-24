@@ -42,7 +42,6 @@ class IOStream {
 
 	public this(Socket socket, IOLoop io_loop=null, 
 				size_t max_buffer_size=104857600, size_t read_chunk_size=4096) {
-		Stdout("IOStream.__init__").newline.flush;
 		this.socket = socket;
 		this.socket.socket.blocking(false);
 		this.io_loop = io_loop ? io_loop : IOLoop.instance();
@@ -63,7 +62,6 @@ class IOStream {
 
 	public void read_until(string delimiter, void delegate(string) callback) {
 		//"""Call callback when we read the given delimiter."""
-		Stdout("IOStream.read_until").newline.flush;
 		assert(!this._read_callback, "Already reading");
 		size_t loc = index(this._read_buffer, delimiter);
 		if(loc != this._read_buffer.length) {
@@ -78,7 +76,6 @@ class IOStream {
 
 	public void read_bytes(size_t num_bytes, void delegate(string) callback) {
 		//"""Call callback when we read the given number of bytes."""
-		Stdout("IOStream.read_bytes").newline.flush;
 		assert(!this._read_callback, "Already reading");
 		if(this._read_buffer.length >= num_bytes) {
 			callback(this._consume(num_bytes));
@@ -98,7 +95,6 @@ class IOStream {
 		//previously buffered write data and an old write callback, that
 		//callback is simply overwritten with this new callback.
 		//"""
-		Stdout("IOStream.write").newline.flush;
 		this._check_closed();
 		this._write_buffer ~= data;
 		this._add_io_state(IOLoop.WRITE);
@@ -107,13 +103,11 @@ class IOStream {
 
 	public void set_close_callback(void delegate() callback) {
 		//"""Call the given callback when the stream is closed."""
-		Stdout("IOStream.set_close_callback").newline.flush;
 		this._close_callback = callback;
 	}
 
 	public void close() {
 		//"""Close this stream."""
-		Stdout("IOStream.close").newline.flush;
 		if(this.socket !is null) {
 			this.io_loop.remove_handler(this.socket.fileHandle);
 			this.socket.close();
@@ -124,23 +118,19 @@ class IOStream {
 
 	public bool reading() {
 		//"""Returns true if we are currently reading from the stream."""
-		Stdout("IOStream.reading").newline.flush;
 		return this._read_callback !is null;
 	}
 
 	public bool writing() {
 		//"""Returns true if we are currently writing to the stream."""
-		Stdout("IOStream.writing").newline.flush;
 		return this._write_buffer.length > 0;
 	}
 
 	public bool closed() {
-		Stdout("IOStream.this").newline.flush;
 		return this.socket is null;
 	}
 
 	public void _handle_events(ISelectable.Handle fd, uint events) {
-		Stdout("IOStream._handle_events").newline.flush;
 		if(!this.socket) {
 //			logging.warning("Got events for closed stream %d", fd)
 			return;
@@ -175,7 +165,6 @@ class IOStream {
 	}
 
 	public void _handle_read() {
-		Stdout("IOStream._handle_read").newline.flush;
 		char[] chunk = new char[this.read_chunk_size];
 //		try {
 			this.socket.read(chunk);
@@ -220,7 +209,6 @@ class IOStream {
 	}
 
 	public void _handle_write() {
-		Stdout("IOStream._handle_write").newline.flush;
 		while(this._write_buffer.length > 0) {
 ///			try {
 				size_t num_bytes = this.socket.write(this._write_buffer);
@@ -244,21 +232,18 @@ class IOStream {
 	}
 
 	public string _consume(size_t loc) {
-		Stdout("IOStream.string _consume").newline.flush;
 		string result = this._read_buffer[0 .. loc-1];
 		this._read_buffer = this._read_buffer[loc .. length];
 		return result;
 	}
 
 	public void _check_closed() {
-		Stdout("IOStream._check_closed").newline.flush;
 		if(!this.socket) {
 			throw new IOError("Stream is closed", 999);
 		}
 	}
 
 	public void _add_io_state(uint state) {
-		Stdout("IOStream._add_io_state").newline.flush;
 		if(!this._state & state) {
 			this._state = this._state | state;
 			this.io_loop.update_handler(this.socket.fileHandle, this._state);

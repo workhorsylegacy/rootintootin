@@ -115,14 +115,12 @@ class IOLoop {
 	}
 
 	public static IOLoop instance() {
-		Stdout("IOLoop.instance").newline.flush;
 		if(_instance is null)
 			_instance = new IOLoop();
 		return _instance;
 	}
 
 	public this(BasePoll impl=null) {
-		Stdout("IOLoop.__init__").newline.flush;
 		this._impl = impl ? impl : get_poll();
 
 		// Create a pipe that we send bogus data to, when we want to wake
@@ -139,20 +137,17 @@ class IOLoop {
 
 	public void add_handler(ISelectable.Handle fd, void delegate(ISelectable.Handle fd, uint events) handler, uint events) {
 		//"""Registers the given handler to receive the given events for fd."""
-		Stdout("IOLoop.add_handler").newline.flush;
 		this._handlers[fd] = handler;
 		this._impl.register(fd, events | this.ERROR);
 	}
 
 	public void update_handler(ISelectable.Handle fd, uint events) {
 		//"""Changes the events we listen for fd."""
-		Stdout("IOLoop.update_handler").newline.flush;
 		this._impl.modify(fd, events | this.ERROR);
 	}
 
 	public void remove_handler(ISelectable.Handle fd) {
 		//"""Stop listening for events on fd."""
-		Stdout("IOLoop.remove_handler").newline.flush;
 		this._handlers.remove(fd);
 		this._events.remove(fd);
 		try {
@@ -168,7 +163,6 @@ class IOLoop {
 		//The loop will run until one of the I/O handlers calls stop(), which
 		//will make the loop stop after the current event iteration completes.
 		//"""
-		Stdout("IOLoop.start").newline.flush;
 		this._running = true;
 		while(true) {
 			// Never use an infinite timeout here - it can stall epoll
@@ -250,20 +244,17 @@ class IOLoop {
 
 	public void stop() {
 		//"""Stop the loop after the current event loop iteration is complete."""
-		Stdout("IOLoop.stop").newline.flush;
 		this._running = false;
 		this._wake();
 	}
 
 	public bool running() {
 		//"""Returns true if this IOLoop is currently running."""
-		Stdout("IOLoop.running").newline.flush;
 		return this._running;
 	}
 
 	public _Timeout add_timeout(float deadline, void delegate() callback) {
 		//"""Calls the given callback at the time deadline from the I/O loop."""
-		Stdout("IOLoop.add_timeout").newline.flush;
 		auto timeout = new _Timeout(deadline, callback);
 		this._timeouts ~= timeout;
 		this._timeouts = this._timeouts.sort;
@@ -271,25 +262,21 @@ class IOLoop {
 	}
 
 	public void remove_timeout(_Timeout timeout) {
-		Stdout("IOLoop.remove_timeout").newline.flush;
 		Array!(_Timeout).remove_item(this._timeouts, timeout);
 	}
 
 	public void add_callback(void delegate() callback) {
 		//"""Calls the given callback on the next I/O loop iteration."""
-		Stdout("IOLoop.add_callback").newline.flush;
 		this._callbacks ~= callback;
 		this._wake();
 	}
 
 	public void remove_callback(void delegate() callback) {
 		//"""Removes the given callback from the next I/O loop iteration."""
-		Stdout("IOLoop.remove_callback").newline.flush;
 		Array!(void delegate()).pop_item(this._callbacks, callback);
 	}
 
 	public void _wake() {
-		Stdout("IOLoop._wake").newline.flush;
 		char[] message = "x";
 		try {
 			fwrite(toStringz(message), message.length, 1, this._waker_writer);
@@ -299,7 +286,6 @@ class IOLoop {
 	}
 
 	public void _run_callback(void delegate() callback) {
-		Stdout("IOLoop._run_callback").newline.flush;
 		try {
 			callback();
 		} catch(KeyboardInterrupt e) {
@@ -312,7 +298,6 @@ class IOLoop {
 	}
 
 	public void _read_waker(ISelectable.Handle fd, uint events) {
-		Stdout("IOLoop._read_waker").newline.flush;
 		char* buffer = toStringz(new char[1]);
 		try {
 			while(true) {
@@ -325,7 +310,6 @@ class IOLoop {
 	}
 
 	public void _set_nonblocking(ISelectable.Handle fd) {
-		Stdout("IOLoop._set_nonblocking").newline.flush;
 		int GETFL = tango.stdc.posix.fcntl.F_GETFL;
 		int SETFL = tango.stdc.posix.fcntl.F_SETFL;
 		int O_NONBLOCK = tango.stdc.posix.fcntl.O_NONBLOCK;
@@ -341,13 +325,11 @@ class _Timeout {
 
 	//"""An IOLoop timeout, a UNIX timestamp and a callback"""
 	public this(float deadline, void delegate() callback) {
-		Stdout("_Timeout.__init__").newline.flush;
 		this.deadline = deadline;
 		this.callback = callback;
 	}
 
 	public bool opEquals(_Timeout other) {
-		Stdout("_Timeout.opEquals").newline.flush;
 		return this.deadline == other.deadline &&
 			   this.callback == other.callback;
 	}
@@ -364,7 +346,6 @@ class PeriodicCallback {
 	//The callback is called every callback_time milliseconds.
 	//"""
 	public this(void delegate() callback, float callback_time, IOLoop io_loop=null) {
-		Stdout("PeriodicCallback.__init__").newline.flush;
 		this.callback = callback;
 		this.callback_time = callback_time;
 		if(io_loop)
@@ -375,18 +356,15 @@ class PeriodicCallback {
 	}
 
 	public void start() {
-		Stdout("PeriodicCallback.start").newline.flush;
 		float timeout = Clock.now.unix.seconds + this.callback_time / 1000.0;
 		this.io_loop.add_timeout(timeout, &this._run);
 	}
 
 	public void stop() {
-		Stdout("PeriodicCallback.stop").newline.flush;
 		this._running = false;
 	}
 
 	public void _run() {
-		Stdout("PeriodicCallback._run").newline.flush;
 		if(!this._running) {
 			return;
 		}
@@ -403,7 +381,6 @@ class _EPoll : BasePoll {
 	private ISelectable.Handle[][] fd_sets;
 
 	public this() {
-		Stdout("_EPoll.__init__").newline.flush;
 //		this.fd_sets = [this.read_fds, this.write_fds, this.error_fds];
 		auto selector = new EpollSelector();
 		selector.open();
@@ -411,19 +388,18 @@ class _EPoll : BasePoll {
 	}
 
 	public void register(ISelectable.Handle fd, uint events) {
-		Stdout("_EPoll.register").newline.flush;
+
 	}
 
 	public void modify(ISelectable.Handle fd, uint events) {
-		Stdout("_EPoll.modify").newline.flush;
+
 	}
 
 	public void unregister(ISelectable.Handle fd) {
-		Stdout("_EPoll.unregister").newline.flush;
+
 	}
 
 	public EventPair[] poll(Socket sock, float timeout) {
-		Stdout("_EPoll.poll").newline.flush;
 		EventPair[] retval;
 		uint[ISelectable.Handle] events;
 
@@ -469,7 +445,6 @@ class _Select : BasePoll {
 	private ISelector _selector = null;
 
 	public this() {
-		Stdout("_Select.__init__").newline.flush;
 		this.fd_sets = [this.read_fds, this.write_fds, this.error_fds];
 		auto selector = new SelectSelector();
 		selector.open();
@@ -477,7 +452,6 @@ class _Select : BasePoll {
 	}
 
 	public void register(ISelectable.Handle fd, uint events) {
-		Stdout("_Select.register").newline.flush;
 		if(events & IOLoop.READ)
 			if(Array!(ISelectable.Handle).contains(this.read_fds, fd) == false)
 				this.read_fds ~= fd;
@@ -490,20 +464,17 @@ class _Select : BasePoll {
 	}
 
 	public void modify(ISelectable.Handle fd, uint events) {
-		Stdout("_Select.modify").newline.flush;
 		this.unregister(fd);
 		this.register(fd, events);
 	}
 
 	public void unregister(ISelectable.Handle fd) {
-		Stdout("_Select.unregister").newline.flush;
 		Array!(ISelectable.Handle).remove_item(this.read_fds, fd);
 		Array!(ISelectable.Handle).remove_item(this.write_fds, fd);
 		Array!(ISelectable.Handle).remove_item(this.error_fds, fd);
 	}
 
 	public EventPair[] poll(Socket sock, float timeout) {
-		Stdout("_Select.poll").newline.flush;
 		EventPair[] retval;
 		uint[ISelectable.Handle] events;
 

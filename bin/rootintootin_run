@@ -152,11 +152,13 @@ def generate_run(routes, table_map, reference_map):
 	# Write the routes
 	out_file.write(
 	"	// Create the routes\n" + 
+	"	Stdout(\"Reqex creation may be extremly slow.\nSee upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
 	"	string[TangoRegex.Regex][string][string] routes;\n")
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
 			for uri, method in route_map.iteritems():
 				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new TangoRegex.Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
+				out_file.write("	Stdout(\"Creating the regex for: " + controller_name + "." + action_name + " ...\").newline.flush;\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 
@@ -803,6 +805,7 @@ class BuilderThread(threading.Thread):
 		self._server_pid = subprocess.Popen([scratch + "run", ""]).pid
 
 # Start the buffer server
+# FIXME: This needs to quit on ctrl+c
 builder_thread = BuilderThread()
 builder_thread._setup_app()
 try:
