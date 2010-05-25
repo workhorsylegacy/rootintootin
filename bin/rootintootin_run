@@ -152,7 +152,7 @@ def generate_run(routes, table_map, reference_map):
 	# Write the routes
 	out_file.write(
 	"	// Create the routes\n" + 
-	"	Stdout(\"Reqex creation may be extremly slow.\nSee upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
+	"	Stdout(\"Warning! Regex creation may be extremely slow.\nSee upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
 	"	string[TangoRegex.Regex][string][string] routes;\n")
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
