@@ -804,13 +804,15 @@ class BuilderThread(threading.Thread):
 		# Run the server in its own process
 		self._server_pid = subprocess.Popen([scratch + "run", ""]).pid
 
-# Start the buffer server
-# FIXME: This needs to quit on ctrl+c
+# Start the build server
 builder_thread = BuilderThread()
 builder_thread._setup_app()
 try:
 	builder_thread.start()
+	while True:
+		time.sleep(1)
 except KeyboardInterrupt:
+	print "Exiting ..."
 	builder_thread.set_is_running(False)
 
 
