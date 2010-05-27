@@ -9,26 +9,20 @@
 private import tango.io.Stdout;
 private import inotify;
 
-void on_create(char[] file_name) {
-	Stdout("create: {}\n", file_name);
-}
-
-void on_read(char[] file_name) {
-	Stdout("read: {}\n", file_name);
-}
-
-void on_update(char[] file_name) {
-	Stdout("update: {}\n", file_name);
-}
-
-void on_delete(char[] file_name) {
-	Stdout("delete: {}\n", file_name);
-}
-
-
 int main() {
+	file_change[] changes;
+	size_t len=0;
+	while(true) {
+		changes = fs_watch("/home/matt", len);
 
-	fs_watch("/home/matt", &on_create, &on_read, &on_update, &on_delete);
+		Stdout.format("len: {}\n", len).flush;
+		size_t i=0;
+		//for(i=0; i<len; i++) {
+		//	Stdout.format("changes[i].name: {}\n", changes[i].name).flush;
+		//	Stdout.format("status: {}\n", to_s(changes[i].status)).flush;
+		//}
+		//Stdout("\n\n").flush;
+	}
 
 	return 0;
 }

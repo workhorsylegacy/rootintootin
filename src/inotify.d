@@ -8,53 +8,55 @@
 
 
 module inotify;
+private import tango.io.Stdout;
 private import tango.stdc.stringz;
 
-void function(char[] file_name) _on_create;
-void function(char[] file_name) _on_read;
-void function(char[] file_name) _on_update;
-void function(char[] file_name) _on_delete;
-
-void fs_watch(char[] path_name, 
-				void function(char[] file_name) on_create, 
-				void function(char[] file_name) on_read, 
-				void function(char[] file_name) on_update, 
-				void function(char[] file_name) on_delete) {
-
-	_on_create = on_create;
-	_on_read = on_read;
-	_on_update = on_update;
-	_on_delete = on_delete;
-
-	c_fs_watch(toStringz(path_name), 
-				&wrap_on_create, 
-				&wrap_on_read, 
-				&wrap_on_update, 
-				&wrap_on_delete);
+enum file_status {
+	access, 
+	modify, 
+	attrib, 
+	close_write, 
+	close_nowrite, 
+	open, 
+	moved_from, 
+	moved_to, 
+	create, 
+	_delete, 
+	delete_self, 
+	move_self
 }
 
-void wrap_on_create(char* file_name) {
-	_on_create(fromStringz(file_name));
+struct file_change {
+	char[] name;
+	file_status status;
 }
 
-void wrap_on_read(char* file_name) {
-	_on_create(fromStringz(file_name));
+char[] to_s(file_status status) {
+	return fromStringz(c_to_s(status));
 }
 
-void wrap_on_update(char* file_name) {
-	_on_create(fromStringz(file_name));
+file_change[] fs_watch(char[] path_name, out size_t out_len) {
+	size_t l;
+	file_change* c_changes = c_fs_watch(toStringz(path_name), &l);
+	out_len = l;
+
+	file_change[] changes;
+//	Stdout.format("l: {}\n", l).flush;
+//	Stdout.format("out_len: {}\n", out_len).flush;
+	for(size_t i=0; i<out_len; i++) {
+		file_change c;
+		c.name = c_changes[i].name;
+		c.status = c_changes[i].status;
+		changes ~= c;
+	}
+
+	return changes;
 }
 
-void wrap_on_delete(char* file_name) {
-	_on_create(fromStringz(file_name));
-}
 
 private:
 extern (C):
 
-void c_fs_watch(char* path_name, 
-				void (*on_create)(char* file_name), 
-				void (*on_read)(char* file_name), 
-				void (*on_update)(char* file_name), 
-				void (*on_delete)(char* file_name));
+char* c_to_s(file_status status);
+file_change* c_fs_watch(char* path_name, size_t* out_len);
 

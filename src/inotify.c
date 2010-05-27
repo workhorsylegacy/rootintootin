@@ -11,77 +11,116 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/inotify.h>
 
 #define BUFF_SIZE ((sizeof(struct inotify_event)+FILENAME_MAX)*1024)
 
-void c_fs_watch(char* path_name, 
-				void (*on_create)(char* file_name), 
-				void (*on_read)(char* file_name), 
-				void (*on_update)(char* file_name), 
-				void (*on_delete)(char* file_name)) {
-	int fd = inotify_init();
-	int wd = inotify_add_watch(fd, path_name, IN_ALL_EVENTS);
+typedef enum _file_status { 
+	file_status_access, 
+	file_status_modify, 
+	file_status_attrib, 
+	file_status_close_write, 
+	file_status_close_nowrite, 
+	file_status_open, 
+	file_status_moved_from, 
+	file_status_moved_to, 
+	file_status_create, 
+	file_status_delete, 
+	file_status_delete_self, 
+	file_status_move_self
+} file_status;
 
-	while(true) {
-		char buff[BUFF_SIZE] = {0};
+typedef struct _file_change {
+	char* name;
+	file_status status;
+} file_change;
 
-		ssize_t i = 0;
-		while(i < read(fd, buff, BUFF_SIZE)) {
-			struct inotify_event* event = (struct inotify_event*)&buff[i];
-
-			if(event->len == 0) {
-				// Skip empty ones
-			} else if(IN_ACCESS & event->mask) {
-				on_read(event->name);
-			} else if(IN_MODIFY & event->mask) {
-				on_update(event->name);
-			} else if(IN_ATTRIB & event->mask) {
-				on_update(event->name);
-			} else if(IN_CLOSE_WRITE & event->mask) {
-				on_update(event->name);
-			} else if(IN_CLOSE_NOWRITE & event->mask) {
-				on_update(event->name);
-			} else if(IN_OPEN & event->mask) {
-				on_update(event->name);
-			} else if(IN_MOVED_FROM & event->mask) {
-				on_delete(event->name);
-			} else if(IN_MOVED_TO & event->mask) {
-				on_create(event->name);
-			} else if(IN_CREATE & event->mask) {
-				on_create(event->name);
-			} else if(IN_DELETE & event->mask) {
-				on_delete(event->name);
-			} else if(IN_DELETE_SELF & event->mask) {
-				on_delete(event->name);
-			} else if(IN_MOVE_SELF & event->mask) {
-				on_create(event->name);
-			}
-
-			i += sizeof(struct inotify_event) + event->len;
-		}
+char* c_to_s(file_status status) {
+	switch(status) {
+		case(file_status_access): return "file_status_access";
+		case(file_status_modify): return "file_status_modify";
+		case(file_status_attrib): return "file_status_attrib";
+		case(file_status_close_write): return "file_status_close_write";
+		case(file_status_close_nowrite): return "file_status_close_nowrite";
+		case(file_status_open): return "file_status_open";
+		case(file_status_moved_from): return "file_status_moved_from";
+		case(file_status_moved_to): return "file_status_moved_to";
+		case(file_status_create): return "file_status_create";
+		case(file_status_delete): return "file_status_delete";
+		case(file_status_delete_self): return "file_status_delete_self";
+		case(file_status_move_self): return "file_status_move_self";
 	}
 }
 
-void on_create(char* file_name) {
-	printf("create: %s\n", file_name);
+file_change* c_fs_watch(char* path_name, size_t* out_len) {
+	file_change* retval;
+	int fd = inotify_init();
+	int wd = inotify_add_watch(fd, path_name, IN_ALL_EVENTS);
+
+	// Read the new file changes
+	char buff[BUFF_SIZE] = {0};
+	ssize_t len = read(fd, buff, BUFF_SIZE);
+
+	// Allocate enough memory to hold all the changes
+	size_t length = 0;
+	ssize_t i = 0;
+	while(i < len) {
+		struct inotify_event* event = (struct inotify_event*)&buff[i];
+		i += sizeof(struct inotify_event) + event->len;
+		length++;
+	}
+	retval = (file_change*) calloc(length, sizeof(file_change));
+
+	// Get all the file changes
+	i = 0;
+	while(i < len) {
+		struct inotify_event* event = (struct inotify_event*)&buff[i];
+
+		if(event->len == 0 || strlen(event->name) == 0) {
+			char* unknown = "unknown";
+			retval[i].name = (char*) calloc(strlen(unknown), sizeof(char));
+			strcpy(retval[i].name, unknown);
+		} else {
+			retval[i].name = (char*) calloc(strlen(event->name), sizeof(char));
+			strcpy(retval[i].name, event->name);
+		}
+
+		if(IN_ACCESS & event->mask) {
+			retval[i].status = file_status_access;
+		} else if(IN_MODIFY & event->mask) {
+			retval[i].status = file_status_modify;
+		} else if(IN_ATTRIB & event->mask) {
+			retval[i].status = file_status_attrib;
+		} else if(IN_CLOSE_WRITE & event->mask) {
+			retval[i].status = file_status_close_write;
+		} else if(IN_CLOSE_NOWRITE & event->mask) {
+			retval[i].status = file_status_close_nowrite;
+		} else if(IN_OPEN & event->mask) {
+			retval[i].status = file_status_open;
+		} else if(IN_MOVED_FROM & event->mask) {
+			retval[i].status = file_status_moved_from;
+		} else if(IN_MOVED_TO & event->mask) {
+			retval[i].status = file_status_moved_to;
+		} else if(IN_CREATE & event->mask) {
+			retval[i].status = file_status_create;
+		} else if(IN_DELETE & event->mask) {
+			retval[i].status = file_status_delete;
+		} else if(IN_DELETE_SELF & event->mask) {
+			retval[i].status = file_status_delete_self;
+		} else if(IN_MOVE_SELF & event->mask) {
+			retval[i].status = file_status_move_self;
+		}
+
+		i += sizeof(struct inotify_event) + event->len;
+	}
+
+//	printf("!!length: %d\n", length);
+//	fflush(stdout);
+	*out_len = length;
+//	printf("!!out_len: %d\n", *out_len);
+//	fflush(stdout);
+	return retval;
 }
 
-void on_read(char* file_name) {
-	printf("read: %s\n", file_name);
-}
 
-void on_update(char* file_name) {
-	printf("update: %s\n", file_name);
-}
-
-void on_delete(char* file_name) {
-	printf("delete: %s\n", file_name);
-}
-
-int main() {
-
-	c_fs_watch("/home/matt", on_create, on_read, on_update, on_delete);
-
-	return 0;
-}
