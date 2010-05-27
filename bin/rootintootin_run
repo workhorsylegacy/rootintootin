@@ -787,9 +787,11 @@ class BuilderThread(threading.Thread):
 		result = ""
 		result += pexpect.run("gcc -g -c db.c -o db.o")
 		result += pexpect.run("ar rcs db.a db.o")
+		result += pexpect.run("gcc -g -c inotify.c -o inotify.o")
+		result += pexpect.run("ar rcs inotify.a inotify.o")
 		command = "ldc -g -of run " + \
 					"language_helper.d helper.d rootintootin.d rootintootin_server.d http_server.d tcp_server.d ui.d run.d " + \
-					"db.d db.a dornado/ioloop.d " + \
+					"db.d db.a inotify.d inotify.a dornado/ioloop.d " + \
 					str.join(' ', additional_imports) + \
 					" -L=\"-lmysqlclient\""
 		result += pexpect.run(command)
