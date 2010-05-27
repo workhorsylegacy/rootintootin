@@ -16,7 +16,7 @@
 
 #define BUFF_SIZE ((sizeof(struct inotify_event)+FILENAME_MAX)*1024)
 
-typedef enum _file_status { 
+typedef enum _file_status {
 	file_status_access, 
 	file_status_modify, 
 	file_status_attrib, 
@@ -79,10 +79,10 @@ file_change* c_fs_watch(char* path_name, size_t* out_len) {
 
 		if(event->len == 0 || strlen(event->name) == 0) {
 			char* unknown = "unknown";
-			retval[i].name = (char*) calloc(strlen(unknown), sizeof(char));
+			retval[i].name = (char*) calloc(strlen(unknown)+1, sizeof(char));
 			strcpy(retval[i].name, unknown);
 		} else {
-			retval[i].name = (char*) calloc(strlen(event->name), sizeof(char));
+			retval[i].name = (char*) calloc(strlen(event->name)+1, sizeof(char));
 			strcpy(retval[i].name, event->name);
 		}
 
@@ -115,11 +115,7 @@ file_change* c_fs_watch(char* path_name, size_t* out_len) {
 		i += sizeof(struct inotify_event) + event->len;
 	}
 
-//	printf("!!length: %d\n", length);
-//	fflush(stdout);
 	*out_len = length;
-//	printf("!!out_len: %d\n", *out_len);
-//	fflush(stdout);
 	return retval;
 }
 

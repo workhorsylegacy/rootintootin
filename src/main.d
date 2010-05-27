@@ -14,14 +14,14 @@ int main() {
 	size_t len=0;
 	while(true) {
 		changes = fs_watch("/home/matt", len);
+		Stdout.format("len: {}", len).newline.flush;
 
-		Stdout.format("len: {}\n", len).flush;
 		size_t i=0;
-		//for(i=0; i<len; i++) {
-		//	Stdout.format("changes[i].name: {}\n", changes[i].name).flush;
-		//	Stdout.format("status: {}\n", to_s(changes[i].status)).flush;
-		//}
-		//Stdout("\n\n").flush;
+		for(i=0; i<len; i++) {
+			Stdout.format("changes[i].name: {}", changes[i].name).newline.flush;
+			Stdout.format("status: {}", to_s(changes[i].status)).newline.flush;
+		}
+		Stdout.newline.flush;
 	}
 
 	return 0;

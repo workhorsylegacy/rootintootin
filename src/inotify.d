@@ -26,6 +26,11 @@ enum file_status {
 	move_self
 }
 
+struct c_file_change {
+	char* name;
+	file_status status;
+}
+
 struct file_change {
 	char[] name;
 	file_status status;
@@ -35,17 +40,15 @@ char[] to_s(file_status status) {
 	return fromStringz(c_to_s(status));
 }
 
-file_change[] fs_watch(char[] path_name, out size_t out_len) {
-	size_t l;
-	file_change* c_changes = c_fs_watch(toStringz(path_name), &l);
-	out_len = l;
+file_change[] fs_watch(char[] path_name, out size_t len) {
+	size_t c_len;
+	c_file_change* c_changes = c_fs_watch(toStringz(path_name), &c_len);
+	len = c_len;
 
 	file_change[] changes;
-//	Stdout.format("l: {}\n", l).flush;
-//	Stdout.format("out_len: {}\n", out_len).flush;
-	for(size_t i=0; i<out_len; i++) {
+	for(size_t i=0; i<len; i++) {
 		file_change c;
-		c.name = c_changes[i].name;
+		c.name = fromStringz(c_changes[i].name);
 		c.status = c_changes[i].status;
 		changes ~= c;
 	}
@@ -58,5 +61,5 @@ private:
 extern (C):
 
 char* c_to_s(file_status status);
-file_change* c_fs_watch(char* path_name, size_t* out_len);
+c_file_change* c_fs_watch(char* path_name, size_t* out_len);
 
