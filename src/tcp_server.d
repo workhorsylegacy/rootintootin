@@ -16,8 +16,17 @@ private import tango.io.Console;
 private import tango.sys.Process;
 public import dornado.ioloop;
 
+private import parent_process;
+private import child_process;
 
-public class TcpServer {
+
+public class TcpServerChild : ChildProcess {
+	public char[] on_request(char[] request) {
+		throw new Exception("The on_request method of TcpServerChild needs to be overloaded on children.");
+	}
+}
+
+class TcpServerParent : ParentProcess {
 	private ServerSocket _sock;
 	private char[1024] _buffer;
 	private char[] _response;
@@ -25,10 +34,30 @@ public class TcpServer {
 	protected int _max_waiting_clients;
 	protected bool _is_address_reusable;
 
-	public this(ushort port, int max_waiting_clients, bool is_address_reusable) {
+	public this(ushort port, int max_waiting_clients, char[] child_name) {
+		super(child_name);
 		_port = port;
 		_max_waiting_clients = max_waiting_clients;
-		_is_address_reusable = is_address_reusable;
+		_is_address_reusable = true;
+	}
+
+	protected void on_started() {
+		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
+	}
+
+	protected char[] on_request(char[] request) {
+		return this.process_request(request);
+	}
+
+	public void start() {
+		_sock = new ServerSocket(new InternetAddress("0.0.0.0", _port), _max_waiting_clients, _is_address_reusable);
+		_sock.socket.blocking(false);
+
+		auto io_loop = IOLoop.instance();
+		auto callback = &this.call_connection_ready;
+		io_loop.add_handler(_sock.fileHandle, callback, io_loop.READ);
+		this.on_started();
+		io_loop.start(_sock);
 	}
 
 	private void handle_connection(Socket connection, string address) {
@@ -65,25 +94,6 @@ public class TcpServer {
 
 	private void call_connection_ready(ISelectable.Handle fd, uint events) {
 		this.connection_ready(_sock, fd, events);
-	}
-
-	protected void on_started() {
-		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
-	}
-
-	public void start() {
-		_sock = new ServerSocket(new InternetAddress("0.0.0.0", _port), _max_waiting_clients, _is_address_reusable);
-		_sock.socket.blocking(false);
-
-		auto io_loop = IOLoop.instance();
-		auto callback = &this.call_connection_ready;
-		io_loop.add_handler(_sock.fileHandle, callback, io_loop.READ);
-		this.on_started();
-		io_loop.start(_sock);
-	}
-
-	protected char[] on_request(char[] request) {
-		throw new Exception("The on_request method of TcpServer needs to be overloaded on children.");
 	}
 }
 

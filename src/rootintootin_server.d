@@ -20,14 +20,12 @@ private import helper;
 private import db;
 private import rootintootin;
 
-public class RootinTootinServer : HttpServer {
+public class RootinTootinChild : HttpServerChild {
 	private RunnerBase _runner = null;
 	private string[TangoRegex.Regex][string][string] _routes = null;
 
 	public this(RunnerBase runner, string[TangoRegex.Regex][string][string] routes, 
-				ushort port, int max_waiting_clients, 
 				string db_host, string db_user, string db_password, string db_name) {
-		super(port, max_waiting_clients, true);
 		_routes = routes;
 		_runner = runner;
 
@@ -68,14 +66,6 @@ public class RootinTootinServer : HttpServer {
 			id = new_id;
 		}
 		return has_valid_request;
-	}
-
-	protected void on_started() {
-		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
-	}
-
-	protected char[] on_request(char[] request) {
-		return this.trigger_on_request(request);
 	}
 
 	protected string on_request_get(Request request, string raw_header, string raw_body) {
@@ -155,6 +145,16 @@ public class RootinTootinServer : HttpServer {
 		}
 
 		// FIXME: Here we need to trigger all the events in events_to_trigger
+	}
+}
+
+public class RootinTootinServer : HttpServerParent {
+	public this(ushort port, int max_waiting_clients, char[] child_name) {
+		super(port, max_waiting_clients, child_name);
+	}
+
+	protected void on_started() {
+		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
 }
 

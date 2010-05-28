@@ -69,27 +69,17 @@ public class Request {
 	}
 }
 
-class HttpServer : TcpServer {
+class HttpServerChild : TcpServerChild {
 	private int _session_id = 0;
 	private string[string][string] _sessions;
 	private string _salt;
 
-	public this(ushort port, int max_waiting_clients, bool is_address_reusable) {
-		super(port, max_waiting_clients, is_address_reusable);
-
+	public this() {
 		// Get a random salt for salting sessions
 		Twister* random = new Twister();
 		random.seed(Clock.now.span.millis);
 		this._salt = to_s(random.next());
 		delete random;
-	}
-
-	protected char[] on_request(char[] request) {
-		return this.trigger_on_request(request);
-	}
-
-	protected void on_started() {
-		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
 	}
 
 	protected string on_request_get(Request request, string raw_header, string raw_body) {
@@ -124,49 +114,6 @@ class HttpServer : TcpServer {
 		"\r\n";
 
 		return response;
-	}
-
-	protected string trigger_on_request_get(Request request, string raw_header, string raw_body) {
-		return this.on_request_get(request, raw_header, raw_body);
-	}
-
-	protected string trigger_on_request_post(Request request, string raw_header, string raw_body) {
-		return this.trigger_on_request_put(request, raw_header, raw_body);
-	}
-
-	protected string trigger_on_request_put(Request request, string raw_header, string raw_body) {
-		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
-		if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
-			return this.render_text(request, "Content-Length is required for HTTP POST and PUT.", 411);
-		}
-
-		// Get the content length
-		request.content_length = to_uint(between(raw_header, "Content-Length: ", "\r\n"));
-
-		// Get the params from the body
-		if(("Content-Type" in request._fields) != null) {
-			switch(request._fields["Content-Type"]) {
-				case "application/x-www-form-urlencoded":
-					urlencode_to_dict(request._params, raw_body);
-					break;
-				case "application/json":
-					json_to_dict(request._params, raw_body);
-					break;
-				case "application/xml":
-					xml_to_dict(request._params, raw_body);
-					break;
-			}
-		}
-
-		return this.on_request_put(request, raw_header, raw_body);
-	}
-
-	protected string trigger_on_request_delete(Request request, string raw_header, string raw_body) {
-		return this.on_request_delete(request, raw_header, raw_body);
-	}
-
-	protected string trigger_on_request_options(Request request, string raw_header, string raw_body) {
-		return this.on_request_options(request, raw_header, raw_body);
 	}
 
 	protected string trigger_on_request(string raw_request) {
@@ -308,6 +255,49 @@ class HttpServer : TcpServer {
 		return response;
 	}
 
+	protected string trigger_on_request_get(Request request, string raw_header, string raw_body) {
+		return this.on_request_get(request, raw_header, raw_body);
+	}
+
+	protected string trigger_on_request_post(Request request, string raw_header, string raw_body) {
+		return this.trigger_on_request_put(request, raw_header, raw_body);
+	}
+
+	protected string trigger_on_request_put(Request request, string raw_header, string raw_body) {
+		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
+		if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
+			return this.render_text(request, "Content-Length is required for HTTP POST and PUT.", 411);
+		}
+
+		// Get the content length
+		request.content_length = to_uint(between(raw_header, "Content-Length: ", "\r\n"));
+
+		// Get the params from the body
+		if(("Content-Type" in request._fields) != null) {
+			switch(request._fields["Content-Type"]) {
+				case "application/x-www-form-urlencoded":
+					urlencode_to_dict(request._params, raw_body);
+					break;
+				case "application/json":
+					json_to_dict(request._params, raw_body);
+					break;
+				case "application/xml":
+					xml_to_dict(request._params, raw_body);
+					break;
+			}
+		}
+
+		return this.on_request_put(request, raw_header, raw_body);
+	}
+
+	protected string trigger_on_request_delete(Request request, string raw_header, string raw_body) {
+		return this.on_request_delete(request, raw_header, raw_body);
+	}
+
+	protected string trigger_on_request_options(Request request, string raw_header, string raw_body) {
+		return this.on_request_options(request, raw_header, raw_body);
+	}
+
 	protected string redirect_to(Request request, string url) {
 		// If we have already rendered, show an error
 		if(request.has_rendered) {
@@ -388,6 +378,21 @@ class HttpServer : TcpServer {
 					dict[pair[0]].value = pair[1];
 			}
 		}
+	}
+}
+
+class HttpServerParent : TcpServerParent {
+	public this(ushort port, int max_waiting_clients, char[] child_name) {
+		super(port, max_waiting_clients, child_name);
+	}
+
+	protected char[] on_request(char[] request) {
+//		return this.trigger_on_request(request);
+		return null;
+	}
+
+	protected void on_started() {
+		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
 	}
 }
 

@@ -40,13 +40,12 @@ char[] to_s(file_status status) {
 	return fromStringz(c_to_s(status));
 }
 
-file_change[] fs_watch(char[] path_name, out size_t len) {
+file_change[] fs_watch(char[] path_name) {
 	size_t c_len;
 	c_file_change* c_changes = c_fs_watch(toStringz(path_name), &c_len);
-	len = c_len;
 
 	file_change[] changes;
-	for(size_t i=0; i<len; i++) {
+	for(size_t i=0; i<c_len; i++) {
 		file_change c;
 		c.name = fromStringz(c_changes[i].name);
 		c.status = c_changes[i].status;
