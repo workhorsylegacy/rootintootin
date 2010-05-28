@@ -21,7 +21,7 @@ private import child_process;
 
 
 public class TcpServerChild : ChildProcess {
-	public char[] on_request(char[] request) {
+	protected override char[] on_request(char[] request) {
 		throw new Exception("The on_request method of TcpServerChild needs to be overloaded on children.");
 	}
 }
@@ -45,7 +45,7 @@ class TcpServerParent : ParentProcess {
 		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
 	}
 
-	protected char[] on_request(char[] request) {
+	private char[] on_request(char[] request) {
 		return this.process_request(request);
 	}
 

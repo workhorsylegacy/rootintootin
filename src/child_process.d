@@ -34,7 +34,7 @@ class ChildProcess {
 		}
 	}
 
-	public char[] on_request(char[] request) {
+	protected char[] on_request(char[] request) {
 		throw new Exception("The on_request method of ChildProcess needs to be overloaded on children.");
 	}
 }

@@ -82,6 +82,10 @@ class HttpServerChild : TcpServerChild {
 		delete random;
 	}
 
+	protected override char[] on_request(char[] request) {
+		return this.trigger_on_request(request);
+	}
+
 	protected string on_request_get(Request request, string raw_header, string raw_body) {
 		string text = "200: Okay";
 		return render_text(request, text, 200);
@@ -154,7 +158,7 @@ class HttpServerChild : TcpServerChild {
 			foreach(string cookie ; split(request._fields["Cookie"], "; ")) {
 				string[] pair = split(cookie, "=");
 				if(pair.length != 2) {
-					Stdout.format("Malformed cookie: {}\n", cookie).flush;
+//					Stdout.format("Malformed cookie: {}\n", cookie).flush;
 				} else {
 					request._cookies[pair[0]] = Helper.unescape_value(pair[1]);
 				}
@@ -190,7 +194,7 @@ class HttpServerChild : TcpServerChild {
 		// Determine if the session id is invalid
 		if(has_session && (request._cookies["_appname_session"] in _sessions) == null) {
 			string hashed_session_id = request._cookies["_appname_session"];
-			Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
+//			Stdout.format("Unknown session id '{}'\n", hashed_session_id).flush;
 			has_session = false;
 		}
 
@@ -208,10 +212,10 @@ class HttpServerChild : TcpServerChild {
 			// Make the new session blank
 			string[string] new_empty_session;
 			_sessions[hashed_session_id] = new_empty_session;
-			Stdout.format("\nCreated session number '{}' '{}'\n", new_session_id, hashed_session_id).flush;
+//			Stdout.format("\nCreated session number '{}' '{}'\n", new_session_id, hashed_session_id).flush;
 		} else {
 			hashed_session_id = request._cookies["_appname_session"];
-			Stdout.format("Using existing session '{}'\n", request._cookies["_appname_session"]).flush;
+//			Stdout.format("Using existing session '{}'\n", request._cookies["_appname_session"]).flush;
 		}
 
 		// Copy the current session to the request

@@ -29,7 +29,7 @@ class ParentProcess {
 	}
 
 	public char[] process_request(char[] request) {
-		// Send the requet to the child
+		// Send the request to the child
 		_in_length = rjust(to_s(request.length), 10, "0");
 		_child.stdin.write(_in_length);
 		_child.stdin.flush();
