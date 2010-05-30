@@ -148,7 +148,7 @@ public class RootinTootinChild : HttpServerChild {
 	}
 }
 
-public class RootinTootinServer : HttpServerParent {
+public class RootinTootinParent : HttpServerParent {
 	public this(ushort port, int max_waiting_clients, char[] child_name) {
 		super(port, max_waiting_clients, child_name);
 	}

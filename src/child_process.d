@@ -11,11 +11,15 @@ private import tango.io.Stdout;
 private import tango.io.Console;
 private import language_helper;
 
+private import tango.io.device.File;
 
 class ChildProcess {
+	private File _log;
+
 	public void start() {
 		auto ins = Cin.stream;
 		auto outs = Cout.stream;
+		_log = new File("log_child", File.WriteCreate);
 
 		while(true) {
 			// Read the request
@@ -24,13 +28,21 @@ class ChildProcess {
 			uint length = to_uint(raw_length);
 			char[] request = new char[length];
 			ins.read(request);
-			char[] response = on_request(request);
+			_log.write(raw_length);
+			_log.write(request);
+			_log.flush();
 
 			// Write the response
+			char[] response = on_request(request);
 			char[] response_length = rjust(to_s(response.length), 10, "0");
 			outs.write(response_length);
+			outs.flush();
 			outs.write(response);
 			outs.flush();
+			_log.write(to_s(response.length));
+			_log.write(response_length);
+			_log.write(response);
+			_log.flush();
 		}
 	}
 

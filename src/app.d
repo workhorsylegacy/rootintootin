@@ -4,9 +4,7 @@ private import TangoRegex = tango.text.Regex;
 
 private import rootintootin;
 private import language_helper;
-private import tcp_server;
-private import http_server;
-private import child_process;
+private import rootintootin_server;
 
 
 public class Runner : RunnerBase {
@@ -18,19 +16,14 @@ public class Runner : RunnerBase {
 	}
 }
 
-public class ExampleServerChild : HttpServerChild {
-	public char[] on_request(char[] request) {
-		return "yeah! example time.";
-	}
-}
-
 int main() {
 	// Create the routes
 	string[TangoRegex.Regex][string][string] routes;
 	routes["users"]["index"][new TangoRegex.Regex(r"^/users$")] = "GET";
 
 	RunnerBase runner = new Runner();
-	auto server = new ExampleServerChild();
+	auto server = new RootinTootinChild(runner, routes, 
+							"localhost", "root", "letmein", "users");
 	server.start();
 
 	return 0;

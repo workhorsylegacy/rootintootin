@@ -15,16 +15,6 @@ private import inotify = inotify;
 private import ui;
 
 
-class ExampleServerParent : TcpServerParent {
-	public this(ushort port, int max_waiting_clients) {
-		super(port, max_waiting_clients, "./app");
-	}
-
-	protected void on_started() {
-		Stdout.format("Example server running on http://localhost:{}\n", this._port).flush;
-	}
-}
-
 class Builder {
 	private Thread _thread = null;
 	public bool _is_ready = false;
@@ -62,8 +52,8 @@ class Server {
 		IOLoop.use_epoll = true;
 		ushort port = 3000;
 		int max_waiting_clients = 100;
-		auto server = new ExampleServerParent(
-					port, max_waiting_clients);
+		auto server = new RootinTootinParent(
+					port, max_waiting_clients, "./app");
 		//auto server = new RootinTootinServer(
 		//			runner, routes, 
 		//			port, max_waiting_clients, 
