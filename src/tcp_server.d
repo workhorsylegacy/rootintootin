@@ -21,7 +21,7 @@ private import child_process;
 
 
 public class TcpServerChild : ChildProcess {
-	protected override char[] on_request(char[] request) {
+	protected override char[] on_stdin(char[] request) {
 		throw new Exception("The on_request method of TcpServerChild needs to be overloaded on children.");
 	}
 }

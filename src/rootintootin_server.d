@@ -48,7 +48,7 @@ public class RootinTootinChild : HttpServerChild {
 				foreach(TangoRegex.Regex regex, string method ; routes_map) {
 					if(request.method == method) {
 						if(regex.test(raw_uri)) {
-							Stdout.format("regex: {}\n", regex.pattern).flush;
+							//Stdout.format("regex: {}\n", regex.pattern).flush;
 							new_action = route_action;
 							if(split(regex.pattern, r"\d*").length > 1 || split(regex.pattern, r"\d+").length > 1)
 								new_id = before(after_last(raw_uri, "/"), ";");
@@ -92,7 +92,7 @@ public class RootinTootinChild : HttpServerChild {
 		// Send any files
 		string normalized = Path.normalize(request.uri);
 		if(normalized != "/" && Path.exists("public" ~ normalized)) {
-			Stdout.format("file: {}\n", normalized).flush;
+			//Stdout.format("file: {}\n", normalized).flush;
 			bool read_file_broke = false;
 			File file = null;
 			// FIXME: Use the existing buffer instead of creating a new one here
@@ -117,10 +117,10 @@ public class RootinTootinChild : HttpServerChild {
 		// Add the id to the params if we have one
 		if(id != null) request._params["id"].value = to_s(id);
 
-		Stdout.format("uri: {}\n", request.uri).flush;
-		Stdout.format("format: {}\n", request.format).flush;
-		Stdout.format("controller: {}\n", controller).flush;
-		Stdout.format("action: {}\n", action).flush;
+		//Stdout.format("uri: {}\n", request.uri).flush;
+		//Stdout.format("format: {}\n", request.format).flush;
+		//Stdout.format("controller: {}\n", controller).flush;
+		//Stdout.format("action: {}\n", action).flush;
 
 		// Generate and send the request
 		string[] events_to_trigger;

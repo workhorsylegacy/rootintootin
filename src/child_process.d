@@ -28,25 +28,26 @@ class ChildProcess {
 			uint length = to_uint(raw_length);
 			char[] request = new char[length];
 			ins.read(request);
-			_log.write(raw_length);
-			_log.write(request);
+			_log.write(to_s(length) ~ "\n");
+			_log.write(raw_length ~ "\n");
+			_log.write(request ~ "\n\n");
 			_log.flush();
 
 			// Write the response
-			char[] response = on_request(request);
+			char[] response = on_stdin(request);
 			char[] response_length = rjust(to_s(response.length), 10, "0");
 			outs.write(response_length);
 			outs.flush();
 			outs.write(response);
 			outs.flush();
-			_log.write(to_s(response.length));
-			_log.write(response_length);
-			_log.write(response);
+			_log.write(to_s(response.length) ~ "\n");
+			_log.write(response_length ~ "\n");
+			_log.write(response ~ "\n\n");
 			_log.flush();
 		}
 	}
 
-	protected char[] on_request(char[] request) {
+	protected char[] on_stdin(char[] request) {
 		throw new Exception("The on_request method of ChildProcess needs to be overloaded on children.");
 	}
 }

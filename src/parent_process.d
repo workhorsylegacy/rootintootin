@@ -38,8 +38,9 @@ class ParentProcess {
 		_child.stdin.flush();
 		_child.stdin.write(request);
 		_child.stdin.flush();
-		_log.write(_in_length);
-		_log.write(request);
+		_log.write(to_s(request.length) ~ "\n");
+		_log.write(_in_length ~ "\n");
+		_log.write(request ~ "\n\n");
 		_log.flush();
 
 		// Get the response from the child
@@ -48,8 +49,9 @@ class ParentProcess {
 		_response = new char[length];
 		_child.stdout.read(_response);
 		_child.stdout.flush();
-		_log.write(_out_length);
-		_log.write(_response);
+		_log.write(to_s(length) ~ "\n");
+		_log.write(_out_length ~ "\n");
+		_log.write(_response ~ "\n\n");
 		_log.flush();
 
 		return _response;

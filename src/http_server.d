@@ -82,8 +82,12 @@ class HttpServerChild : TcpServerChild {
 		delete random;
 	}
 
-	protected override char[] on_request(char[] request) {
-		return this.trigger_on_request(request);
+	protected override char[] on_stdin(char[] request) {
+		try {
+			return this.trigger_on_request(request);
+		} catch(Exception err) {
+			return "Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
+		}
 	}
 
 	protected string on_request_get(Request request, string raw_header, string raw_body) {
