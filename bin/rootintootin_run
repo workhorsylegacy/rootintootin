@@ -10,9 +10,9 @@
 
 import os, sys, shutil, signal, subprocess
 import threading, time
-import pyinotify
 import errno
 import functools
+import commands
 from lib_rootintootin import *
 
 
@@ -27,7 +27,7 @@ elif not os.path.exists(sys.argv[1]):
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
-def generate_run(routes, table_map, reference_map):
+def generate_child(routes, table_map, reference_map):
 	generator = Generator()
 
 	# Get the names of all the views
@@ -38,7 +38,7 @@ def generate_run(routes, table_map, reference_map):
 				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
 
 	# Open the output file
-	out_file = open('run.d', 'w')
+	out_file = open('child.d', 'w')
 
 	# Write the imports
 	out_file.write(
@@ -55,7 +55,7 @@ def generate_run(routes, table_map, reference_map):
 		"private import helper;\n" +
 		"private import rootintootin;\n" +
 		"private import rootintootin_server;\n" +
-		"private import ui;\n\n"
+		"//private import ui;\n\n"
 	)
 
 	for controller_name, route_maps in routes.items():
@@ -152,15 +152,15 @@ def generate_run(routes, table_map, reference_map):
 	# Write the routes
 	out_file.write(
 	"	// Create the routes\n" + 
-	"	Stdout(\"Warning! Regex creation and use may be extremely slow.\").newline.flush;\n" + 
-	"	Stdout(\"This will make startup and requests slow.\").newline.flush;\n" + 
-	"	Stdout(\"See upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
+	"	//Stdout(\"Warning! Regex creation and use may be extremely slow.\").newline.flush;\n" + 
+	"	//Stdout(\"This will make startup and requests slow.\").newline.flush;\n" + 
+	"	//Stdout(\"See upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
 	"	string[TangoRegex.Regex][string][string] routes;\n")
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
 			for uri, method in route_map.iteritems():
 				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new TangoRegex.Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
-				out_file.write("	Stdout(\"Creating the regex for: " + controller_name + "." + action_name + " ...\").newline.flush;\n")
+				out_file.write("	//Stdout(\"Creating the regex for: " + controller_name + "." + action_name + " ...\").newline.flush;\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 
@@ -170,15 +170,49 @@ def generate_run(routes, table_map, reference_map):
 	"	int max_waiting_clients = " + str(max_waiting_clients) + ";\n" + 
 	"	char[" + str(header_max_size) + "] buffer;\n" + 
 	"	RunnerBase runner = new Runner();\n" + 
-	"	auto server = new RootinTootinServer(\n" + 
+	"	auto server = new RootinTootinChild(\n" + 
 	"				runner, routes, \n" + 
-	"				port, max_waiting_clients, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
 	"	server.start();\n" + 
 	"\n" +
 	"	return 0;\n" +
 	"}\n")
+
+	# Open the server for output
+	out_file = open('server.d', 'w')
+
+	out_file.write("\n" + 
+	"private import tango.text.convert.Integer;\n" + 
+	"private import tango.text.Util;\n" + 
+	"private import tango.io.Stdout;\n" + 
+	"private import tango.core.Thread;\n" + 
+	"\n" + 
+	"private import language_helper;\n" + 
+	"private import helper;\n" + 
+	"private import rootintootin;\n" + 
+	"private import rootintootin_server;\n" + 
+	"private import tcp_server;\n" + 
+	"private import inotify = inotify;\n" + 
+	"private import ui;\n" + 
+	"\n" + 
+	"\n" + 
+	"int main() {\n" + 
+	"	// Create and start the sever\n" + 
+	"	IOLoop.use_epoll = true;\n" + 
+	"	ushort port = 3000;\n" + 
+	"	int max_waiting_clients = 100;\n" + 
+	"	auto server = new RootinTootinParent(\n" + 
+	"				port, max_waiting_clients, \"./child\");\n" + 
+	"\n" + 
+	"	Stdout(\"Warning! Regex creation and use may be extremely slow.\").newline.flush;\n" + 
+	"	Stdout(\"This will make startup and requests slow.\").newline.flush;\n" + 
+	"	Stdout(\"See upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
+	"	server.start();\n" + 
+	"\n" + 
+	"	return 0;\n" + 
+	"}\n" + 
+	"\n")
 
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
@@ -655,62 +689,12 @@ def process_template_body(body, output):
 		body = after
 
 class BuilderThread(threading.Thread):
-	class EventHandler(pyinotify.ProcessEvent):
-		def __init__(self):
-			self._had_event = False
-
-		def set_had_event(self, value):
-			self._had_event = value
-
-		def get_had_event(self):
-			return self._had_event
-
-		# new
-		def process_IN_CREATE(self, event):
-			#print "new: " + event.name
-			self._had_event = True
-
-		# new
-		def process_IN_MOVED_TO(self, event):
-			#print "new: " + event.name
-			self._had_event = True
-
-		# update
-		def process_IN_MODIFY(self, event):
-			#print "update: " + event.name
-			self._had_event = True
-
-		# destroy
-		def process_IN_DELETE(self, event):
-			#print "destroy: " + event.name
-			self._had_event = True
-
-		# destroy
-		def process_IN_MOVED_FROM(self, event):
-			#print "destroy: " + event.name
-			self._had_event = True
-
 	def __init__(self):
 		threading.Thread.__init__(self)
 		self._server_pid = None
 		self._is_running = False
 		self._project_dir = sys.argv[1] + '/app/'
 		self._compile_error = None
-
-		# Only get CRUD events
-		all_flags = pyinotify.EventsCodes.ALL_FLAGS
-		mask = all_flags['IN_MODIFY'] | \
-				all_flags['IN_DELETE']  | \
-				all_flags['IN_CREATE']  | \
-				all_flags['IN_MOVED_FROM']  | \
-				all_flags['IN_MOVED_TO']
-
-		# Start watching the files
-		wm = pyinotify.WatchManager()
-		wm.add_watch(self._project_dir, mask, rec=True)
-		self._event_handler = BuilderThread.EventHandler()
-		self._notifier = pyinotify.ThreadedNotifier(wm, self._event_handler)
-		self._notifier.start()
 
 	def set_is_running(self, value):
 		self._is_running = value
@@ -725,12 +709,8 @@ class BuilderThread(threading.Thread):
 		self._is_running = True
 
 		while self._is_running:
-			if self._event_handler.get_had_event():
-				self._event_handler.set_had_event(False)
-				self._setup_app()
 			time.sleep(3)
 
-		self._notifier.stop()
 		self._kill_server()
 
 	def _kill_server(self):
@@ -780,21 +760,32 @@ class BuilderThread(threading.Thread):
 		generate_controllers()
 		generate_layouts()
 		generate_views(routes)
-		generate_run(routes, table_map, reference_map)
+		generate_child(routes, table_map, reference_map)
 
 		# Compile the application into an executable
 		additional_imports = get_link_files(routes)
-		result = ""
-		result += pexpect.run("gcc -g -c db.c -o db.o")
-		result += pexpect.run("ar rcs db.a db.o")
-		result += pexpect.run("gcc -g -c inotify.c -o inotify.o")
-		result += pexpect.run("ar rcs inotify.a inotify.o")
-		command = "ldc -g -of run " + \
-					"language_helper.d helper.d rootintootin.d rootintootin_server.d http_server.d tcp_server.d ui.d run.d " + \
+
+		result = ''
+		result += commands.getoutput("gcc -g -c db.c -o db.o")
+		result += commands.getoutput("ar rcs db.a db.o")
+		result += commands.getoutput("gcc -g -c inotify.c -o inotify.o")
+		result += commands.getoutput("ar rcs inotify.a inotify.o")
+		command = "ldc -g -of child child.d " + \
+					"language_helper.d helper.d rootintootin.d ui.d " + \
+					"rootintootin_server.d http_server.d tcp_server.d " + \
+					"parent_process.d child_process.d " + \
 					"db.d db.a inotify.d inotify.a dornado/ioloop.d " + \
 					str.join(' ', additional_imports) + \
-					" -L=\"-lmysqlclient\""
-		result += pexpect.run(command)
+					" -L=\"-lmysqlclient\" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+		result += commands.getoutput(command)
+		command = "ldc -g -of server server.d " + \
+					"language_helper.d helper.d rootintootin.d ui.d " + \
+					"rootintootin_server.d http_server.d tcp_server.d " + \
+					"parent_process.d child_process.d " + \
+					"db.d db.a inotify.d inotify.a dornado/ioloop.d " + \
+					" -L=\"-lmysqlclient\" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+		result += commands.getoutput(command)
+		print "Build complete"
 
 		if len(result) != 0:
 			self._compile_error = result
@@ -806,7 +797,7 @@ class BuilderThread(threading.Thread):
 			print "Build successful!"
 
 		# Run the server in its own process
-		self._server_pid = subprocess.Popen([scratch + "run", ""]).pid
+		self._server_pid = subprocess.Popen([scratch + "server", ""]).pid
 
 # Start the build server
 builder_thread = BuilderThread()
@@ -818,6 +809,7 @@ try:
 except KeyboardInterrupt:
 	print "Exiting ..."
 	builder_thread.set_is_running(False)
+
 
 
 
