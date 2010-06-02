@@ -152,15 +152,18 @@ def generate_child(routes, table_map, reference_map):
 	# Write the routes
 	out_file.write(
 	"	// Create the routes\n" + 
-	"	//Stdout(\"Warning! Regex creation and use may be extremely slow.\").newline.flush;\n" + 
-	"	//Stdout(\"This will make startup and requests slow.\").newline.flush;\n" + 
-	"	//Stdout(\"See upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
+	"	stdout_message(\"Warning! Regex creation and use may be extremely slow.\\n\");\n" + 
+	"	stdout_message(\"This will make startup and requests slow.\\n\");\n" + 
+	"	stdout_message(\"See upstream bug: http://dsource.org/projects/tango/ticket/1119\\n\");\n" + 
 	"	string[TangoRegex.Regex][string][string] routes;\n")
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
 			for uri, method in route_map.iteritems():
 				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new TangoRegex.Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
-				out_file.write("	//Stdout(\"Creating the regex for: " + controller_name + "." + action_name + " ...\").newline.flush;\n")
+				out_file.write("	stdout_message(\"Creating the regex for: " + controller_name + "." + action_name + " ...\\n\");\n")
+
+	out_file.write(
+	"	stdout_message(\"\");\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 
@@ -205,9 +208,6 @@ def generate_child(routes, table_map, reference_map):
 	"	auto server = new RootinTootinParent(\n" + 
 	"				port, max_waiting_clients, \"./child\");\n" + 
 	"\n" + 
-	"	Stdout(\"Warning! Regex creation and use may be extremely slow.\").newline.flush;\n" + 
-	"	Stdout(\"This will make startup and requests slow.\").newline.flush;\n" + 
-	"	Stdout(\"See upstream bug: http://dsource.org/projects/tango/ticket/1119\").newline.flush;\n" + 
 	"	server.start();\n" + 
 	"\n" + 
 	"	return 0;\n" + 
