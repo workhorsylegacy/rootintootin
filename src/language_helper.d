@@ -364,6 +364,15 @@ public string ljust(string value, uint width, string pad_char=" ") {
 	return value ~ tango.text.Util.join(padding, "");
 }
 
+public bool ends_with(string value, string end) {
+	// Just return false if the length is wrong
+	if(value.length < end.length)
+		return false;
+
+	size_t len = end.length;
+	return value[length-len .. length] == end;
+}
+
 // Add a to_s function for basic types
 public static string to_s(short value) {
 	return tango.text.convert.Integer.toString(value);
