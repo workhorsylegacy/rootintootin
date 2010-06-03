@@ -4,6 +4,9 @@ private import tango.text.Util;
 private import tango.io.Stdout;
 private import tango.core.Thread;
 private import tango.sys.Process;
+private import tango.io.FilePath;
+//private import tango.io.FileScan;
+private import TangoPath = tango.io.Path;
 
 private import language_helper;
 private import helper;
@@ -28,61 +31,92 @@ class Builder {
 		return changes.length > 0;
 	}
 
+	private string singularize(string[string] nouns, string noun) {
+		foreach(string singular, string plural; nouns) {
+			if(noun == singular || noun == plural) {
+				return singular;
+			} else if(noun == capitalize(singular) || noun == capitalize(plural)) {
+				return capitalize(singular);
+			}
+		}
+	}
+
 	private void builder_method() {
 		// Rebuild if there are changes
 //		if(wait_for_changes()) {
 //			_is_ready = false;
 
 		// FIXME: These are hard coded routes. Load the read ones from json
-		string[string[string[string]]] routes;
+		string[string][string][string] routes;
 		routes["users"] = null;
 		routes["users"]["index"] = null;
-		routes["users"]["create"] = "^/users$";
-		routes["users"]["new"] = "^/users/new$";
-		routes["users"]["show"] = "^/users/\d+$";
-		routes["users"]["update"] = "^/users/\d+$";
-		routes["users"]["edit"] = "^/users/\d+;edit$";
-		routes["users"]["destroy"] = "^/users/\d+$";
-		routes["users"]["index"]["^/users$"] = "GET";
-		routes["users"]["create"]["^/users$"] = "POST";
-		routes["users"]["new"]["^/users/new$"] = "GET";
-		routes["users"]["show"]["^/users/\d+$"] = "GET";
-		routes["users"]["update"]["^/users/\d+$"] = "PUT";
-		routes["users"]["edit"]["^/users/\d+;edit$"] = "GET";
-		routes["users"]["destroy"]["^/users/\d+$"] = "DELETE";
+		routes["users"]["create"] = null;
+		routes["users"]["new"] = null;
+		routes["users"]["show"] = null;
+		routes["users"]["update"] = null;
+		routes["users"]["edit"] = null;
+		routes["users"]["destroy"] = null;
+		routes["users"]["index"][r"^/users$"] = "GET";
+		routes["users"]["create"][r"^/users$"] = "POST";
+		routes["users"]["new"][r"^/users/new$"] = "GET";
+		routes["users"]["show"][r"^/users/\d+$"] = "GET";
+		routes["users"]["update"][r"^/users/\d+$"] = "PUT";
+		routes["users"]["edit"][r"^/users/\d+;edit$"] = "GET";
+		routes["users"]["destroy"][r"^/users/\d+$"] = "DELETE";
 
 		routes["comments"] = null;
 		routes["comments"]["index"] = null;
-		routes["comments"]["create"] = "^/comments$";
-		routes["comments"]["new"] = "^/comments/new$";
-		routes["comments"]["show"] = "^/comments/\d+$";
-		routes["comments"]["update"] = "^/comments/\d+$";
-		routes["comments"]["edit"] = "^/comments/\d+;edit$";
-		routes["comments"]["destroy"] = "^/comments/\d+$";
-		routes["comments"]["index"]["^/comments$"] = "GET";
-		routes["comments"]["create"]["^/comments$"] = "POST";
-		routes["comments"]["new"]["^/comments/new$"] = "GET";
-		routes["comments"]["show"]["^/comments/\d+$"] = "GET";
-		routes["comments"]["update"]["^/comments/\d+$"] = "PUT";
-		routes["comments"]["edit"]["^/comments/\d+;edit$"] = "GET";
-		routes["comments"]["destroy"]["^/comments/\d+$"] = "DELETE";
+		routes["comments"]["create"] = null;
+		routes["comments"]["new"] = null;
+		routes["comments"]["show"] = null;
+		routes["comments"]["update"] = null;
+		routes["comments"]["edit"] = null;
+		routes["comments"]["destroy"] = null;
+		routes["comments"]["index"][r"^/comments$"] = "GET";
+		routes["comments"]["create"][r"^/comments$"] = "POST";
+		routes["comments"]["new"][r"^/comments/new$"] = "GET";
+		routes["comments"]["show"][r"^/comments/\d+$"] = "GET";
+		routes["comments"]["update"][r"^/comments/\d+$"] = "PUT";
+		routes["comments"]["edit"][r"^/comments/\d+;edit$"] = "GET";
+		routes["comments"]["destroy"][r"^/comments/\d+$"] = "DELETE";
+
+		// FIXME: These are hard coded nouns. Load the read ones from json
+		string[string] nouns;
+		nouns["user"] = "users";
+		nouns["comment"] = "comments";
+
+            bool filter(FilePath p, bool isDir) {
+                char[] name = p.name;
+                if(isDir && name[0] != '.')
+                    return true;
+                return false;
+            }
+            scope dir = new FilePath("file:///home/matt/");
+            foreach(p; dir.toList(&filter)) {
+                Stdout(p.name);
+            }
 
 		// Get the names of all the models
 		string[] model_names;
 		auto path = new FilePath("/home/matt/Projects/rootintootin/examples/users/app/models/");
-		foreach(string entry; path.toList) {
-			if(ends_with(entry, ".d")) {
-				model_names ~= entry[0 .. length-2];
+		Stdout.format("length: {}", path.toList()).newline.flush;
+		foreach(FilePath entry; path.toList()) {
+			auto name = entry.toString();
+			Stdout.format("model name: {}", name).newline.flush;
+			if(ends_with(name, ".d")) {
+				model_names ~= name[0 .. length-2];
 			}
 		}
 
 		// Get the names of all the views
 		string[] view_names;
-		foreach(string controller_name, route_maps; routes) {
+		foreach(string controller_name, string[string][string] route_maps; routes) {
 			path = new FilePath("/home/matt/Projects/rootintootin/examples/users/app/views/" ~ controller_name);
-			foreach(string entry; path.toList) {
-				if(ends_with(entry, ".html.ed")) {
-					view_names ~= "view_" ~ controller_name ~ "_" ~ split(entry, ".html.ed")[0]);
+			foreach(FilePath entry; path.toList()) {
+				auto name = entry.toString();
+				Stdout.format("view name: {}", name).newline.flush;
+				if(ends_with(name, ".html.ed")) {
+					view_names ~= "view_" ~ controller_name ~ "_" ~ split(name, ".html.ed")[0];
 				}
 			}
 		}
@@ -92,8 +126,8 @@ class Builder {
 			files ~= model_name ~ "_base.d";
 		foreach(string model_name; model_names)
 			files ~= model_name ~ ".d";
-		foreach(string controller_name, route_maps; routes)
-			files ~= generator.singularize(controller_name) ~ "_controller.d";
+		foreach(string controller_name, string[string][string] route_maps; routes)
+			files ~= singularize(nouns, controller_name) ~ "_controller.d";
 		foreach(string view_name; view_names)
 			files ~= view_name ~ ".d";
 		files ~= "view_layouts_default.d";
@@ -101,8 +135,11 @@ class Builder {
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
 			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a dornado/ioloop.d -L=\"-lmysqlclient\"";
-			string command = "ldc -g -of child child.d " ~ files ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
-			this.run_command(command);
+			string command = "ldc -g -of child child.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
+			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
+			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
+			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
+			//this.run_command(command);
 		} catch {
 
 		}
