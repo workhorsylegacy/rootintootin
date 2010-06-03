@@ -11,18 +11,27 @@ module file_system;
 private import tango.stdc.stringz;
 
 
-char** list_dirs(char[] dir_name, out int len) {
-	return c_list_dirs(toStringz(dir_name), &len);
-}
+char[][] dir_entries(char[] dir_name) {
+	// Get the entries in C strings
+	int len = 0;
+	char** c_entries;
+	c_entries = c_dir_entries(toStringz(dir_name), &len);
 
-void free_list_dirs(char** entries, int len) {
-	c_free_list_dirs(entries, len);
+	// Convert the C strings to D strings
+	char[][] d_entries;
+	for(int i=0; i<len; i++) {
+		d_entries ~= fromStringz(c_entries[i]).dup;
+	}
+
+	// Free the C strings, and return the D strings
+	c_free_dir_entries(c_entries, len);
+	return d_entries;
 }
 
 private:
 
 extern (C):
 
-char** c_list_dirs(char* dir_name, int* len);
-void c_free_list_dirs(char** entries, int len);
+char** c_dir_entries(char* dir_name, int* len);
+void c_free_dir_entries(char** entries, int len);
 

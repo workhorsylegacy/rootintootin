@@ -9,19 +9,14 @@
 
 import file_system;
 import tango.io.Stdout;
-private import tango.stdc.stringz;
 
 
 int main() {
-	int len = 0;
-	char** entries = list_dirs("./", len);
+	char[][] entries = dir_entries("/home/matt/Desktop/");
 
-	int i = 0;
-	for(i=0; i<len; i++) {
-		Stdout.format("entry: {}\n", fromStringz(entries[i])).flush;
+	foreach(char[] entry; entries) {
+		Stdout.format("entry: {}\n", entry).flush;
 	}
-
-	free_list_dirs(entries, len);
 
 	return 0;
 }

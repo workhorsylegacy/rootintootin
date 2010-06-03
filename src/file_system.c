@@ -14,7 +14,7 @@
 #include <dirent.h>
 
 
-char** c_list_dirs(char* dir_name, int* len) {
+char** c_dir_entries(char* dir_name, int* len) {
 	char** retval;
 	DIR* dp;
 	struct dirent* ep;
@@ -47,7 +47,7 @@ char** c_list_dirs(char* dir_name, int* len) {
 	return retval;
 }
 
-void c_free_list_dirs(char** entries, int len) {
+void c_free_dir_entries(char** entries, int len) {
 	int i = 0;
 	for(i=0; i<len; i++) {
 		free(entries[i]);
