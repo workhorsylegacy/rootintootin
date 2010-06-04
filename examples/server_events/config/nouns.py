@@ -1,5 +1,0 @@
-
-nouns = {
-	"message" : "messages", 
-}
-

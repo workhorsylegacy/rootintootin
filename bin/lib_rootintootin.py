@@ -11,6 +11,7 @@
 import os, sys, re
 import commands, pexpect
 import platform
+import json
 import MySQLdb
 
 rootintootin_path = os.path.dirname(os.sys.path[0]) + '/'
@@ -509,7 +510,7 @@ class Generator(object):
 	def configure_routes(self, model_name, pairs):
 		model_name = self.pluralize(model_name)
 
-		f = open('config/routes.py', 'w')
+		f = open('config/routes.json', 'w')
 
 		f.write(
 			"routes = 	{'" + model_name + "' : \n" + 
@@ -547,12 +548,13 @@ class Generator(object):
 #private
 
 	def load_configuration(self):
-		exec_file('config/config.py', globals(), locals())
-		self._database_configuration = locals()['database_configuration']
-		self._server_configuration = locals()['server_configuration']
+		with open('config/config.json', 'r') as f:
+			config = json.loads(f.read())["config"]
+			self._database_configuration = config['database_configuration']
+			self._server_configuration = config['server_configuration']
 
 	def save_configuration(self):
-		f = open('config/config.py', 'w')
+		f = open('config/config.json', 'w')
 
 		f.write("\ndatabase_configuration = {\n")
 		for key, value in self._database_configuration.items():
@@ -567,11 +569,11 @@ class Generator(object):
 		f.close()
 
 	def load_nouns(self):
-		exec_file('config/nouns.py', globals(), locals())
-		self._nouns = locals()['nouns']
+		with open('config/nouns.json', 'r') as f:
+			self._nouns = json.loads(f.read())["nouns"]
 
 	def save_nouns(self):
-		f = open('config/nouns.py', 'w')
+		f = open('config/nouns.json', 'w')
 
 		f.write("\nnouns = {\n")
 		for key, value in self._nouns.items():
@@ -593,7 +595,7 @@ class Generator(object):
 			if err.args[0] == 2002:
 				print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
 			elif err.args[0] == 1045:
-				print "Can't log into the mysql server. Make sure the user name and password are correct in config/config.py. Exiting ..."
+				print "Can't log into the mysql server. Make sure the user name and password are correct in config/config.json. Exiting ..."
 			else:
 				print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
 			exit()

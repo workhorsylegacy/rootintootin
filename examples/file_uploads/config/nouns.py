@@ -1,5 +1,0 @@
-
-nouns = {
-	"file" : "files", 
-}
-

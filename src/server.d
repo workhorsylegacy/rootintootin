@@ -4,6 +4,8 @@ private import tango.text.Util;
 private import tango.io.Stdout;
 private import tango.core.Thread;
 private import tango.sys.Process;
+private import tango.io.device.File;
+private import tango.text.json.Json;
 
 private import language_helper;
 private import helper;
@@ -25,6 +27,7 @@ class Builder {
 
 	private bool wait_for_changes() {
 		inotify.file_change[] changes;
+		// FIXME: The path should not be hard coded
 		changes = inotify.fs_watch("/home/matt/Projects/rootintootin/examples/users");
 		return changes.length > 0;
 	}
@@ -44,39 +47,30 @@ class Builder {
 //		if(wait_for_changes()) {
 //			_is_ready = false;
 
-		// FIXME: These are hard coded routes. Load the read ones from json
-		string[string][string][string] routes;
-		routes["users"] = null;
-		routes["users"]["index"] = null;
-		routes["users"]["create"] = null;
-		routes["users"]["new"] = null;
-		routes["users"]["show"] = null;
-		routes["users"]["update"] = null;
-		routes["users"]["edit"] = null;
-		routes["users"]["destroy"] = null;
-		routes["users"]["index"][r"^/users$"] = "GET";
-		routes["users"]["create"][r"^/users$"] = "POST";
-		routes["users"]["new"][r"^/users/new$"] = "GET";
-		routes["users"]["show"][r"^/users/\d+$"] = "GET";
-		routes["users"]["update"][r"^/users/\d+$"] = "PUT";
-		routes["users"]["edit"][r"^/users/\d+;edit$"] = "GET";
-		routes["users"]["destroy"][r"^/users/\d+$"] = "DELETE";
+		// FIXME: The path should not be hard coded
+		auto config = new File("/home/matt/Projects/rootintootin/examples/users/config/routes.json", File.ReadExisting);
+		auto content = new char[config.length];
+		config.read(content);
+		auto values = (new Json!(char)).parse(content).toObject();
+		config.close();
 
-		routes["comments"] = null;
-		routes["comments"]["index"] = null;
-		routes["comments"]["create"] = null;
-		routes["comments"]["new"] = null;
-		routes["comments"]["show"] = null;
-		routes["comments"]["update"] = null;
-		routes["comments"]["edit"] = null;
-		routes["comments"]["destroy"] = null;
-		routes["comments"]["index"][r"^/comments$"] = "GET";
-		routes["comments"]["create"][r"^/comments$"] = "POST";
-		routes["comments"]["new"][r"^/comments/new$"] = "GET";
-		routes["comments"]["show"][r"^/comments/\d+$"] = "GET";
-		routes["comments"]["update"][r"^/comments/\d+$"] = "PUT";
-		routes["comments"]["edit"][r"^/comments/\d+;edit$"] = "GET";
-		routes["comments"]["destroy"][r"^/comments/\d+$"] = "DELETE";
+		string[string][string][string] routes;
+		foreach(n1, v1; values.attributes()) {
+			//Stdout.format("name: {}", n1).newline.flush;
+			foreach(n2, v2; v1.toObject().attributes()) {
+				//Stdout.format("	name: {}", n2).newline.flush;
+				routes[n2] = null;
+				foreach(n3, v3; v2.toObject().attributes()) {
+					//Stdout.format("		name: {}", n3).newline.flush;
+					routes[n2][n3] = null;
+					foreach(n4, v4; v3.toObject().attributes()) {
+						//Stdout.format("			name: {} value: {}", n4, v4.toString()).newline.flush;
+						routes[n2][n3][n4] = v4.toString();
+					}
+				}
+			}
+		}
+
 
 		// FIXME: These are hard coded nouns. Load the read ones from json
 		string[string] nouns;
@@ -85,6 +79,7 @@ class Builder {
 
 		// Get the names of all the models
 		string[] model_names;
+		// FIXME: The path should not be hard coded
 		string name = "/home/matt/Projects/rootintootin/examples/users/app/models/";
 		entry_type type = entry_type.file;
 		foreach(string entry; dir_entries(name, type)) {
@@ -97,6 +92,7 @@ class Builder {
 		// Get the names of all the views
 		string[] view_names;
 		foreach(string controller_name, string[string][string] route_maps; routes) {
+			// FIXME: The path should not be hard coded
 			name = "/home/matt/Projects/rootintootin/examples/users/app/views/" ~ controller_name;
 			foreach(string entry; dir_entries(name, type)) {
 //				Stdout.format("view name: {}", entry).newline.flush;

@@ -3,7 +3,7 @@ database_configuration = {
 	"host" : "localhost", 
 	"password" : "password", 
 	"name" : "empty_project_name", 
-	"user" : "root", 
+	"user" : "root"
 }
 
 server_configuration = {

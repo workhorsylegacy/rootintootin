@@ -13,6 +13,7 @@ import threading, time
 import errno
 import functools
 import commands
+import json
 from lib_rootintootin import *
 
 
@@ -35,7 +36,7 @@ def generate_child(routes, table_map, reference_map):
 	for controller_name, route_maps in routes.items():
 		for entry in os.listdir('app/views/' + controller_name):
 			if entry.endswith('.html.ed'):
-				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
+				view_names.append('view_' + controller_name + '_' + entry.split('.html.ed')[0])
 
 	# Open the output file
 	out_file = open('child.d', 'w')
@@ -418,7 +419,7 @@ def generate_models():
 		if err.args[0] == 2002:
 			print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
 		elif err.args[0] == 1045:
-			print "Can't log into the mysql server. Make sure the user name and password are correct in config/config.py. Exiting ..."
+			print "Can't log into the mysql server. Make sure the user name and password are correct in config/config.json. Exiting ..."
 		else:
 			print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
 		exit()
@@ -607,7 +608,7 @@ def get_link_files(routes):
 	for controller_name, route_maps in routes.items():
 		for entry in os.listdir('app/views/' + controller_name):
 			if entry.endswith('.html.ed'):
-				view_names.append('view_' + controller_name + '_' + str.split(entry, '.html.ed')[0])
+				view_names.append('view_' + controller_name + '_' + entry.split('.html.ed')[0])
 
 	for model_name in model_names:
 		files.append(model_name + '_base.d')
@@ -715,11 +716,13 @@ class BuilderThread(threading.Thread):
 		os.chdir(scratch)
 
 		# Load the config files
-		exec_file("config/routes.py", globals(), locals())
-		exec_file("config/config.py", globals(), locals())
-		globals()['database_configuration'] = locals()['database_configuration']
-		globals()['server_configuration'] = locals()['server_configuration']
-		globals()['routes'] = locals()['routes']
+		with open('config/routes.json', 'r') as f:
+			globals()['routes'] = json.loads(f.read())["routes"]
+
+		with open('config/config.json', 'r') as f:
+			config = json.loads(f.read())["config"]
+			globals()['database_configuration'] = config['database_configuration']
+			globals()['server_configuration'] = config['server_configuration']
 
 		self._port = int(globals()['server_configuration']['port'])
 
