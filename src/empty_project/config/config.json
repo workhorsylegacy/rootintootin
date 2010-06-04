@@ -1,14 +1,16 @@
 
-database_configuration = {
-	"host" : "localhost", 
-	"password" : "password", 
-	"name" : "empty_project_name", 
-	"user" : "root"
+{
+	"config" : {
+		"database_configuration" : {
+			"host" : "localhost", 
+			"password" : "password", 
+			"name" : "empty_project_name", 
+			"user" : "root"
+		},
+		"server_configuration" : {
+			"header_max_size" : "8192", 
+			"port" : "3000", 
+			"max_waiting_clients" : "100"
+		}
+	}
 }
-
-server_configuration = {
-	"header_max_size" : "8192", 
-	"port" : "2345", 
-	"max_waiting_clients" : "100"
-}
-

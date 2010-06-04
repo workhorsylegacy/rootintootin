@@ -1,5 +1,8 @@
 
-nouns = {
-	"message" : "messages"
+{
+	"nouns" : {
+		"message" : "messages"
+	}
 }
+
 

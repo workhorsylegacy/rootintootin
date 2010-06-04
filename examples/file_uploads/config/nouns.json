@@ -1,5 +1,6 @@
 
-nouns = {
-	"file" : "files"
+{
+	"nouns" : {
+		"file" : "files"
+	}
 }
-
