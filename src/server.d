@@ -4,9 +4,6 @@ private import tango.text.Util;
 private import tango.io.Stdout;
 private import tango.core.Thread;
 private import tango.sys.Process;
-private import tango.io.FilePath;
-//private import tango.io.FileScan;
-private import TangoPath = tango.io.Path;
 
 private import language_helper;
 private import helper;
@@ -14,6 +11,7 @@ private import rootintootin;
 private import rootintootin_server;
 private import tcp_server;
 private import inotify = inotify;
+private import file_system;
 private import ui;
 
 class Builder {
@@ -85,38 +83,25 @@ class Builder {
 		nouns["user"] = "users";
 		nouns["comment"] = "comments";
 
-            bool filter(FilePath p, bool isDir) {
-                char[] name = p.name;
-                if(isDir && name[0] != '.')
-                    return true;
-                return false;
-            }
-            scope dir = new FilePath("file:///home/matt/");
-            foreach(p; dir.toList(&filter)) {
-                Stdout(p.name);
-            }
-
 		// Get the names of all the models
 		string[] model_names;
-		auto path = new FilePath("/home/matt/Projects/rootintootin/examples/users/app/models/");
-		Stdout.format("length: {}", path.toList()).newline.flush;
-		foreach(FilePath entry; path.toList()) {
-			auto name = entry.toString();
-			Stdout.format("model name: {}", name).newline.flush;
-			if(ends_with(name, ".d")) {
-				model_names ~= name[0 .. length-2];
+		string name = "/home/matt/Projects/rootintootin/examples/users/app/models/";
+		entry_type type = entry_type.file;
+		foreach(string entry; dir_entries(name, type)) {
+//			Stdout.format("model name: {}", entry).newline.flush;
+			if(ends_with(entry, ".d")) {
+				model_names ~= entry[0 .. length-2];
 			}
 		}
 
 		// Get the names of all the views
 		string[] view_names;
 		foreach(string controller_name, string[string][string] route_maps; routes) {
-			path = new FilePath("/home/matt/Projects/rootintootin/examples/users/app/views/" ~ controller_name);
-			foreach(FilePath entry; path.toList()) {
-				auto name = entry.toString();
-				Stdout.format("view name: {}", name).newline.flush;
-				if(ends_with(name, ".html.ed")) {
-					view_names ~= "view_" ~ controller_name ~ "_" ~ split(name, ".html.ed")[0];
+			name = "/home/matt/Projects/rootintootin/examples/users/app/views/" ~ controller_name;
+			foreach(string entry; dir_entries(name, type)) {
+//				Stdout.format("view name: {}", entry).newline.flush;
+				if(ends_with(entry, ".html.ed")) {
+					view_names ~= "view_" ~ controller_name ~ "_" ~ split(entry, ".html.ed")[0];
 				}
 			}
 		}
@@ -133,13 +118,23 @@ class Builder {
 		files ~= "view_layouts_default.d";
 
 		try {
+			// Build the child
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
-			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a dornado/ioloop.d -L=\"-lmysqlclient\"";
+			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a file_system.d file_system.a dornado/ioloop.d -L=\"-lmysqlclient\"";
 			string command = "ldc -g -of child child.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
-			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
-			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
-			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
-			//this.run_command(command);
+//			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
+//			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
+//			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
+			this.run_command(command);
+
+			// Create and start the sever
+			IOLoop.use_epoll = true;
+			ushort port = 3000;
+			int max_waiting_clients = 100;
+			auto server = new RootinTootinParent(
+						port, max_waiting_clients, "./child");
+
+			server.start();
 		} catch {
 
 		}
@@ -171,15 +166,6 @@ int main() {
 	// Create the builder
 	auto builder = new Builder();
 	builder.start();
-
-	// Create and start the sever
-	IOLoop.use_epoll = true;
-	ushort port = 3000;
-	int max_waiting_clients = 100;
-//	auto server = new RootinTootinParent(
-//				port, max_waiting_clients, "./child");
-
-//	server.start();
 
 	return 0;
 }

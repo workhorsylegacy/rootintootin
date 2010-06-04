@@ -738,11 +738,13 @@ class BuilderThread(threading.Thread):
 		result += commands.getoutput("ar rcs db.a db.o")
 		result += commands.getoutput("gcc -g -c inotify.c -o inotify.o")
 		result += commands.getoutput("ar rcs inotify.a inotify.o")
+		result += commands.getoutput("gcc -g -c file_system.c -o file_system.o")
+		result += commands.getoutput("ar rcs file_system.a file_system.o")
 		command = "ldc -g -of server server.d " + \
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
 					"parent_process.d child_process.d " + \
-					"db.d db.a inotify.d inotify.a dornado/ioloop.d " + \
+					"db.d db.a inotify.d inotify.a file_system.d file_system.a dornado/ioloop.d " + \
 					" -L=\"-lmysqlclient\" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 		result += commands.getoutput(command)
 		print "Build complete"
