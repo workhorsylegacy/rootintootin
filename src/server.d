@@ -8,13 +8,11 @@ private import tango.io.device.File;
 private import tango.text.json.Json;
 
 private import language_helper;
-private import helper;
 private import rootintootin;
 private import rootintootin_server;
-private import tcp_server;
 private import inotify = inotify;
 private import file_system;
-private import ui;
+
 
 class Builder {
 	private Thread _thread = null;
@@ -47,12 +45,13 @@ class Builder {
 //		if(wait_for_changes()) {
 //			_is_ready = false;
 
+		// Read the routes from the config file
 		// FIXME: The path should not be hard coded
-		auto config = new File("/home/matt/Projects/rootintootin/examples/users/config/routes.json", File.ReadExisting);
-		auto content = new char[config.length];
-		config.read(content);
+		auto file = new File("/home/matt/Projects/rootintootin/examples/users/config/routes.json", File.ReadExisting);
+		auto content = new char[file.length];
+		file.read(content);
+		file.close();
 		auto values = (new Json!(char)).parse(content).toObject();
-		config.close();
 
 		string[string][string][string] routes;
 		foreach(n1, v1; values.attributes()) {
@@ -71,11 +70,43 @@ class Builder {
 			}
 		}
 
+		// Read the nouns from the config file
+		// FIXME: The path should not be hard coded
+		file = new File("/home/matt/Projects/rootintootin/examples/users/config/nouns.json", File.ReadExisting);
+		content = new char[file.length];
+		file.read(content);
+		file.close();
+		values = (new Json!(char)).parse(content).toObject();
 
-		// FIXME: These are hard coded nouns. Load the read ones from json
 		string[string] nouns;
-		nouns["user"] = "users";
-		nouns["comment"] = "comments";
+		foreach(n1, v1; values.attributes()) {
+			//Stdout.format("name: {}", n1).newline.flush;
+			foreach(n2, v2; v1.toObject().attributes()) {
+				//Stdout.format("	name: {} value: {}", n2, v2.toString()).newline.flush;
+				nouns[n2] = v2.toString();
+			}
+		}
+
+		// Read the config from the config file
+		// FIXME: The path should not be hard coded
+		file = new File("/home/matt/Projects/rootintootin/examples/users/config/config.json", File.ReadExisting);
+		content = new char[file.length];
+		file.read(content);
+		file.close();
+		values = (new Json!(char)).parse(content).toObject();
+
+		string[string][string] config;
+		foreach(n1, v1; values.attributes()) {
+			//Stdout.format("name: {}", n1).newline.flush;
+			foreach(n2, v2; v1.toObject().attributes()) {
+				//Stdout.format("	name: {}", n2).newline.flush;
+				config[n2] = null;
+				foreach(n3, v3; v2.toObject().attributes()) {
+					//Stdout.format("			name: {} value: {}", n3, v3.toString()).newline.flush;
+					config[n2][n3] = v3.toString();
+				}
+			}
+		}
 
 		// Get the names of all the models
 		string[] model_names;
@@ -102,6 +133,7 @@ class Builder {
 			}
 		}
 
+		// Get all the app's files to compile
 		string[] files;
 		foreach(string model_name; model_names)
 			files ~= model_name ~ "_base.d";
@@ -113,8 +145,8 @@ class Builder {
 			files ~= view_name ~ ".d";
 		files ~= "view_layouts_default.d";
 
+		// Build the child
 		try {
-			// Build the child
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
 			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a file_system.d file_system.a dornado/ioloop.d -L=\"-lmysqlclient\"";
 			string command = "ldc -g -of child child.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
@@ -125,8 +157,8 @@ class Builder {
 
 			// Create and start the sever
 			IOLoop.use_epoll = true;
-			ushort port = 3000;
-			int max_waiting_clients = 100;
+			ushort port = to_uint(config["server_configuration"]["port"]);
+			int max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
 			auto server = new RootinTootinParent(
 						port, max_waiting_clients, "./child");
 
