@@ -25,8 +25,8 @@ class Builder {
 
 	private bool wait_for_changes() {
 		inotify.file_change[] changes;
-		// FIXME: The path should not be hard coded
-		changes = inotify.fs_watch("/home/matt/Projects/rootintootin/examples/users");
+		// FIXME: This needs to be the project directory
+		changes = inotify.fs_watch("./");
 		return changes.length > 0;
 	}
 
@@ -46,8 +46,7 @@ class Builder {
 //			_is_ready = false;
 
 		// Read the routes from the config file
-		// FIXME: The path should not be hard coded
-		auto file = new File("/home/matt/Projects/rootintootin/examples/users/config/routes.json", File.ReadExisting);
+		auto file = new File("config/routes.json", File.ReadExisting);
 		auto content = new char[file.length];
 		file.read(content);
 		file.close();
@@ -71,8 +70,7 @@ class Builder {
 		}
 
 		// Read the nouns from the config file
-		// FIXME: The path should not be hard coded
-		file = new File("/home/matt/Projects/rootintootin/examples/users/config/nouns.json", File.ReadExisting);
+		file = new File("config/nouns.json", File.ReadExisting);
 		content = new char[file.length];
 		file.read(content);
 		file.close();
@@ -88,8 +86,7 @@ class Builder {
 		}
 
 		// Read the config from the config file
-		// FIXME: The path should not be hard coded
-		file = new File("/home/matt/Projects/rootintootin/examples/users/config/config.json", File.ReadExisting);
+		file = new File("config/config.json", File.ReadExisting);
 		content = new char[file.length];
 		file.read(content);
 		file.close();
@@ -110,8 +107,7 @@ class Builder {
 
 		// Get the names of all the models
 		string[] model_names;
-		// FIXME: The path should not be hard coded
-		string name = "/home/matt/Projects/rootintootin/examples/users/app/models/";
+		string name = "app/models/";
 		entry_type type = entry_type.file;
 		foreach(string entry; dir_entries(name, type)) {
 //			Stdout.format("model name: {}", entry).newline.flush;
@@ -123,8 +119,7 @@ class Builder {
 		// Get the names of all the views
 		string[] view_names;
 		foreach(string controller_name, string[string][string] route_maps; routes) {
-			// FIXME: The path should not be hard coded
-			name = "/home/matt/Projects/rootintootin/examples/users/app/views/" ~ controller_name;
+			name = "app/views/" ~ controller_name;
 			foreach(string entry; dir_entries(name, type)) {
 //				Stdout.format("view name: {}", entry).newline.flush;
 				if(ends_with(entry, ".html.ed")) {
