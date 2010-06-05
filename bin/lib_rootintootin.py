@@ -504,6 +504,8 @@ class Generator(object):
 				self._server_configuration['port'] = value
 			elif key == 'max_waiting_clients':
 				self._server_configuration['max_waiting_clients'] = value
+			elif key == 'header_max_size':
+				self._server_configuration['header_max_size'] = value
 
 		self.save_configuration()
 
