@@ -274,7 +274,7 @@ class Generator(object):
 		for field_name, field_type in field_map.items():
 			if field_type.startswith('unique_'):
 				query += "CONSTRAINT uc_" + field_name + " UNIQUE(`" + field_name + "`),"
-		query = str.rstrip(query, ', ')
+		query = query.rstrip(', ')
 		query += ") ENGINE=innoDB;"
 
 		cursor = self._db.cursor()
@@ -513,14 +513,16 @@ class Generator(object):
 		f = open('config/routes.json', 'w')
 
 		f.write(
-			"routes = 	{'" + model_name + "' : \n" + 
-			"		{'index'  : {'^/" + model_name + "$'        : 'GET'}, \n" + 
-			"		 'create' : {'^/" + model_name + "$'        : 'POST'}, \n" + 
-			"		 'new'    : {'^/" + model_name + "/new$'    : 'GET'}, \n" + 
-			"		 'show'   : {'^/" + model_name + "/\d+$'      : 'GET'}, \n" + 
-			"		 'update' : {'^/" + model_name + "/\d+$'      : 'PUT'}, \n" + 
-			"		 'edit'   : {'^/" + model_name + "/\d+;edit$' : 'GET'}, \n" + 
-			"		 'destroy' : {'^/" + model_name + "/\d+$'      : 'DELETE'}}\n" + 
+			"{\n" + 
+			"	\"routes\" : 	{\"" + model_name + "\" : \n" + 
+			"		{\"index\"  : {\"^/" + model_name + "$\"        : \"GET\"}, \n" + 
+			"		 \"create\" : {\"^/" + model_name + "$\"        : \"POST\"}, \n" + 
+			"		 \"new\"    : {\"^/" + model_name + "/new$\"    : \"GET\"}, \n" + 
+			"		 \"show\"   : {\"^/" + model_name + "/\\\\d+$\"      : \"GET\"}, \n" + 
+			"		 \"update\" : {\"^/" + model_name + "/\\\\d+$\"      : \"PUT\"}, \n" + 
+			"		 \"edit\"   : {\"^/" + model_name + "/\\\\d+;edit$\" : \"GET\"}, \n" + 
+			"		 \"destroy\" : {\"^/" + model_name + "/\\\\d+$\"      : \"DELETE\"}}\n" + 
+			"	}\n" + 
 			"}"
 		)
 
@@ -556,15 +558,21 @@ class Generator(object):
 	def save_configuration(self):
 		f = open('config/config.json', 'w')
 
-		f.write("\ndatabase_configuration = {\n")
+		f.write("\n{ \"config\" : {\n")
+		f.write("	\"database_configuration\" : {\n")
+		lines = []
 		for key, value in self._database_configuration.items():
-			f.write("	\"" + key + "\" : \"" + value + "\", \n")
-		f.write("}\n\n")
+			lines.append("		\"" + key + "\" : \"" + value + "\"")
+		f.write(str.join(", \n", lines))
+		f.write("	},\n")
 
-		f.write("server_configuration = {\n")
+		f.write("	\"server_configuration\" : {\n")
+		lines = []
 		for key, value in self._server_configuration.items():
-			f.write("	\"" + str(key) + "\" : \"" + str(value) + "\", \n")
-		f.write("}\n\n")
+			lines.append("		\"" + str(key) + "\" : \"" + str(value) + "\"")
+		f.write(str.join(", \n", lines))
+		f.write("	}\n")
+		f.write("} }\n")
 
 		f.close()
 
@@ -575,10 +583,14 @@ class Generator(object):
 	def save_nouns(self):
 		f = open('config/nouns.json', 'w')
 
-		f.write("\nnouns = {\n")
+		f.write("\n{\n")
+		f.write("\n	\"nouns\" : {\n")
+		lines = []
 		for key, value in self._nouns.items():
-			f.write("	\"" + key + "\" : \"" + value + "\", \n")
-		f.write("}\n\n")
+			lines.append("		\"" + key + "\" : \"" + value + "\"")
+		f.write(str.join(", \n", lines))
+		f.write("	}\n")
+		f.write("}\n")
 
 		f.close()
 
