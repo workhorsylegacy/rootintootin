@@ -8,8 +8,6 @@
 
 
 private import tango.text.Util;
-private import TangoRegex = tango.text.Regex;
-
 private import tango.io.device.File;
 private import Path = tango.io.Path;
 
@@ -18,13 +16,14 @@ public import http_server;
 private import language_helper;
 private import helper;
 private import db;
+private import regex;
 private import rootintootin;
 
 public class RootinTootinChild : HttpServerChild {
 	private RunnerBase _runner = null;
-	private string[TangoRegex.Regex][string][string] _routes = null;
+	private string[Regex][string][string] _routes = null;
 
-	public this(RunnerBase runner, string[TangoRegex.Regex][string][string] routes, 
+	public this(RunnerBase runner, string[Regex][string][string] routes, 
 				string db_host, string db_user, string db_password, string db_name) {
 		_routes = routes;
 		_runner = runner;
@@ -43,11 +42,11 @@ public class RootinTootinChild : HttpServerChild {
 
 		// Make sure the route exists
 		bool has_valid_request = false;
-		foreach(string route_controller, string[TangoRegex.Regex][string] routes_maps ; _routes) {
-			foreach(string route_action, string[TangoRegex.Regex] routes_map ; routes_maps) {
-				foreach(TangoRegex.Regex regex, string method ; routes_map) {
+		foreach(string route_controller, string[Regex][string] routes_maps ; _routes) {
+			foreach(string route_action, string[Regex] routes_map ; routes_maps) {
+				foreach(Regex regex, string method ; routes_map) {
 					if(request.method == method) {
-						if(regex.test(raw_uri)) {
+						if(regex.is_match(raw_uri)) {
 							stdout_message("regex: " ~ regex.pattern ~ "\n");
 							new_action = route_action;
 							if(split(regex.pattern, r"\d*").length > 1 || split(regex.pattern, r"\d+").length > 1)

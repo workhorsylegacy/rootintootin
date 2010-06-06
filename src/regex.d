@@ -15,6 +15,7 @@ class Regex {
 	private static size_t _inc;
 	private static size_t _max;
 	public size_t _id;
+	private char[] _pattern;
 
 	public static void init(size_t regex_count) {
 		_max = regex_count;
@@ -27,13 +28,18 @@ class Regex {
 			throw new Exception("No more free ids.");
 
 		// Get the next id
+		_pattern = pattern;
 		_id = _inc;
 		_inc++;
 
-		int ret = c_setup_regex(_id, toStringz(pattern));
+		int ret = c_setup_regex(_id, toStringz(_pattern));
 		if(ret != 0) {
 			throw new Exception("Failed to compile regex: '" ~ pattern ~ "'\n");
 		}
+	}
+
+	public char[] pattern() {
+		return _pattern;
 	}
 
 	public bool is_match(char[] value) {
