@@ -10,16 +10,37 @@
 module regex;
 private import tango.stdc.stringz;
 
-void regex_init(size_t regex_count) {
-	c_regex_init(regex_count);
-}
+// FIXME: This is not thread safe. 
+class Regex {
+	private static size_t _inc;
+	private static size_t _max;
+	public size_t _id;
 
-void setup_regex(size_t index, char[] pattern) {
-	c_setup_regex(index, toStringz(pattern));
-}
+	public static void init(size_t regex_count) {
+		_max = regex_count;
+		c_regex_init(_max);
+	}
 
-bool match_regex(size_t index, char[] value) {
-	return c_match_regex(index, toStringz(value));
+	public this(char[] pattern) {
+		// Make sure we are not out of ids
+		if(_inc == _max)
+			throw new Exception("No more free ids.");
+
+		// Get the next id
+		_id = _inc;
+		_inc++;
+
+		int ret = c_setup_regex(_id, toStringz(pattern));
+		if(ret != 0) {
+			throw new Exception("Failed to compile regex: '" ~ pattern ~ "'\n");
+		}
+	}
+
+	public bool is_match(char[] value) {
+		bool retval;
+		c_is_match_regex(_id, toStringz(value), &retval);
+		return retval;
+	}
 }
 
 private:
@@ -27,6 +48,6 @@ private:
 extern (C):
 
 void c_regex_init(size_t regex_count);
-void c_setup_regex(size_t index, char* pattern);
-bool c_match_regex(size_t index, char* value);
+int c_setup_regex(size_t index, char* pattern);
+int c_is_match_regex(size_t index, char* value, bool* retval);
 

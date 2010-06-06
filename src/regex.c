@@ -20,23 +20,21 @@ void c_regex_init(size_t regex_count) {
 	regexes = calloc(regex_count, sizeof(regex_t));
 }
 
-void c_setup_regex(size_t index, char* pattern) {
+int c_setup_regex(size_t index, char* pattern) {
 	// Compile the regex
 	int ret = regcomp(&regexes[index], pattern, REG_NOSUB);
-	if(ret != 0) {
-		printf("Failed to compile regex: %s\n", pattern);
-	}
+	return ret;
 }
 
-bool c_match_regex(size_t index, char* value) {
+int c_is_match_regex(size_t index, char* value, bool* retval) {
 	// Test the pattern
 	int ret = regexec(&regexes[index], value, 0, NULL, 0);
 	if(ret != 0) {
-		printf("no match\n");
-		return false;
+		*retval = false;
 	} else {
-		printf("match: %s\n", value);
-		return true;
+		*retval = true;
 	}
+
+	return ret;
 }
 

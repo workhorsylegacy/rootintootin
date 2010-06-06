@@ -2,16 +2,24 @@
 
 
 private import regex;
+private import tango.io.Stdout;
 
 
 int main() {
-	regex_init(2);
+	Regex.init(2);
 
-	setup_regex(0, "^/users$");
-	match_regex(0, "/users");
+	auto a = new Regex("^/users$");
+	auto b = new Regex("^/comments$");
 
-	setup_regex(1, "^/comments$");
-	match_regex(1, "/comments");
+	if(a.is_match("/users"))
+		Stdout("a matched").newline.flush;
+	else
+		Stdout("a did not match").newline.flush;
+
+	if(b.is_match("/comments"))
+		Stdout("b matched").newline.flush;
+	else
+		Stdout("b did not match").newline.flush;
 
 	return 0;
 }
