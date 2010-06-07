@@ -345,23 +345,19 @@ public static string after_last(string value, string separator) {
 }
 
 public string rjust(string value, uint width, string pad_char=" ") {
-	string[] padding;
-	if(width > value.length) {
-		for(size_t i=0; i<width-value.length; i++) {
-			padding ~= pad_char;
-		}
-	}
-	return tango.text.Util.join(padding, "") ~ value;
+	int len = width - value.length;
+	char[] retval = new char[width];
+	tango.text.Util.repeat("0", width, retval);
+	retval[len .. length] = value;
+	return retval;
 }
 
 public string ljust(string value, uint width, string pad_char=" ") {
-	string[] padding;
-	if(width > value.length) {
-		for(size_t i=0; i<width-value.length; i++) {
-			padding ~= pad_char;
-		}
-	}
-	return value ~ tango.text.Util.join(padding, "");
+	int len = value.length;
+	char[] retval = new char[width];
+	tango.text.Util.repeat("0", width, retval);
+	retval[0 .. len] = value;
+	return retval;
 }
 
 public bool ends_with(string value, string end) {
