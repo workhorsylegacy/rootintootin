@@ -12,29 +12,61 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <regex.h>
+#include <pcre.h>
 
-regex_t* regexes = NULL;
+typedef size_t regex_address;
 
-void c_regex_init(size_t regex_count) {
-	regexes = calloc(regex_count, sizeof(regex_t));
-}
+regex_address c_setup_regex(char* pattern, const char* error, int erroffset) {
+	regex_address address = 0;
 
-int c_setup_regex(size_t index, char* pattern) {
 	// Compile the regex
-	int ret = regcomp(&regexes[index], pattern, REG_NOSUB);
-	return ret;
-}
+	pcre* regex = pcre_compile(
+			pattern, 	// the pattern
+			0,			// default options
+			&error,		// for error message
+			&erroffset,	// for error offset
+			0);
 
-int c_is_match_regex(size_t index, char* value, bool* retval) {
-	// Test the pattern
-	int ret = regexec(&regexes[index], value, 0, NULL, 0);
-	if(ret != 0) {
-		*retval = false;
-	} else {
-		*retval = true;
+	if(!regex) {
+//		printf("pcre_compile failed (offset: %d), %s\n", erroffset, error);
+		return address;
 	}
 
-	return ret;
+	address = (regex_address) regex;
+	return address;
+}
+
+bool c_is_match_regex(regex_address address, char* value) {
+	pcre* regex = (pcre*) address;
+
+	const int OVECCOUNT = 3;
+	int ovector[OVECCOUNT];
+
+	// Test the string against the regex, and print
+	int rc = pcre_exec(
+		regex,				// the compiled pattern
+		0,					// no extra data - pattern was not studied
+		value,				// the string to match
+		strlen(value),		// the length of the string
+		0,					// start at offset 0 in the subject
+		0,					// default options
+		ovector,			// output vector for substring information
+		OVECCOUNT);			// number of elements in the output vector
+
+	//printf("rc: %d\n", PCRE_ERROR_NOMATCH);
+	if(rc == PCRE_ERROR_NOMATCH) {
+//		printf("String didn't match\n");
+		return false;
+	// FIXME: Add other error codes: http://pcre.org/pcre.txt
+	} else if(rc < 0) {
+//		printf("Error while matching: %d\n", rc);
+		return false;
+	} else {
+//	int i = 0;
+//		for(i=0; i<rc; i++) {
+//			printf("%2d: %.*s\n", i, ovector[2*i+1] - ovector[2*i], value + ovector[2*i]);
+//		}
+		return true;
+	}
 }
 

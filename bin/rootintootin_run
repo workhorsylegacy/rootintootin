@@ -150,15 +150,9 @@ def generate_child(routes, table_map, reference_map):
 	out_file.write(
 	"\n\nint main() {\n")
 
-	# Get the number of entries in the routes
-	route_count = 0
-	for i in range(len(routes)):
-		route_count += len(routes.items()[i][1])
-
 	# Write the routes
 	out_file.write(
 	"	// Create the routes\n" + 
-	"	Regex.init(" + str(route_count) + ");\n" + 
 	"	string[Regex][string][string] routes;\n")
 	for controller_name, route_maps in routes.iteritems():
 		for action_name, route_map in route_maps.iteritems():
@@ -745,14 +739,15 @@ class BuilderThread(threading.Thread):
 		result += commands.getoutput("ar rcs inotify.a inotify.o")
 		result += commands.getoutput("gcc -g -c file_system.c -o file_system.o")
 		result += commands.getoutput("ar rcs file_system.a file_system.o")
-		result += commands.getoutput("gcc -g -c regex.c -o regex.o")
+		result += commands.getoutput("gcc -g -c regex.c -o regex.o -lpcre")
 		result += commands.getoutput("ar rcs regex.a regex.o")
 		command = "ldc -g -of server server.d " + \
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
 					"parent_process.d child_process.d " + \
 					"db.d db.a inotify.d inotify.a file_system.d file_system.a regex.a regex.d dornado/ioloop.d " + \
-					" -L=\"-lmysqlclient\" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+					" -L=\"-lmysqlclient\" -L=\"-lpcre\" " + \
+					" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 		result += commands.getoutput(command)
 		print "Build complete"
 
