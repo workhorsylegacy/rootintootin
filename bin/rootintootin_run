@@ -160,7 +160,7 @@ def generate_child(routes, table_map, reference_map):
 				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
 
 	out_file.write(
-	"	stdout_message(\"\");\n")
+	"	//stdout_message(\"\");\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 
@@ -741,12 +741,15 @@ class BuilderThread(threading.Thread):
 		result += commands.getoutput("ar rcs file_system.a file_system.o")
 		result += commands.getoutput("gcc -g -c regex.c -o regex.o -lpcre")
 		result += commands.getoutput("ar rcs regex.a regex.o")
+		result += commands.getoutput("gcc -g -c shared_memory.c -o shared_memory.o -lrt")
+		result += commands.getoutput("ar rcs shared_memory.a shared_memory.o")
 		command = "ldc -g -of server server.d " + \
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
 					"parent_process.d child_process.d " + \
-					"db.d db.a inotify.d inotify.a file_system.d file_system.a regex.a regex.d dornado/ioloop.d " + \
-					" -L=\"-lmysqlclient\" -L=\"-lpcre\" " + \
+					"db.d db.a inotify.d inotify.a file_system.d file_system.a " + \
+					"shared_memory.d shared_memory.a regex.d regex.a dornado/ioloop.d " + \
+					" -L=\"-lmysqlclient\" -L=\"-lpcre\" -L\"-lrt\"" + \
 					" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 		result += commands.getoutput(command)
 		print "Build complete"

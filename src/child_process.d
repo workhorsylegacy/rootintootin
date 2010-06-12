@@ -12,14 +12,18 @@ private import tango.io.Console;
 private import language_helper;
 
 private import tango.io.device.File;
+private import tango.stdc.stringz;
+private import shared_memory;
 
 class ChildProcess {
-	private File _log = null;
-	private char[9] _in_length;
 	private char[1] _in_type;
+	private char[] _out_type = "r";
+	private File _log = null;
+	private SharedMemory _shm;
 
 	public void start() {
 		_log = new File("log_child", File.WriteCreate);
+		_shm = new SharedMemory("/program.shared");
 
 		while(true) {
 			char[] request = this.read_request();
@@ -33,16 +37,13 @@ class ChildProcess {
 
 		// Read the request
 		ins.read(_in_type);
-		ins.read(_in_length);
-		uint length = to_uint(_in_length);
-		char[] request = new char[length];
-		ins.read(request);
+		char[] request = fromStringz(_shm.get_value());
 
 		// Write to the log
-		_log.write(to_s(length) ~ "\n");
-		_log.write(_in_type ~ _in_length ~ "\n");
-		_log.write(request ~ "\n\n");
-		_log.flush();
+		if(_log) {
+			_log.write(request ~ "\n\n");
+			_log.flush();
+		}
 
 		return request;
 	}
@@ -51,18 +52,15 @@ class ChildProcess {
 		auto outs = Cout.stream;
 
 		// Write the response
-		char[] response_length = rjust(to_s(response.length), 9, "0");
-		outs.write(type);
-		outs.write(response_length);
-		outs.flush();
-		outs.write(response);
+		_shm.set_value(toStringz(response));
+		outs.write(_out_type);
 		outs.flush();
 
 		// Write to the log
-		_log.write(to_s(response.length) ~ "\n");
-		_log.write(type ~ response_length ~ "\n");
-		_log.write(response ~ "\n\n");
-		_log.flush();
+		if(_log) {
+			_log.write(response ~ "\n\n");
+			_log.flush();
+		}
 	}
 
 	protected char[] on_stdin(char[] request) {

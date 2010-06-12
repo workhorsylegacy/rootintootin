@@ -16,28 +16,33 @@ private import tango.sys.Process;
 public import dornado.ioloop;
 
 private import tango.io.device.File;
+private import tango.stdc.stringz;
+private import shared_memory;
 
 class ParentProcess {
 	private Process _child = null;
-	private char[] _in_length;
-	private char[9] _out_length;
-	private char[1] _out_type;
+	private char[1] _in_type;
+	private char[] _out_type = "r";
 	private char[] _response;
 	private File _log;
+	private SharedMemory _shm;
 
 	public this(char[] child_name) {
 		_child = new Process(child_name);
 		_child.redirect(Redirect.Output | Redirect.Error | Redirect.Input);
 		_child.execute();
 		_log = new File("log_parent", File.WriteCreate);
+		_shm = new SharedMemory("/program.shared");
 
 		// Read any startup messages from the child
+/*
 		char[] message;
 		while(true) {
 			message = this.read_response();
 			if(message == "") break;
 			Stdout(message).flush;
 		}
+*/
 	}
 
 	public char[] process_request(char[] request) {
@@ -48,9 +53,9 @@ class ParentProcess {
 		// Read and messages and the response from the child
 		while(true) {
 			response = this.read_response();
-			if(_out_type == "r") {
+			if(_in_type == "r") {
 				break;
-			} else if(_out_type == "m") {
+			} else if(_in_type == "m") {
 				Stdout(response).flush;
 			}
 		}
@@ -60,34 +65,28 @@ class ParentProcess {
 
 	protected void write_request(char[] type, char[] request) {
 		// Send the request to the child
-		_in_length = rjust(to_s(request.length), 9, "0");
-		_child.stdin.write(type);
-		_child.stdin.write(_in_length);
-		_child.stdin.flush();
-		_child.stdin.write(request);
+		_shm.set_value(toStringz(request));
+		_child.stdin.write(_out_type);
 		_child.stdin.flush();
 
 		// Write to the log
-		_log.write(to_s(request.length) ~ "\n");
-		_log.write(_in_length ~ "\n");
-		_log.write(type ~ request ~ "\n\n");
-		_log.flush();
+		if(_log) {
+			_log.write(request ~ "\n\n");
+			_log.flush();
+		}
 	}
 
 	protected char[] read_response() {
 		// Get the response from the child
-		_child.stdout.read(_out_type);
-		_child.stdout.read(_out_length);
-		uint length = to_uint(_out_length);
-		_response = new char[length];
-		_child.stdout.read(_response);
+		_child.stdout.read(_in_type);
 		_child.stdout.flush();
+		_response = fromStringz(_shm.get_value());
 
 		// Write to the log
-		_log.write(to_s(length) ~ "\n");
-		_log.write(_out_type ~ _out_length ~ "\n");
-		_log.write(_response ~ "\n\n");
-		_log.flush();
+		if(_log) {
+			_log.write(_response ~ "\n\n");
+			_log.flush();
+		}
 
 		return _response;
 	}

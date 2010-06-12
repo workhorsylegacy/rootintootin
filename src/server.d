@@ -151,7 +151,7 @@ class Builder {
 		// Build the child
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
-			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
+			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\" -L\"-lrt\"";
 			string command = "ldc -g -of child child.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
