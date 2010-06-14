@@ -22,9 +22,10 @@ class ChildProcess {
 	private SharedMemory _shm;
 
 	public void start() {
-		_log = new File("log_child", File.WriteCreate);
-		_shm = new SharedMemory("/program.shared");
+		//_log = new File("log_child", File.WriteCreate);
+		_shm = new SharedMemory("rootin.shared");
 
+		// Read each request, and write the response
 		while(true) {
 			char[] request = this.read_request();
 			char[] response = on_stdin(request);

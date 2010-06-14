@@ -23,16 +23,16 @@ class ParentProcess {
 	private Process _child = null;
 	private char[1] _in_type;
 	private char[] _out_type = "r";
-	private char[] _response;
 	private File _log;
 	private SharedMemory _shm;
 
 	public this(char[] child_name) {
+		//_log = new File("log_parent", File.WriteCreate);
+		_shm = new SharedMemory("rootin.shared");
+
 		_child = new Process(child_name);
 		_child.redirect(Redirect.Output | Redirect.Error | Redirect.Input);
 		_child.execute();
-		_log = new File("log_parent", File.WriteCreate);
-		_shm = new SharedMemory("/program.shared");
 
 		// Read any startup messages from the child
 /*
@@ -47,10 +47,10 @@ class ParentProcess {
 
 	public char[] process_request(char[] request) {
 		// Write the request to the child
-		char[] response;
 		write_request("r", request);
 
-		// Read and messages and the response from the child
+		// Read the messages and response from the child
+		char[] response;
 		while(true) {
 			response = this.read_response();
 			if(_in_type == "r") {
@@ -80,15 +80,15 @@ class ParentProcess {
 		// Get the response from the child
 		_child.stdout.read(_in_type);
 		_child.stdout.flush();
-		_response = fromStringz(_shm.get_value());
+		char[] response = fromStringz(_shm.get_value());
 
 		// Write to the log
 		if(_log) {
-			_log.write(_response ~ "\n\n");
+			_log.write(response ~ "\n\n");
 			_log.flush();
 		}
 
-		return _response;
+		return response;
 	}
 }
 
