@@ -19,6 +19,7 @@ private import db;
 private import regex;
 private import rootintootin;
 
+
 public class RootinTootinChild : HttpServerChild {
 	private RunnerBase _runner = null;
 	private string[Regex][string][string] _routes = null;
@@ -123,16 +124,17 @@ public class RootinTootinChild : HttpServerChild {
 
 		// Generate and send the request
 		string[] events_to_trigger;
+		string retval = null;
 		try {
 			// Run the action and get any event names to trigger
 			string response = _runner.run_action(request, controller, action, id, events_to_trigger);
-			return this.render_text(request, response, 200);
+			retval = this.render_text(request, response, 200);
 		} catch(RenderTextException e) {
-			return this.render_text(request, e._text, e._status);
+			retval = this.render_text(request, e._text, e._status);
 		} catch(RenderRedirectException e) {
-			return this.redirect_to(request, e._url);
+			retval = this.redirect_to(request, e._url);
 		} catch(RenderNoActionException e) {
-			return this.render_text(request, e.msg, 404);
+			retval = this.render_text(request, e.msg, 404);
 		} catch(RenderNoControllerException e) {
 			string response = "<h1>404 Unknown Resource</h1>\n<ul>\n";
 			response ~= "<p>Resources we know about:</p>";
@@ -140,9 +142,10 @@ public class RootinTootinChild : HttpServerChild {
 				response ~= "	<li><a href=\"/" ~ controller_name ~ "\">" ~ controller_name ~ "</a></li>\n";
 			}
 			response ~= "</ul>\n";
-			return this.render_text(request, response, 404, "html");
+			retval = this.render_text(request, response, 404, "html");
 		}
 
+		return retval;
 		// FIXME: Here we need to trigger all the events in events_to_trigger
 	}
 }

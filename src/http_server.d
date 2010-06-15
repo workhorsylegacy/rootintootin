@@ -125,6 +125,7 @@ class HttpServerChild : TcpServerChild {
 	}
 
 	protected string trigger_on_request(string raw_request) {
+		string[] pair = null;
 		Request request = Request.new_blank();
 		string response = null;
 
@@ -151,7 +152,7 @@ class HttpServerChild : TcpServerChild {
 			// Break if we are at the end of the fields
 			if(line.length == 0) break;
 
-			string[] pair = split(line, ": ");
+			pair = split(line, ": ");
 			if(pair.length == 2) {
 				request._fields[pair[0]] = pair[1];
 			}
@@ -160,7 +161,7 @@ class HttpServerChild : TcpServerChild {
 		// Get the cookies
 		if(("Cookie" in request._fields) != null) {
 			foreach(string cookie ; split(request._fields["Cookie"], "; ")) {
-				string[] pair = split(cookie, "=");
+				pair = split(cookie, "=");
 				if(pair.length != 2) {
 //					Stdout.format("Malformed cookie: {}\n", cookie).flush;
 				} else {
@@ -172,7 +173,7 @@ class HttpServerChild : TcpServerChild {
 		// Get the HTTP GET params
 		if(tango.text.Util.contains(request.uri, '?')) {
 			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
-				string[] pair = tango.text.Util.split(param, "=");
+				pair = split(param, "=");
 				request._params[Helper.unescape_value(pair[0])].value = Helper.unescape_value(pair[1]);
 			}
 		}

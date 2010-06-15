@@ -15,6 +15,7 @@ private import tango.io.device.File;
 private import tango.stdc.stringz;
 private import shared_memory;
 
+
 class ChildProcess {
 	private char[1] _in_type;
 	private char[] _out_type = "r";
@@ -26,9 +27,10 @@ class ChildProcess {
 		_shm = new SharedMemory("rootin.shared");
 
 		// Read each request, and write the response
+		char[] response = null;
 		while(true) {
 			char[] request = this.read_request();
-			char[] response = on_stdin(request);
+			response = on_stdin(request);
 			write_response("r", response);
 		}
 	}
