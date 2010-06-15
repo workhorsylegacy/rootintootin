@@ -156,7 +156,22 @@ class Builder {
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
 //			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
+			Stdout("Rebuilding child ...").newline.flush;
 			this.run_command(command);
+
+			// Make sure the child was built
+			bool has_child = false;
+			foreach(string n; file_system.dir_entries(".", entry_type.file)) {
+				if(n == "child")
+					has_child = true;
+			}
+			if(has_child) {
+				Stdout("Child build successful!").newline.flush;
+			} else {
+				Stdout("Child build failed!").newline.flush;
+				Stdout("Press ctrl+c to exit ...").newline.flush;
+				return;
+			}
 
 			// Create and start the sever
 			IOLoop.use_epoll = true;
@@ -174,8 +189,6 @@ class Builder {
 	}
 
 	private void run_command(char[] command) {
-		Stdout(command).newline.flush;
-
 		// Run the command
 		auto child = new Process(true, command);
 		child.redirect(Redirect.Output | Redirect.Error | Redirect.Input);

@@ -156,7 +156,7 @@ public class RootinTootinParent : HttpServerParent {
 	}
 
 	protected void on_started() {
-		//Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
+		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
 }
 
