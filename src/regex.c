@@ -14,10 +14,10 @@
 #include <stdlib.h>
 #include <pcre.h>
 
-typedef size_t regex_address;
+typedef size_t RegexAddress;
 
-regex_address c_setup_regex(char* pattern, const char* error, int erroffset) {
-	regex_address address = 0;
+RegexAddress c_setup_regex(char* pattern, const char* error, int erroffset) {
+	RegexAddress address = 0;
 
 	// Compile the regex
 	pcre* regex = pcre_compile(
@@ -32,11 +32,11 @@ regex_address c_setup_regex(char* pattern, const char* error, int erroffset) {
 		return address;
 	}
 
-	address = (regex_address) regex;
+	address = (RegexAddress) regex;
 	return address;
 }
 
-bool c_is_match_regex(regex_address address, char* value) {
+bool c_is_match_regex(RegexAddress address, char* value) {
 	pcre* regex = (pcre*) address;
 
 	const int OVECCOUNT = 3;

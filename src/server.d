@@ -32,7 +32,7 @@ class Builder {
 	}
 
 	private bool wait_for_changes() {
-		inotify.file_change[] changes;
+		inotify.FileChange[] changes;
 		// FIXME: This needs to be the project directory
 		changes = inotify.fs_watch("./");
 		return changes.length > 0;

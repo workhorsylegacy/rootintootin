@@ -15,12 +15,9 @@
 #include <stdlib.h>
 
 
-MYSQL mysql;
 char* error_message;
 
-char* c_db_get_error_message() {
-	return error_message;
-}
+typedef size_t MysqlAddress;
 
 typedef enum { 
 	query_result_unknown, 
@@ -29,92 +26,106 @@ typedef enum {
 	query_result_not_unique_error
 } QueryResult;
 
-void c_db_connect(char* server, char* user_name, char* password, char* database) {
-	mysql_init(&mysql);
-	mysql_real_connect(&mysql,
+char* c_db_get_error_message() {
+	return error_message;
+}
+
+MysqlAddress c_db_connect(char* server, char* user_name, char* password, char* database) {
+	MysqlAddress address = 0;
+
+	MYSQL* mysql = calloc(1, sizeof(MYSQL*));
+	mysql_init(mysql);
+	mysql_real_connect(mysql,
 					server, 
 					user_name, password, 
 					database, 
 					0, NULL, 0);
+
+	address = (MysqlAddress) mysql;
+	return address;
 }
 
 // Runs the query and returns the id of the last inserted row
-unsigned long long c_db_insert_query_with_result_id(char* query, QueryResult* result) {
+unsigned long long c_db_insert_query_with_result_id(MysqlAddress address, char* query, QueryResult* result) {
+	MYSQL* mysql = (MYSQL*) address;
 	*result = query_result_unknown;
 	error_message = NULL;
 	unsigned long long id = -1;
 
 	// Run the query and get the result
-	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
-	MYSQL_RES* res = mysql_store_result(&mysql);
+	mysql_real_query(mysql, query, (unsigned int)strlen(query));
+	MYSQL_RES* res = mysql_store_result(mysql);
 
 	// Return the id of the last inserted row
-	id = mysql_insert_id(&mysql);
+	id = mysql_insert_id(mysql);
 
 	// Free the resources for the result
 	mysql_free_result(res);
 
 	// Check for duplicate error
-	unsigned int errno = mysql_errno(&mysql);
+	unsigned int errno = mysql_errno(mysql);
 	if(errno == 0) {
 		*result = query_result_success;
 	} else if(errno == ER_DUP_ENTRY) {
-		error_message = (char*) mysql_error(&mysql);
+		error_message = (char*) mysql_error(mysql);
 		*result = query_result_not_unique_error;
 	}
 
 	return id;
 }
 
-void c_db_delete_query(char* query, QueryResult* result) {
+void c_db_delete_query(MysqlAddress address, char* query, QueryResult* result) {
+	MYSQL* mysql = (MYSQL*) address;
 	*result = query_result_unknown;
 	error_message = NULL;
 
 	// Run the query and get the result
-	int status = mysql_real_query(&mysql, query, (unsigned int)strlen(query));
+	int status = mysql_real_query(mysql, query, (unsigned int)strlen(query));
 	if(status == 0) {
 		*result = query_result_success;
-	} else if(status != 0 && mysql_errno(&mysql) == ER_ROW_IS_REFERENCED_2) {
+	} else if(status != 0 && mysql_errno(mysql) == ER_ROW_IS_REFERENCED_2) {
 		printf("errno: %d\n", ER_ROW_IS_REFERENCED_2);
 		fflush(stdout);
 		*result = query_result_foreign_key_constraint_error;
-		error_message = (char*) mysql_error(&mysql);
+		error_message = (char*) mysql_error(mysql);
 	}
-	MYSQL_RES* res = mysql_store_result(&mysql);
+	MYSQL_RES* res = mysql_store_result(mysql);
 
 	// Free the resources for the result
 	mysql_free_result(res);
 }
 
 // Runs the query and returns nothing
-void c_db_update_query(char* query, QueryResult* result) {
+void c_db_update_query(MysqlAddress address, char* query, QueryResult* result) {
+	MYSQL* mysql = (MYSQL*) address;
 	*result = query_result_unknown;
 	error_message = NULL;
 	// Run the query and get the result
-	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
-	MYSQL_RES* res = mysql_store_result(&mysql);
+	mysql_real_query(mysql, query, (unsigned int)strlen(query));
+	MYSQL_RES* res = mysql_store_result(mysql);
 
 	// Free the resources for the result
 	mysql_free_result(res);
 
 	// Check for duplicate error
-	unsigned int errno = mysql_errno(&mysql);
+	unsigned int errno = mysql_errno(mysql);
 	if(errno == 0) {
 		*result = query_result_success;
 	} else if(errno == ER_DUP_ENTRY) {
 		*result = query_result_not_unique_error;
-		error_message = (char*) mysql_error(&mysql);
+		error_message = (char*) mysql_error(mysql);
 	}
 }
 
 // Runs the query and returns it as a 3D array of characters
-char*** c_db_query_with_result(char* query, int* row_len, int* col_len) {
+char*** c_db_query_with_result(MysqlAddress address, char* query, int* row_len, int* col_len) {
+	MYSQL* mysql = (MYSQL*) address;
 	char*** retval;
 	error_message = NULL;
 
 	// Run the query and get the result
-	mysql_real_query(&mysql, query, (unsigned int)strlen(query));
-	MYSQL_RES* res = mysql_store_result(&mysql);
+	mysql_real_query(mysql, query, (unsigned int)strlen(query));
+	MYSQL_RES* res = mysql_store_result(mysql);
 
 	// Allocate enough memory to hold the pointers for each row in the return value
 	int col_count = 0;

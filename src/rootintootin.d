@@ -19,7 +19,7 @@ private import tango.time.WallClock;
 private import tango.core.Thread;
 
 public import language_helper;
-private import db;
+public import db;
 private import helper;
 private import http_server;
 
@@ -216,11 +216,11 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		string query = "select " ~ field_names_as_comma_string ~ " from " ~ T._table_name;
 		query ~= " where id=" ~ to_s(id) ~ ";";
 		int row_len, col_len;
-		char*** result = db.db_query_with_result(query, row_len, col_len);
+		char*** result = Db.query_with_result(query, row_len, col_len);
 
 		// Just return null if there was none found
 		if(row_len == 0) {
-			db.free_db_query_with_result(result, row_len, col_len);
+			Db.free_query_with_result(result, row_len, col_len);
 			return null;
 		}
 
@@ -233,7 +233,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		model._was_pulled_from_database = true;
 		model.after_this();
 
-		db.free_db_query_with_result(result, row_len, col_len);
+		Db.free_query_with_result(result, row_len, col_len);
 
 		return model;
 	}
@@ -257,7 +257,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		if(order != null) query ~= " order by " ~ order;
 		query ~= ";";
 		int row_len, col_len;
-		char*** result = db.db_query_with_result(query, row_len, col_len);
+		char*** result = Db.query_with_result(query, row_len, col_len);
 
 		// Copy all the fields into each model
 		T model = null;
@@ -272,7 +272,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			all ~= model;
 		}
 
-		db.free_db_query_with_result(result, row_len, col_len);
+		Db.free_query_with_result(result, row_len, col_len);
 
 		return all;
 	}
@@ -297,7 +297,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		 	query ~= ");";
 
 			// Run the query, and save the id
-			_id = db.db_insert_query_with_result_id(query, result);
+			_id = Db.insert_query_with_result_id(query, result);
 		} else {
 		// If there is an id, use an update query
 			query ~= "update " ~ typeof(this)._table_name ~ " set ";
@@ -312,13 +312,13 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 			// Run the query
-			db.db_update_query(query, result);
+			Db.update_query(query, result);
 		}
 
 		if(result == db.QueryResult.success) {
 			return true;
 		} else if(result == db.QueryResult.not_unique_error) {
-			char[] message = db.db_get_error_message();
+			char[] message = Db.get_error_message();
 			char[] field = tango.text.Util.split(tango.text.Util.split(message, "for key 'uc_")[1], "'")[0];
 			this._errors ~= "The " ~ field ~ " is already used.";
 			return false;
@@ -335,7 +335,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		// Run the query
 		db.QueryResult result;
-		db.db_delete_query(query, result);
+		Db.delete_query(query, result);
 
 		if(result == db.QueryResult.success) {
 			return true;

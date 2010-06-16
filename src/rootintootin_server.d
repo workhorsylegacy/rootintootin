@@ -30,7 +30,7 @@ public class RootinTootinApp : HttpApp {
 		_runner = runner;
 
 		// Connect to the database
-		db_connect(db_host, db_user, db_password, db_name);
+		Db.connect(db_host, db_user, db_password, db_name);
 	}
 
 	private bool get_route_info(Request request, out string controller, out string action, out string id) {

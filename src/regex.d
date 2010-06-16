@@ -11,7 +11,7 @@ module regex;
 private import tango.stdc.stringz;
 
 class Regex {
-	private regex_address _address;
+	private RegexAddress _address;
 	private char[] _pattern;
 
 	public this(char[] pattern) {
@@ -39,7 +39,7 @@ private:
 
 extern (C):
 
-typedef size_t regex_address;
-regex_address c_setup_regex(char* pattern, char* error, int erroffset);
-bool c_is_match_regex(regex_address address, char* value);
+typedef size_t RegexAddress;
+RegexAddress c_setup_regex(char* pattern, char* error, int erroffset);
+bool c_is_match_regex(RegexAddress address, char* value);
 
