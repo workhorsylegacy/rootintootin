@@ -395,8 +395,8 @@ class HttpApp : TcpApp {
 }
 
 class HttpServer : TcpServer {
-	public this(ushort port, int max_waiting_clients, char[] child_name) {
-		super(port, max_waiting_clients, child_name);
+	public this(ushort port, int max_waiting_clients, char[] app_name) {
+		super(port, max_waiting_clients, app_name);
 	}
 
 	protected char[] on_request(char[] request) {

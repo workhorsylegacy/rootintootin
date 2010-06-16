@@ -151,8 +151,8 @@ public class RootinTootinApp : HttpApp {
 }
 
 public class RootinTootinServer : HttpServer {
-	public this(ushort port, int max_waiting_clients, char[] child_name) {
-		super(port, max_waiting_clients, child_name);
+	public this(ushort port, int max_waiting_clients, char[] app_name) {
+		super(port, max_waiting_clients, app_name);
 	}
 
 	protected void on_started() {

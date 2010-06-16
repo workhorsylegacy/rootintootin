@@ -34,8 +34,8 @@ class TcpServer : ServerProcess {
 	protected int _max_waiting_clients;
 	protected bool _is_address_reusable;
 
-	public this(ushort port, int max_waiting_clients, char[] child_name) {
-		super(child_name);
+	public this(ushort port, int max_waiting_clients, char[] app_name) {
+		super(app_name);
 		_port = port;
 		_max_waiting_clients = max_waiting_clients;
 		_is_address_reusable = true;
