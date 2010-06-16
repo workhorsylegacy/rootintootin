@@ -17,7 +17,7 @@
 
 #define BUFF_SIZE ((sizeof(struct inotify_event)+FILENAME_MAX)*1024)
 
-typedef enum _file_status {
+typedef enum {
 	file_status_access, 
 	file_status_modify, 
 	file_status_attrib, 
@@ -30,14 +30,14 @@ typedef enum _file_status {
 	file_status_delete, 
 	file_status_delete_self, 
 	file_status_move_self
-} file_status;
+} FileStatus;
 
-typedef struct _file_change {
+typedef struct {
 	char* name;
-	file_status status;
-} file_change;
+	FileStatus status;
+} FileChange;
 
-char* c_to_s(file_status status) {
+char* c_to_s(FileStatus status) {
 	switch(status) {
 		case(file_status_access): return "file_status_access";
 		case(file_status_modify): return "file_status_modify";
@@ -55,8 +55,8 @@ char* c_to_s(file_status status) {
 	}
 }
 
-file_change* c_fs_watch(char* path_name, size_t* out_len) {
-	file_change* retval;
+FileChange* c_fs_watch(char* path_name, size_t* out_len) {
+	FileChange* retval;
 	int fd = inotify_init();
 	/*int wd = */inotify_add_watch(fd, path_name, IN_ALL_EVENTS);
 
@@ -72,7 +72,7 @@ file_change* c_fs_watch(char* path_name, size_t* out_len) {
 		i += sizeof(struct inotify_event) + event->len;
 		length++;
 	}
-	retval = (file_change*) calloc(length, sizeof(file_change));
+	retval = (FileChange*) calloc(length, sizeof(FileChange));
 
 	// Get all the file changes
 	i = 0;

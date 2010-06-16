@@ -11,7 +11,7 @@ module inotify;
 private import tango.io.Stdout;
 private import tango.stdc.stringz;
 
-enum file_status {
+enum FileStatus {
 	access, 
 	modify, 
 	attrib, 
@@ -28,15 +28,15 @@ enum file_status {
 
 struct c_file_change {
 	char* name;
-	file_status status;
+	FileStatus status;
 }
 
 struct file_change {
 	char[] name;
-	file_status status;
+	FileStatus status;
 }
 
-char[] to_s(file_status status) {
+char[] to_s(FileStatus status) {
 	return fromStringz(c_to_s(status));
 }
 
@@ -59,6 +59,6 @@ file_change[] fs_watch(char[] path_name) {
 private:
 extern (C):
 
-char* c_to_s(file_status status);
+char* c_to_s(FileStatus status);
 c_file_change* c_fs_watch(char* path_name, size_t* out_len);
 

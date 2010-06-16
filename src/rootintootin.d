@@ -287,7 +287,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			return false;
 
 		string query = "";
-		db.query_result result;
+		db.QueryResult result;
 
 		// If there is no id, use an insert query
 		if(this._id < 1) {
@@ -315,9 +315,9 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			db.db_update_query(query, result);
 		}
 
-		if(result == db.query_result.success) {
+		if(result == db.QueryResult.success) {
 			return true;
-		} else if(result == db.query_result.not_unique_error) {
+		} else if(result == db.QueryResult.not_unique_error) {
 			char[] message = db.db_get_error_message();
 			char[] field = tango.text.Util.split(tango.text.Util.split(message, "for key 'uc_")[1], "'")[0];
 			this._errors ~= "The " ~ field ~ " is already used.";
@@ -334,12 +334,12 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		query ~= " where id=" ~ to_s(this._id) ~ ";";
 
 		// Run the query
-		db.query_result result;
+		db.QueryResult result;
 		db.db_delete_query(query, result);
 
-		if(result == db.query_result.success) {
+		if(result == db.QueryResult.success) {
 			return true;
-		} else if(result == db.query_result.foreign_key_constraint_error) {
+		} else if(result == db.QueryResult.foreign_key_constraint_error) {
 			this._errors ~= "Failed to delete because of foreign key constraints.";
 			return false;
 		}

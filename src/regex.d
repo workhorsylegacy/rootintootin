@@ -11,7 +11,7 @@ module regex;
 private import tango.stdc.stringz;
 
 class Regex {
-	public regex_address _address;
+	private regex_address _address;
 	private char[] _pattern;
 
 	public this(char[] pattern) {

@@ -11,7 +11,7 @@ module db;
 private import tango.stdc.stringz;
 
 
-enum query_result { 
+enum QueryResult { 
 	unknown, 
 	success, 
 	foreign_key_constraint_error, 
@@ -26,15 +26,15 @@ void db_connect(char[] server, char[] user_name, char[] password, char[] databas
 	c_db_connect(toStringz(server), toStringz(user_name), toStringz(password), toStringz(database));
 }
 
-ulong db_insert_query_with_result_id(char[] query, out query_result result) {
+ulong db_insert_query_with_result_id(char[] query, out QueryResult result) {
 	return c_db_insert_query_with_result_id(toStringz(query), &result);
 }
 
-void db_delete_query(char[] query, out query_result result) {
+void db_delete_query(char[] query, out QueryResult result) {
 	c_db_delete_query(toStringz(query), &result);
 }
 
-void db_update_query(char[] query, out query_result result) {
+void db_update_query(char[] query, out QueryResult result) {
 	c_db_update_query(toStringz(query), &result);
 }
 
@@ -53,9 +53,9 @@ extern (C):
 char* c_db_get_error_message();
 void c_db_connect(char* server, char* user_name, char* password, char* database);
 
-ulong c_db_insert_query_with_result_id(char* query, query_result *result);
-void c_db_delete_query(char* query, query_result *result);
-void c_db_update_query(char* query, query_result *result);
+ulong c_db_insert_query_with_result_id(char* query, QueryResult* result);
+void c_db_delete_query(char* query, QueryResult* result);
+void c_db_update_query(char* query, QueryResult* result);
 
 char*** c_db_query_with_result(char* query, int* row_len, int* col_len);
 void c_free_db_query_with_result(char*** result, int row_len, int col_len);

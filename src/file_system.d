@@ -10,13 +10,13 @@
 module file_system;
 private import tango.stdc.stringz;
 
-enum entry_type { 
+enum EntryType { 
 	unknown = 0, 
 	file = 1, 
 	directory = 2
 }
 
-char[][] dir_entries(char[] dir_name, entry_type type) {
+char[][] dir_entries(char[] dir_name, EntryType type) {
 	// Get the entries in C strings
 	int len = 0;
 	char** c_entries;
@@ -37,6 +37,6 @@ private:
 
 extern (C):
 
-char** c_dir_entries(char* dir_name, int* len, entry_type type);
+char** c_dir_entries(char* dir_name, int* len, EntryType type);
 void c_free_dir_entries(char** entries, int len);
 

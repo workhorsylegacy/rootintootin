@@ -117,7 +117,7 @@ class Builder {
 		// Get the names of all the models
 		string[] model_names;
 		string name = "app/models/";
-		entry_type type = entry_type.file;
+		EntryType type = EntryType.file;
 		foreach(string entry; dir_entries(name, type)) {
 //			Stdout.format("model name: {}", entry).newline.flush;
 			if(ends_with(entry, ".d")) {
@@ -162,7 +162,7 @@ class Builder {
 
 			// Make sure the application was built
 			bool has_app = false;
-			foreach(string n; file_system.dir_entries(".", entry_type.file)) {
+			foreach(string n; file_system.dir_entries(".", EntryType.file)) {
 				if(n == "application")
 					has_app = true;
 			}

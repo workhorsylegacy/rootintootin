@@ -15,13 +15,13 @@
 
 #include <stdio.h>
 
-enum entry_type { 
+typedef enum { 
 	entry_type_unknown = 0, 
 	entry_type_file = 1, 
 	entry_type_directory = 2
-};
+} EntryType;
 
-char** c_dir_entries(char* dir_name, int* len, enum entry_type type) {
+char** c_dir_entries(char* dir_name, int* len, EntryType type) {
 	char** retval;
 	DIR* dp;
 	struct dirent* ep;
@@ -46,7 +46,7 @@ char** c_dir_entries(char* dir_name, int* len, enum entry_type type) {
 	rewinddir(dp);
 
 	// Copy the entries to the retval
-	retval = (char **) calloc(entry_count, sizeof(char *));
+	retval = (char**) calloc(entry_count, sizeof(char*));
 	int i = 0;
 	while((ep = readdir(dp))) {
 		if(strcmp(ep->d_name, ".")==0 || strcmp(ep->d_name, "..")==0)
@@ -58,7 +58,7 @@ char** c_dir_entries(char* dir_name, int* len, enum entry_type type) {
 			is_wanted = true;
 
 		if(is_wanted) {
-			retval[i] = (char *) calloc(strlen(ep->d_name)+1, sizeof(char));
+			retval[i] = (char*) calloc(strlen(ep->d_name)+1, sizeof(char));
 			strcpy(retval[i], ep->d_name);
 			i++;
 		}
