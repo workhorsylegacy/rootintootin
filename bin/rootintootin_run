@@ -28,7 +28,7 @@ elif not os.path.exists(sys.argv[1]):
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
-def generate_child(routes, table_map, reference_map):
+def generate_app(routes, table_map, reference_map):
 	generator = Generator()
 
 	# Get the names of all the views
@@ -39,7 +39,7 @@ def generate_child(routes, table_map, reference_map):
 				view_names.append('view_' + controller_name + '_' + entry.split('.html.ed')[0])
 
 	# Open the output file
-	out_file = open('child.d', 'w')
+	out_file = open('application.d', 'w')
 
 	# Write the imports
 	out_file.write(
@@ -164,17 +164,13 @@ def generate_child(routes, table_map, reference_map):
 
 	# Write the server start in main
 	out_file.write("\n" + 
-	"	// Create and start the sever\n" + 
-	"	IOLoop.use_epoll = true;\n" + 
-	"	ushort port = " + port + ";\n" + 
-	"	int max_waiting_clients = " + str(max_waiting_clients) + ";\n" + 
-	"	char[" + str(header_max_size) + "] buffer;\n" + 
+	"	// Create and start the app\n" + 
 	"	RunnerBase runner = new Runner();\n" + 
-	"	auto server = new RootinTootinChild(\n" + 
+	"	auto app = new RootinTootinApp(\n" + 
 	"				runner, routes, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
-	"	server.start();\n" + 
+	"	app.start();\n" + 
 	"\n" +
 	"	return 0;\n" +
 	"}\n")
@@ -727,7 +723,7 @@ class BuilderThread(threading.Thread):
 		generate_controllers()
 		generate_layouts()
 		generate_views(routes)
-		generate_child(routes, table_map, reference_map)
+		generate_app(routes, table_map, reference_map)
 
 		# Compile the application into an executable
 		additional_imports = get_link_files(routes)
@@ -746,7 +742,7 @@ class BuilderThread(threading.Thread):
 		command = "ldc -g -of server server.d " + \
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
-					"parent_process.d child_process.d " + \
+					"server_process.d app_process.d " + \
 					"db.d db.a inotify.d inotify.a file_system.d file_system.a " + \
 					"shared_memory.d shared_memory.a regex.d regex.a dornado/ioloop.d " + \
 					" -L=\"-lmysqlclient\" -L=\"-lpcre\"" + \

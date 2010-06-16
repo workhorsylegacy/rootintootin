@@ -19,7 +19,7 @@ private import tango.io.device.File;
 private import tango.stdc.stringz;
 private import shared_memory;
 
-class ParentProcess {
+class ServerProcess {
 	private Process _child = null;
 	private char[1] _in_type;
 	private char[] _out_type = "r";

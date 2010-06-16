@@ -16,17 +16,17 @@ private import tango.io.Console;
 private import tango.sys.Process;
 public import dornado.ioloop;
 
-private import parent_process;
-private import child_process;
+private import server_process;
+private import app_process;
 
 
-public class TcpServerChild : ChildProcess {
+public class TcpApp : AppProcess {
 	protected override char[] on_stdin(char[] request) {
-		throw new Exception("The on_request method of TcpServerChild needs to be overloaded on children.");
+		throw new Exception("The on_request method of TcpApp needs to be overloaded on children.");
 	}
 }
 
-class TcpServerParent : ParentProcess {
+class TcpServer : ServerProcess {
 	private ServerSocket _sock;
 	private char[1024] _buffer;
 	private char[] _response;

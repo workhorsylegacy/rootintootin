@@ -69,7 +69,7 @@ public class Request {
 	}
 }
 
-class HttpServerChild : TcpServerChild {
+class HttpApp : TcpApp {
 	private int _session_id = 0;
 	private string[string][string] _sessions;
 	private string _salt;
@@ -390,7 +390,7 @@ class HttpServerChild : TcpServerChild {
 	}
 }
 
-class HttpServerParent : TcpServerParent {
+class HttpServer : TcpServer {
 	public this(ushort port, int max_waiting_clients, char[] child_name) {
 		super(port, max_waiting_clients, child_name);
 	}

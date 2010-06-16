@@ -20,7 +20,7 @@ private import regex;
 private import rootintootin;
 
 
-public class RootinTootinChild : HttpServerChild {
+public class RootinTootinApp : HttpApp {
 	private RunnerBase _runner = null;
 	private string[Regex][string][string] _routes = null;
 
@@ -150,7 +150,7 @@ public class RootinTootinChild : HttpServerChild {
 	}
 }
 
-public class RootinTootinParent : HttpServerParent {
+public class RootinTootinServer : HttpServer {
 	public this(ushort port, int max_waiting_clients, char[] child_name) {
 		super(port, max_waiting_clients, child_name);
 	}

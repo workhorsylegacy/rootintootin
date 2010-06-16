@@ -16,7 +16,7 @@ private import tango.stdc.stringz;
 private import shared_memory;
 
 
-class ChildProcess {
+class AppProcess {
 	private char[1] _in_type;
 	private char[] _out_type = "r";
 	private File _log = null;
@@ -67,7 +67,7 @@ class ChildProcess {
 	}
 
 	protected char[] on_stdin(char[] request) {
-		throw new Exception("The on_request method of ChildProcess needs to be overloaded on children.");
+		throw new Exception("The on_request method of AppProcess needs to be overloaded on children.");
 	}
 }
 

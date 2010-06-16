@@ -148,27 +148,27 @@ class Builder {
 			files ~= view_name ~ ".d";
 		files ~= "view_layouts_default.d";
 
-		// Build the child
+		// Build the app
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
-			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d parent_process.d child_process.d db.d db.a inotify.d inotify.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
-			string command = "ldc -g -of child child.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
+			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d server_process.d app_process.d db.d db.a inotify.d inotify.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
+			string command = "ldc -g -of application application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
 //			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
-			Stdout("Rebuilding child ...").newline.flush;
+			Stdout("Rebuilding application ...").newline.flush;
 			this.run_command(command);
 
-			// Make sure the child was built
-			bool has_child = false;
+			// Make sure the application was built
+			bool has_app = false;
 			foreach(string n; file_system.dir_entries(".", entry_type.file)) {
-				if(n == "child")
-					has_child = true;
+				if(n == "application")
+					has_app = true;
 			}
-			if(has_child) {
-				Stdout("Child build successful!").newline.flush;
+			if(has_app) {
+				Stdout("Application build successful!").newline.flush;
 			} else {
-				Stdout("Child build failed!").newline.flush;
+				Stdout("Application build failed!").newline.flush;
 				Stdout("Press ctrl+c to exit ...").newline.flush;
 				return;
 			}
@@ -177,8 +177,8 @@ class Builder {
 			IOLoop.use_epoll = true;
 			ushort port = to_uint(config["server_configuration"]["port"]);
 			int max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
-			auto server = new RootinTootinParent(
-						port, max_waiting_clients, "./child");
+			auto server = new RootinTootinServer(
+						port, max_waiting_clients, "./application");
 
 			server.start();
 		} catch {
