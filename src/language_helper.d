@@ -143,7 +143,7 @@ public class FixedPoint {
 			string[] buffer;
 			for(size_t i=0; i<_max_precision_width; i++)
 				buffer ~= "9";
-			new_precision = to_ulong(tango.text.Util.join(buffer, ""));
+			new_precision = to_long(tango.text.Util.join(buffer, ""));
 		}
 
 		// Make sure the new_scale does not overflow
@@ -392,7 +392,7 @@ public static string to_s(long value) {
 
 public static string to_s(ulong value) {
 	char[66] tmp = void;
-	return tango.text.convert.Integer.format(tmp, value, "u").dup;
+	return tango.text.convert.Integer.format(tmp, cast(long)value, "u").dup;
 }
 
 public static string to_s(float value) {
@@ -435,6 +435,14 @@ public static int to_int(string value) {
 
 public static uint to_uint(string value) {
 	return cast(uint) tango.text.convert.Integer.convert(value);
+}
+
+public static short to_short(string value) {
+	return cast(short) tango.text.convert.Integer.convert(value);
+}
+
+public static ushort to_ushort(string value) {
+	return cast(ushort) tango.text.convert.Integer.convert(value);
 }
 
 public static long to_long(string value) {
@@ -583,6 +591,8 @@ public static void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
 				json_to_dict(d, sub_value);
 			}
 			break;
+		default:
+			throw new Exception("Unknown json type.");
 	}
 }
 
@@ -629,6 +639,8 @@ public static void xml_to_dict(ref Dictionary dict, Document!(char).Node node) {
 				xml_to_dict(d, child);
 			}
 			break;
+		default:
+			throw new Exception("Unknown xml type.");
 	}
 }
 

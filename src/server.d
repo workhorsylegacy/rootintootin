@@ -46,6 +46,7 @@ class Builder {
 				return capitalize(singular);
 			}
 		}
+		throw new Exception("Can't singularize unknown noun '" ~ noun ~ "'.");
 	}
 
 	private void builder_method() {
@@ -55,7 +56,7 @@ class Builder {
 
 		// Read the routes from the config file
 		auto file = new File("config/routes.json", File.ReadExisting);
-		auto content = new char[file.length];
+		auto content = new char[cast(size_t)file.length];
 		file.read(content);
 		file.close();
 		auto values = (new Json!(char)).parse(content).toObject();
@@ -79,7 +80,7 @@ class Builder {
 
 		// Read the nouns from the config file
 		file = new File("config/nouns.json", File.ReadExisting);
-		content = new char[file.length];
+		content = new char[cast(size_t)file.length];
 		file.read(content);
 		file.close();
 		values = (new Json!(char)).parse(content).toObject();
@@ -95,7 +96,7 @@ class Builder {
 
 		// Read the config from the config file
 		file = new File("config/config.json", File.ReadExisting);
-		content = new char[file.length];
+		content = new char[cast(size_t)file.length];
 		file.read(content);
 		file.close();
 		values = (new Json!(char)).parse(content).toObject();
@@ -152,7 +153,7 @@ class Builder {
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
 			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d server_process.d app_process.d db.d db.a inotify.d inotify.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
-			string command = "ldc -g -of application application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
+			string command = "ldc -g -w -of application application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
 //			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
@@ -175,7 +176,7 @@ class Builder {
 
 			// Create and start the sever
 			IOLoop.use_epoll = true;
-			ushort port = to_uint(config["server_configuration"]["port"]);
+			ushort port = to_ushort(config["server_configuration"]["port"]);
 			int max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
 			auto server = new RootinTootinServer(
 						port, max_waiting_clients, "./application");

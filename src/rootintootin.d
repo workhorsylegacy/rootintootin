@@ -323,6 +323,8 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			this._errors ~= "The " ~ field ~ " is already used.";
 			return false;
 		}
+
+		return false;
 	}
 
 	bool destroy() {
@@ -341,6 +343,8 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			this._errors ~= "Failed to delete because of foreign key constraints.";
 			return false;
 		}
+
+		return false;
 	}
 
 	void validates_presence_of(string[] field_names) {

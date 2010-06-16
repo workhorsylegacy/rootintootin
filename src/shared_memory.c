@@ -1,13 +1,12 @@
 
 //#include <stdbool.h>
 #include <sys/shm.h>
-//#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
 int c_shm_open(char* name, size_t buffer_size) {
-	char* segptr;
 	key_t key = ftok(name, 'S');
 
 	// Create a new memory block

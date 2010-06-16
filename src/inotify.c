@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/inotify.h>
 
 #define BUFF_SIZE ((sizeof(struct inotify_event)+FILENAME_MAX)*1024)
@@ -50,13 +51,14 @@ char* c_to_s(file_status status) {
 		case(file_status_delete): return "file_status_delete";
 		case(file_status_delete_self): return "file_status_delete_self";
 		case(file_status_move_self): return "file_status_move_self";
+		default: return NULL;
 	}
 }
 
 file_change* c_fs_watch(char* path_name, size_t* out_len) {
 	file_change* retval;
 	int fd = inotify_init();
-	int wd = inotify_add_watch(fd, path_name, IN_ALL_EVENTS);
+	/*int wd = */inotify_add_watch(fd, path_name, IN_ALL_EVENTS);
 
 	// Read the new file changes
 	char buff[BUFF_SIZE] = {0};

@@ -35,7 +35,7 @@ char** c_dir_entries(char* dir_name, int* len, enum entry_type type) {
 
 	// Count how many entries are in the directory
 	int entry_count = 0;
-	while(ep = readdir(dp)) {
+	while((ep = readdir(dp))) {
 		if(strcmp(ep->d_name, ".")==0 || strcmp(ep->d_name, "..")==0)
 			continue;
 		if(type & entry_type_directory && ep->d_type == DT_DIR)
@@ -48,7 +48,7 @@ char** c_dir_entries(char* dir_name, int* len, enum entry_type type) {
 	// Copy the entries to the retval
 	retval = (char **) calloc(entry_count, sizeof(char *));
 	int i = 0;
-	while(ep = readdir(dp)) {
+	while((ep = readdir(dp))) {
 		if(strcmp(ep->d_name, ".")==0 || strcmp(ep->d_name, "..")==0)
 			continue;
 		bool is_wanted = false;

@@ -729,17 +729,17 @@ class BuilderThread(threading.Thread):
 		additional_imports = get_link_files(routes)
 
 		result = ''
-		result += commands.getoutput("gcc -g -c db.c -o db.o")
+		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
 		result += commands.getoutput("ar rcs db.a db.o")
-		result += commands.getoutput("gcc -g -c inotify.c -o inotify.o")
+		result += commands.getoutput("gcc -g -c -Wall -Werror inotify.c -o inotify.o")
 		result += commands.getoutput("ar rcs inotify.a inotify.o")
-		result += commands.getoutput("gcc -g -c file_system.c -o file_system.o")
+		result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
 		result += commands.getoutput("ar rcs file_system.a file_system.o")
-		result += commands.getoutput("gcc -g -c regex.c -o regex.o -lpcre")
+		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
 		result += commands.getoutput("ar rcs regex.a regex.o")
-		result += commands.getoutput("gcc -g -c shared_memory.c -o shared_memory.o")
+		result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
 		result += commands.getoutput("ar rcs shared_memory.a shared_memory.o")
-		command = "ldc -g -of server server.d " + \
+		command = "ldc -g -w -of server server.d " + \
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
 					"server_process.d app_process.d " + \
@@ -749,14 +749,14 @@ class BuilderThread(threading.Thread):
 					" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 		result += commands.getoutput(command)
 
-		if len(result) != 0:
+		if os.path.exists("server"):
+			self._compile_error = None
+			print "Server build successful!"
+		else:
 			self._compile_error = result
 			print "Server build failed!"
 			print self._compile_error
 			exit()
-		else:
-			self._compile_error = None
-			print "Server build successful!"
 
 		# Run the server in its own process
 		self._server_pid = subprocess.Popen([scratch + "server", ""]).pid

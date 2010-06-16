@@ -77,7 +77,7 @@ class HttpApp : TcpApp {
 	public this() {
 		// Get a random salt for salting sessions
 		Twister* random = new Twister();
-		random.seed(Clock.now.span.millis);
+		random.seed(cast(uint)Clock.now.span.millis);
 		this._salt = to_s(random.next());
 		delete random;
 	}
@@ -243,6 +243,8 @@ class HttpApp : TcpApp {
 			case "OPTIONS":
 				response = this.trigger_on_request_options(request, raw_header, raw_body);
 				break;
+			default:
+				throw new Exception("Unknown http request method '" ~ request.method ~ "'.");
 		}
 
 		// Copy the modified session back to the sessions
@@ -293,6 +295,8 @@ class HttpApp : TcpApp {
 				case "application/xml":
 					xml_to_dict(request._params, raw_body);
 					break;
+				default:
+					throw new Exception("Unknown Content-Type '" ~ request._fields["Content-Type"] ~ "'.");
 			}
 		}
 
