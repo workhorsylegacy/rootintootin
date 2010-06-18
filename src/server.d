@@ -7,8 +7,6 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.text.convert.Integer;
-private import tango.text.Util;
 private import tango.io.Stdout;
 private import tango.core.Thread;
 private import tango.sys.Process;
@@ -18,7 +16,6 @@ private import tango.text.json.Json;
 private import language_helper;
 private import rootintootin;
 private import rootintootin_server;
-private import inotify = inotify;
 private import file_system;
 
 
@@ -32,10 +29,14 @@ class Builder {
 	}
 
 	private bool wait_for_changes() {
-		inotify.FileChange[] changes;
-		// FIXME: This needs to be the project directory
-		changes = inotify.fs_watch("./");
-		return changes.length > 0;
+		string command = "inotifywait -r -q .";
+		string c_stdout, c_stderr;
+		this.run_command(command, c_stdout, c_stderr);
+		Stdout(c_stdout).flush;
+		Stdout(c_stderr).flush;
+		Stdout.format("length: {}\n", to_s(c_stdout.length)).flush;
+
+		return false;
 	}
 
 	private string singularize(string[string] nouns, string noun) {
@@ -152,7 +153,7 @@ class Builder {
 		// Build the app
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
-			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d server_process.d app_process.d db.d db.a inotify.d inotify.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
+			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d server_process.d app_process.d db.d db.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
 			string command = "ldc -g -w -of application application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
@@ -189,21 +190,41 @@ class Builder {
 //		}
 	}
 
-	private void run_command(char[] command) {
+	private void run_command(string command) {
+		string stdout_message, stderr_message;
+		run_command(command, stdout_message, stderr_message);
+		Stdout(stdout_message).flush;
+		Stdout(stderr_message).flush;
+	}
+
+	private void run_command(string command, out string c_stdout, out string c_stderr) {
 		// Run the command
 		auto child = new Process(true, command);
 		child.redirect(Redirect.Output | Redirect.Error | Redirect.Input);
 		child.execute();
 
-		// Get its output and if it was successful
-		Stdout.copy(child.stdout).flush;
-		Stdout.copy(child.stderr).flush;
+		// Throw if the child returned an error code
 		Process.Result result = child.wait();
 		if(Process.Result.Exit != result.reason) {
 			throw new Exception("Process '" ~ child.programName ~ "' (" ~ 
 				to_s(child.pid) ~ ") exited with reason " ~ to_s(result.reason) ~ 
 				", status " ~ to_s(result.status) ~ "");
 		}
+
+		// Get the output
+		c_stdout = [];
+		c_stderr = [];
+		char[1] buffer;
+		int len = -1;
+		while((len = child.stdout.read(buffer)) > 0) {
+			c_stdout ~= buffer;
+		}
+		c_stdout = trim(c_stdout);
+
+		while((len = child.stderr.read(buffer)) > 0) {
+			c_stderr ~= buffer;
+		}
+		c_stderr = trim(c_stderr);
 	}
 }
 

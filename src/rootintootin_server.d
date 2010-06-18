@@ -7,7 +7,6 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.text.Util;
 private import tango.io.device.File;
 private import Path = tango.io.Path;
 

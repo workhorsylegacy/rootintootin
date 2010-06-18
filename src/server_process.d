@@ -20,19 +20,19 @@ private import tango.stdc.stringz;
 private import shared_memory;
 
 class ServerProcess {
+	private char[] _app_name = null;
 	private Process _app = null;
 	private char[1] _in_type;
 	private char[] _out_type = "r";
-	private File _log;
-	private SharedMemory _shm;
+	private File _log = null;
+	private SharedMemory _shm = null;
 
 	public this(char[] app_name) {
+		_app_name = app_name;
 		//_log = new File("log_parent", File.WriteCreate);
 		_shm = new SharedMemory("rootin.shared");
 
-		_app = new Process(app_name);
-		_app.redirect(Redirect.Output | Redirect.Error | Redirect.Input);
-		_app.execute();
+		this.start_application();
 
 		// Read any startup messages from the app
 /*
@@ -61,6 +61,22 @@ class ServerProcess {
 		}
 
 		return response;
+	}
+
+	public void start_application() {
+		_app = new Process(_app_name);
+		_app.redirect(Redirect.Output | Redirect.Error | Redirect.Input);
+		_app.execute();
+	}
+
+	public void stop_application() {
+		// Just return if it is already not running
+		if(_app is null)
+			return;
+
+		// Stop the application process
+		_app.kill();
+		_app = null;
 	}
 
 	protected void write_request(char[] type, char[] request) {

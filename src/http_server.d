@@ -7,7 +7,6 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.text.Util;
 private import tango.io.Stdout;
 private import tango.io.Console;
 

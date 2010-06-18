@@ -731,8 +731,6 @@ class BuilderThread(threading.Thread):
 		result = ''
 		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
 		result += commands.getoutput("ar rcs db.a db.o")
-		result += commands.getoutput("gcc -g -c -Wall -Werror inotify.c -o inotify.o")
-		result += commands.getoutput("ar rcs inotify.a inotify.o")
 		result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
 		result += commands.getoutput("ar rcs file_system.a file_system.o")
 		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
@@ -743,7 +741,7 @@ class BuilderThread(threading.Thread):
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
 					"server_process.d app_process.d " + \
-					"db.d db.a inotify.d inotify.a file_system.d file_system.a " + \
+					"db.d db.a file_system.d file_system.a " + \
 					"shared_memory.d shared_memory.a regex.d regex.a dornado/ioloop.d " + \
 					" -L=\"-lmysqlclient\" -L=\"-lpcre\"" + \
 					" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"

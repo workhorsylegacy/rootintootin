@@ -143,7 +143,7 @@ public class FixedPoint {
 			string[] buffer;
 			for(size_t i=0; i<_max_precision_width; i++)
 				buffer ~= "9";
-			new_precision = to_long(tango.text.Util.join(buffer, ""));
+			new_precision = to_long(join(buffer, ""));
 		}
 
 		// Make sure the new_scale does not overflow
@@ -151,7 +151,7 @@ public class FixedPoint {
 			string[] buffer;
 			for(size_t i=0; i<_max_scale_width; i++)
 				buffer ~= "9";
-			new_scale = to_ulong(tango.text.Util.join(buffer, ""));
+			new_scale = to_ulong(join(buffer, ""));
 		}
 
 		// Save the result
@@ -160,7 +160,7 @@ public class FixedPoint {
 	}
 
 	public void opAddAssign(double a) {
-		string[] pair = tango.text.Util.split(to_s(a), ".");
+		string[] pair = split(to_s(a), ".");
 		long new_precision = to_long(pair[0]);
 		ulong new_scale = to_ulong(pair[1]);
 		auto other = new FixedPoint(new_precision, new_scale, this.max_precision_width, this.max_scale_width);
@@ -316,6 +316,63 @@ public class FixedPoint {
 	}
 }
 
+
+
+public static size_t index(string value, string match) {
+	return tango.text.Util.index!(char)(value, match);
+}
+
+public static bool contains(string value, string match) {
+	return tango.text.Util.containsPattern!(char)(value, match);
+}
+
+public static string[] split_lines(string value) {
+	return tango.text.Util.split(value, "\r\n");
+}
+
+public static string[] split(string value, string separator) {
+	return tango.text.Util.split(value, separator);
+}
+
+public static string trim(string value) {
+	return tango.text.Util.trim(value);
+}
+
+public static string strip(char[] value, char[] match) {
+	string retval = value;
+	retval = tango.text.Util.chopl!(char)(retval, match);
+	retval = tango.text.Util.chopr!(char)(retval, match);
+	return retval;
+}
+
+public static string join(string[] values, string separator) {
+	return tango.text.Util.join(values, separator);
+}
+
+public static bool starts_with(string value, string match) {
+	if(value is null || match is null)
+		return false;
+
+	if(value.length < match.length)
+		return false;
+
+	return value[0 .. match.length] == match;
+}
+
+public static bool ends_with(string value, string match) {
+	if(value is null || match is null)
+		return false;
+
+	if(value.length < match.length)
+		return false;
+
+	return value[length-match.length .. length] == match;
+}
+
+
+
+
+
 public static string between(string value, string before, string after) {
 	return split(split(value, before)[1], after)[0];
 }
@@ -358,15 +415,6 @@ public string ljust(string value, uint width, string pad_char=" ") {
 	tango.text.Util.repeat("0", width, retval);
 	retval[0 .. len] = value;
 	return retval;
-}
-
-public bool ends_with(string value, string end) {
-	// Just return false if the length is wrong
-	if(value.length < end.length)
-		return false;
-
-	size_t len = end.length;
-	return value[length-len .. length] == end;
 }
 
 // Add a to_s function for basic types
@@ -472,7 +520,7 @@ public static bool to_bool(string value) {
 // FIXME: This has 18, 2 hard coded
 public static FixedPoint to_FixedPoint(string value) {
 	try {
-		string[] pair = tango.text.Util.split(value, ".");
+		string[] pair = split(value, ".");
 		if(pair.length == 2) {
 			return new FixedPoint(to_long(pair[0]), to_ulong(pair[1]), 18, 2);
 		} else if(pair.length == 1) {

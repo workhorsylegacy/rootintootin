@@ -9,14 +9,14 @@ similar to Ruby on Rails.
 # ubuntu
 sudo apt-get install mysql-client mysql-server libmysqlclient16-dev \
 python-mysqldb python-pexpect python-mako python-pyinotify \
-build-essential bzr ldc libtango-ldc-dev libpcre3 libpcre3-dev
+build-essential bzr ldc libtango-ldc-dev libpcre3 libpcre3-dev inotify-tools
 sudo service mysql start
 
 # fedora
 # Install ldc and tango from here:
 # http://www.dsource.org/projects/ldc/
 sudo yum groupinstall "Development Tools"
-sudo yum install mysql mysql-server MySQL-python pexpect python-mako python-inotify bzr ldc pcre pcre-devel
+sudo yum install mysql mysql-server MySQL-python pexpect python-mako python-inotify bzr ldc pcre pcre-devel inotify-tools
 sudo service mysqld start
 
 2. Move to your install location, download the code, add path to bashrc:
