@@ -27,12 +27,14 @@ class ServerProcess {
 	private File _log = null;
 	private SharedMemory _shm = null;
 
-	public this(char[] app_name) {
+	public this(char[] app_name, bool start_application) {
 		_app_name = app_name;
 		//_log = new File("log_parent", File.WriteCreate);
 		_shm = new SharedMemory("rootin.shared");
 
-		this.start_application();
+		// Start the application if desired
+		if(start_application)
+			this.start_application();
 
 		// Read any startup messages from the app
 /*
@@ -64,6 +66,10 @@ class ServerProcess {
 	}
 
 	public void start_application() {
+		// Make sure the application is stopped
+		this.stop_application();
+
+		// Start the application
 		_app = new Process(_app_name);
 		_app.redirect(Redirect.Output | Redirect.Error | Redirect.Input);
 		_app.execute();

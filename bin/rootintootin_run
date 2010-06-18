@@ -740,7 +740,7 @@ class BuilderThread(threading.Thread):
 		command = "ldc -g -w -of server server.d " + \
 					"language_helper.d helper.d rootintootin.d ui.d " + \
 					"rootintootin_server.d http_server.d tcp_server.d " + \
-					"server_process.d app_process.d " + \
+					"server_process.d app_process.d app_builder.d " + \
 					"db.d db.a file_system.d file_system.a " + \
 					"shared_memory.d shared_memory.a regex.d regex.a dornado/ioloop.d " + \
 					" -L=\"-lmysqlclient\" -L=\"-lpcre\"" + \
