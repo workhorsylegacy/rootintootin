@@ -164,7 +164,7 @@ class HttpApp : TcpApp {
 				if(pair.length != 2) {
 //					Stdout.format("Malformed cookie: {}\n", cookie).flush;
 				} else {
-					request._cookies[pair[0]] = Helper.unescape_value(pair[1]);
+					request._cookies[pair[0]] = Helper.unescape(pair[1]);
 				}
 			}
 		}
@@ -173,7 +173,7 @@ class HttpApp : TcpApp {
 		if(tango.text.Util.contains(request.uri, '?')) {
 			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
 				pair = split(param, "=");
-				request._params[Helper.unescape_value(pair[0])].value = Helper.unescape_value(pair[1]);
+				request._params[Helper.unescape(pair[0])].value = Helper.unescape(pair[1]);
 			}
 		}
 
@@ -351,7 +351,7 @@ class HttpApp : TcpApp {
 		// FIXME: This is sending all cookies. It should only send the ones that have changed
 		string set_cookies = "";
 		foreach(string name, string value ; request._cookies) {
-			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ Helper.escape_value(value) ~ "\r\n";
+			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ Helper.escape(value) ~ "\r\n";
 		}
 
 		// Add the HTTP headers
@@ -378,7 +378,7 @@ class HttpApp : TcpApp {
 	}
 
 	private void urlencode_to_dict(ref Dictionary dict, string urlencode_in_a_string) {
-		string data = Helper.unescape_value(urlencode_in_a_string);
+		string data = Helper.unescape(urlencode_in_a_string);
 		foreach(string param ; split(data, "&")) {
 			string[] pair = split(param, "=");
 			if(pair.length == 2) {

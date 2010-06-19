@@ -4,6 +4,7 @@
 	* Fixed Bug #589820: 'Change configuration files to json'.
 	* Fixed Bug #584748: 'Move from Tornado to Dornado'.
 	* Fixed Bug #584807: 'Regex makes startup and requests extremely slow'.
+	* Fixed Bug #594439: 'escape_value and unescape_value are slow'.
 
 2010-03-02 Release 0.4.0
 	* Fixed bug #511025: 'Controller template uses wrong view on create fail'.
