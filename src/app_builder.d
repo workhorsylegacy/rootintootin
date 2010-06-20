@@ -11,6 +11,7 @@ private import tango.io.Stdout;
 private import tango.core.Thread;
 private import tango.sys.Process;
 private import tango.io.device.File;
+private import tango.io.FilePath;
 private import tango.text.json.Json;
 
 private import language_helper;
@@ -175,7 +176,7 @@ public class AppBuilder {
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
 			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d server_process.d app_process.d app_builder.d db.d db.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
-			string command = "ldc -g -w -of application application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
+			string command = "ldc -g -w -of application_new application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
 //			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
@@ -183,17 +184,15 @@ public class AppBuilder {
 			this.run_command(command);
 
 			// Make sure the application was built
-			bool has_app = false;
-			foreach(string n; file_system.dir_entries(".", EntryType.file)) {
-				if(n == "application")
-					has_app = true;
-			}
-			if(has_app) {
+			if(file_system.file_exist("application_new")) {
 				Stdout("\nApplication build successful!").newline.flush;
+
+				// Replace the old app with the new one
+				if(file_system.file_exist("application"))
+					(new FilePath("application")).remove();
+				(new FilePath("application_new")).rename("application");
 			} else {
 				Stdout("\nApplication build failed!").newline.flush;
-				Stdout("Press ctrl+c to exit ...").newline.flush;
-				return;
 			}
 
 			// FIXME: Run the app

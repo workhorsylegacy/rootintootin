@@ -13,7 +13,7 @@ private import tango.stdc.stringz;
 enum EntryType { 
 	unknown = 0, 
 	file = 1, 
-	directory = 2
+	dir = 2
 }
 
 char[][] dir_entries(char[] dir_name, EntryType type) {
@@ -31,6 +31,23 @@ char[][] dir_entries(char[] dir_name, EntryType type) {
 	// Free the C strings, and return the D strings
 	c_free_dir_entries(c_entries, len);
 	return d_entries;
+}
+
+bool file_exist(char[] file_name, char[] path=".") {
+	return exist(file_name, EntryType.file, path);
+}
+
+bool dir_exist(char[] file_name, char[] path=".") {
+	return exist(file_name, EntryType.dir, path);
+}
+
+bool exist(char[] name, EntryType type, char[] path=".") {
+	foreach(char[] n; file_system.dir_entries(path, type)) {
+		if(n == name)
+			return true;
+	}
+
+	return false;
 }
 
 private:

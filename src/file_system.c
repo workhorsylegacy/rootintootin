@@ -18,7 +18,7 @@
 typedef enum { 
 	entry_type_unknown = 0, 
 	entry_type_file = 1, 
-	entry_type_directory = 2
+	entry_type_dir = 2
 } EntryType;
 
 char** c_dir_entries(char* dir_name, int* len, EntryType type) {
@@ -38,7 +38,7 @@ char** c_dir_entries(char* dir_name, int* len, EntryType type) {
 	while((ep = readdir(dp))) {
 		if(strcmp(ep->d_name, ".")==0 || strcmp(ep->d_name, "..")==0)
 			continue;
-		if(type & entry_type_directory && ep->d_type == DT_DIR)
+		if(type & entry_type_dir && ep->d_type == DT_DIR)
 			entry_count++;
 		if(type & entry_type_file && ep->d_type == DT_REG)
 			entry_count++;
@@ -52,7 +52,7 @@ char** c_dir_entries(char* dir_name, int* len, EntryType type) {
 		if(strcmp(ep->d_name, ".")==0 || strcmp(ep->d_name, "..")==0)
 			continue;
 		bool is_wanted = false;
-		if(type & entry_type_directory && ep->d_type == DT_DIR)
+		if(type & entry_type_dir && ep->d_type == DT_DIR)
 			is_wanted = true;
 		if(type & entry_type_file && ep->d_type == DT_REG)
 			is_wanted = true;
