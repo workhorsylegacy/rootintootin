@@ -151,13 +151,16 @@ public class RootinTootinApp : HttpApp {
 }
 
 public class RootinTootinServer : HttpServer {
-	public this(ushort port, int max_waiting_clients, char[] app_name) {
+	private string _app_path;
+
+	public this(string app_path, ushort port, int max_waiting_clients, char[] app_name) {
 		super(port, max_waiting_clients, app_name, false);
+		_app_path = app_path;
 	}
 
 	protected void on_started() {
 		// Have the builder build and start the app when it changes
-		auto builder = new AppBuilder();
+		auto builder = new AppBuilder(_app_path);
 		builder.on_build_success(&on_build);
 		builder.start();
 

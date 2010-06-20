@@ -18,8 +18,8 @@ from lib_rootintootin import *
 
 
 # Make sure the first arg is a path
-if len(sys.argv) != 2:
-	print "usage: ./build 'working directory'"
+if len(sys.argv) != 3:
+	print "usage: ./build 'working directory' [server|application]"
 	exit(1)
 elif not os.path.exists(sys.argv[1]):
 	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
@@ -649,6 +649,45 @@ def process_template_body(body, output):
 		# Set the remaining text as the body, so it can be processed next
 		body = after
 
+def setup_app(pwd, scratch):
+	# Remove all the old app files
+	if os.path.exists(scratch+'app/'):
+		shutil.rmtree(scratch+'app/')
+	if os.path.exists(scratch+'config/'):
+		shutil.rmtree(scratch+'config/')
+	if os.path.exists(scratch+'db/'):
+		shutil.rmtree(scratch+'db/')
+	if os.path.exists(scratch+'public/'):
+		shutil.rmtree(scratch+'public/')
+
+	# Copy all the app files into a scratch dir
+	if os.path.exists(pwd+'/app/'):
+		shutil.copytree(pwd+'/app/', scratch+'app/')
+	if os.path.exists(pwd+'/config/'):
+		shutil.copytree(pwd+'/config/', scratch+'config/')
+	if os.path.exists(pwd+'/db/'):
+		shutil.copytree(pwd+'/db/', scratch+'db/')
+	if os.path.exists(pwd+'/public/'):
+		shutil.copytree(pwd+'/public/', scratch+'public/')
+	os.chdir(scratch)
+
+	# Load the config files
+	with open('config/routes.json', 'r') as f:
+		globals()['routes'] = json.loads(f.read())["routes"]
+
+	with open('config/config.json', 'r') as f:
+		config = json.loads(f.read())["config"]
+		globals()['database_configuration'] = config['database_configuration']
+		globals()['server_configuration'] = config['server_configuration']
+
+	# Do code generation
+	table_map, reference_map = generate_models()
+	generate_controllers()
+	generate_layouts()
+	generate_views(routes)
+	generate_app(routes, table_map, reference_map)
+
+# FIXME: This does not need to be a thread anymore, as we don't rebuild the server
 class BuilderThread(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -680,16 +719,17 @@ class BuilderThread(threading.Thread):
 			os.kill(self._server_pid, signal.SIGHUP)
 			self._server_pid = None
 
-	def _setup_app(self):
+	def _build_server(self):
 		print "Rebuilding server ..."
 		self._kill_server()
 
-		# Copy all the framework and app files into a scratch dir
+		# Get all the locations
 		rootintootin_dir = os.path.expanduser('~/.rootintootin')
 		project_name = sys.argv[1].split('/')[-1]
 		pwd = sys.argv[1]
 		scratch = rootintootin_dir + '/' + project_name + '/scratch/'
 
+		# Copy all the framework files into a scratch dir
 		if not os.path.exists(rootintootin_dir):
 			os.mkdir(rootintootin_dir)
 		if os.path.exists(scratch):
@@ -697,33 +737,8 @@ class BuilderThread(threading.Thread):
 		shutil.copytree(os.sys.path[0]+'/../src/', scratch)
 		shutil.copytree(os.sys.path[0]+'/../dornado/', scratch+'dornado')
 
-		if os.path.exists(pwd+'/app/'):
-			shutil.copytree(pwd+'/app/', scratch+'app/')
-		if os.path.exists(pwd+'/config/'):
-			shutil.copytree(pwd+'/config/', scratch+'config/')
-		if os.path.exists(pwd+'/db/'):
-			shutil.copytree(pwd+'/db/', scratch+'db/')
-		if os.path.exists(pwd+'/public/'):
-			shutil.copytree(pwd+'/public/', scratch+'public/')
-		os.chdir(scratch)
-
-		# Load the config files
-		with open('config/routes.json', 'r') as f:
-			globals()['routes'] = json.loads(f.read())["routes"]
-
-		with open('config/config.json', 'r') as f:
-			config = json.loads(f.read())["config"]
-			globals()['database_configuration'] = config['database_configuration']
-			globals()['server_configuration'] = config['server_configuration']
-
+		setup_app(pwd, scratch)
 		self._port = int(globals()['server_configuration']['port'])
-
-		# Do code generation
-		table_map, reference_map = generate_models()
-		generate_controllers()
-		generate_layouts()
-		generate_views(routes)
-		generate_app(routes, table_map, reference_map)
 
 		# Compile the application into an executable
 		additional_imports = get_link_files(routes)
@@ -757,22 +772,29 @@ class BuilderThread(threading.Thread):
 			exit()
 
 		# Run the server in its own process
-		self._server_pid = subprocess.Popen([scratch + "server", ""]).pid
+		self._server_pid = subprocess.Popen([scratch + "server", pwd]).pid
 
-# Start the build server
-builder_thread = BuilderThread()
-builder_thread._setup_app()
-try:
-	builder_thread.start()
-	while True:
-		time.sleep(1)
-except KeyboardInterrupt:
-	print "Exiting ..."
-	builder_thread.set_is_running(False)
+# Build and start the server
+if sys.argv[2] == 'server':
+	builder_thread = BuilderThread()
+	builder_thread._build_server()
+	try:
+		builder_thread.start()
+		while True:
+			time.sleep(1)
+	except KeyboardInterrupt:
+		print "Exiting ..."
+		builder_thread.set_is_running(False)
+# Or build the application
+elif sys.argv[2] == 'application':
+	# Get all the locations
+	rootintootin_dir = os.path.expanduser('~/.rootintootin')
+	project_name = sys.argv[1].split('/')[-1]
+	pwd = sys.argv[1]
+	scratch = rootintootin_dir + '/' + project_name + '/scratch/'
 
-
-
-
-
+	setup_app(pwd, scratch)
+else:
+	print "invalid option " + sys.argv[2]
 
 

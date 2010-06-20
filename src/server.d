@@ -16,7 +16,12 @@ private import rootintootin;
 private import rootintootin_server;
 
 
-int main() {
+int main(string[] args) {
+	// Make sure the first arg is the application path
+	if(args.length < 2)
+		throw new Exception("The first argument should be the application path.");
+	string app_path = args[1];
+
 	// Read the server config file
 	auto file = new File("config/config.json", File.ReadExisting);
 	auto content = new char[cast(size_t)file.length];
@@ -39,6 +44,7 @@ int main() {
 	ushort port = to_ushort(config["server_configuration"]["port"]);
 	int max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
 	auto server = new RootinTootinServer(
+				app_path, 
 				port, max_waiting_clients, "./application");
 
 	server.start();

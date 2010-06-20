@@ -20,6 +20,11 @@ private import file_system;
 public class AppBuilder {
 	private Thread _thread = null;
 	private void delegate() _on_build_func = null;
+	private string _app_path = null;
+
+	public this(string app_path) {
+		_app_path = app_path;
+	}
 
 	public void start() {
 		_thread = new Thread(&build_loop);
@@ -31,7 +36,7 @@ public class AppBuilder {
 	}
 
 	private void wait_for_changes() {
-		string command = "inotifywait -r -q -c -e modify -e create -e attrib -e move -e delete /home/matt/Projects/rootintootin/examples/users/";
+		string command = "inotifywait -r -q -c -e modify -e create -e attrib -e move -e delete " ~ _app_path;
 		string c_stdout, c_stderr;
 		this.run_command(command, c_stdout, c_stderr);
 		//string dir = split(c_stdout, "/ ")[0];
@@ -68,6 +73,9 @@ public class AppBuilder {
 	}
 
 	private void build_method() {
+		// Copy all the app files, and do code generation
+		this.run_command("python /usr/bin/rootintootin_run " ~ _app_path ~ " application");
+
 		// Read the routes from the config file
 		auto file = new File("config/routes.json", File.ReadExisting);
 		auto content = new char[cast(size_t)file.length];
@@ -196,7 +204,7 @@ public class AppBuilder {
 
 	private void run_command(string command) {
 		string stdout_message, stderr_message;
-		run_command(command, stdout_message, stderr_message);
+		this.run_command(command, stdout_message, stderr_message);
 		Stdout(stdout_message).flush;
 		Stdout(stderr_message).flush;
 	}
