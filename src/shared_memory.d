@@ -11,6 +11,7 @@ module shared_memory;
 private import language_helper;
 private import tango.stdc.stringz;
 
+
 public class SharedMemory {
 	private int _shmid;
 	private char* _segptr;

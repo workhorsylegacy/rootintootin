@@ -19,11 +19,12 @@ private import tango.io.device.File;
 private import tango.stdc.stringz;
 private import shared_memory;
 
+
 class ServerProcess {
 	private char[] _app_name = null;
 	private Process _app = null;
-	private char[1] _in_type;
-	private char[] _out_type = "r";
+	private char[] _request_signal = "r";
+	private char[1] _response_signal;
 	private File _log = null;
 	private SharedMemory _shm = null;
 
@@ -55,9 +56,9 @@ class ServerProcess {
 		char[] response;
 		while(true) {
 			response = this.read_response();
-			if(_in_type == "r") {
+			if(_response_signal == "r") {
 				break;
-			} else if(_in_type == "m") {
+			} else if(_response_signal == "m") {
 				Stdout(response).flush;
 			}
 		}
@@ -88,7 +89,7 @@ class ServerProcess {
 	protected void write_request(char[] type, char[] request) {
 		// Send the request to the app
 		_shm.set_value(toStringz(request));
-		_app.stdin.write(_out_type);
+		_app.stdin.write(_request_signal);
 		_app.stdin.flush();
 
 		// Write to the log
@@ -100,7 +101,7 @@ class ServerProcess {
 
 	protected char[] read_response() {
 		// Get the response from the app
-		_app.stdout.read(_in_type);
+		_app.stdout.read(_response_signal);
 		_app.stdout.flush();
 		char[] response = fromStringz(_shm.get_value());
 

@@ -17,8 +17,9 @@ private import shared_memory;
 
 
 class AppProcess {
-	private char[1] _in_type;
-	private char[] _out_type = "r";
+	private char[1] _request_signal;
+	private char[] _response_signal = "r";
+
 	private File _log = null;
 	private SharedMemory _shm;
 
@@ -39,7 +40,7 @@ class AppProcess {
 		auto ins = Cin.stream;
 
 		// Read the request
-		ins.read(_in_type);
+		ins.read(_request_signal);
 		char[] request = fromStringz(_shm.get_value());
 
 		// Write to the log
@@ -56,7 +57,7 @@ class AppProcess {
 
 		// Write the response
 		_shm.set_value(toStringz(response));
-		outs.write(_out_type);
+		outs.write(_response_signal);
 		outs.flush();
 
 		// Write to the log
