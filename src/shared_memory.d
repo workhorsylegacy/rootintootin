@@ -20,8 +20,20 @@ public class SharedMemory {
 	public this(char[] name, size_t buffer_size = 100) {
 		_buffer_size = buffer_size;
 
-		_shmid = c_shm_open(toStringz(name), _buffer_size);
+		// Get the key
+		size_t key = c_create_key(toStringz(name));
+		if(key == -1)
+			throw new Exception("Failed to create shared memory key. The name may not be an existing path, or may be invalid.");
+
+		// Open the shm
+		_shmid = c_shm_open(key, _buffer_size);
+		if(_shmid == -1)
+			throw new Exception("Failed to open shared memory.");
+
+		// Attach the shm
 		_segptr = c_shm_attach(_shmid);
+		if(_segptr == cast(char*)-1)
+			throw new Exception("Failed to attach the shared memory to the current process.");
 	}
 
 	public void set_value(char* value) {
@@ -53,7 +65,8 @@ private:
 
 extern (C):
 
-int c_shm_open(char* name, size_t buffer_size);
+size_t c_create_key(char* name);
+int c_shm_open(size_t key, size_t buffer_size);
 char* c_shm_attach(int shmid);
 void c_shm_set_value(int shmid, char* segptr, char* text);
 char* c_shm_get_value(int shmid, char* segptr);

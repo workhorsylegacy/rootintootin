@@ -14,9 +14,11 @@
 #include <string.h>
 
 
-int c_shm_open(char* name, size_t buffer_size) {
-	key_t key = ftok(name, 'S');
+size_t c_create_key(char* name) {
+	return ftok(name, 'S');
+}
 
+int c_shm_open(size_t key, size_t buffer_size) {
 	// Create a new memory block
 	int shmid = shmget(key, buffer_size, IPC_CREAT | IPC_EXCL | 0666);
 	if(shmid != -1) {
@@ -26,8 +28,8 @@ int c_shm_open(char* name, size_t buffer_size) {
 	// If that failed, use the existing memory block
 	shmid = shmget(key, buffer_size, 0);
 	if(shmid == -1) {
-		perror("shmget");
-		exit(1);
+//		perror("shmget");
+//		exit(1);
 	}
 
 	return shmid;
@@ -37,8 +39,8 @@ int c_shm_open(char* name, size_t buffer_size) {
 char* c_shm_attach(int shmid) {
 	char* segptr = (char*)shmat(shmid, 0, 0);
 	if(segptr == (char*)-1) {
-		perror("shmat");
-		exit(1);
+//		perror("shmat");
+//		exit(1);
 	}
 
 	return segptr;

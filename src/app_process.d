@@ -21,11 +21,15 @@ class AppProcess {
 	private char[] _response_signal = "r";
 
 	private File _log = null;
-	private SharedMemory _shm;
+	private SharedMemory _shm_request = null;
+	private SharedMemory _shm_response = null;
 
 	public void start() {
 		//_log = new File("log_child", File.WriteCreate);
-		_shm = new SharedMemory("rootin.shared");
+
+		// Create the shared memory
+		_shm_request = new SharedMemory("request");
+		_shm_response = new SharedMemory("response");
 
 		// Read each request, and write the response
 		char[] response = null;
@@ -41,7 +45,7 @@ class AppProcess {
 
 		// Read the request
 		ins.read(_request_signal);
-		char[] request = fromStringz(_shm.get_value());
+		char[] request = fromStringz(_shm_request.get_value());
 
 		// Write to the log
 		if(_log) {
@@ -56,7 +60,7 @@ class AppProcess {
 		auto outs = Cout.stream;
 
 		// Write the response
-		_shm.set_value(toStringz(response));
+		_shm_response.set_value(toStringz(response));
 		outs.write(_response_signal);
 		outs.flush();
 

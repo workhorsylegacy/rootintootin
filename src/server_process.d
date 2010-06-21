@@ -17,6 +17,7 @@ public import dornado.ioloop;
 
 private import tango.io.device.File;
 private import tango.stdc.stringz;
+private import file_system;
 private import shared_memory;
 
 
@@ -26,12 +27,20 @@ class ServerProcess {
 	private char[] _request_signal = "r";
 	private char[1] _response_signal;
 	private File _log = null;
-	private SharedMemory _shm = null;
+	private SharedMemory _shm_request = null;
+	private SharedMemory _shm_response = null;
 
 	public this(char[] app_name, bool start_application) {
 		_app_name = app_name;
 		//_log = new File("log_parent", File.WriteCreate);
-		_shm = new SharedMemory("rootin.shared");
+
+		// Create the shared memory
+		if(!file_system.file_exist("request"))
+			(new File("request", File.WriteCreate)).close();
+		if(!file_system.file_exist("response"))
+			(new File("response", File.WriteCreate)).close();
+		_shm_request = new SharedMemory("request");
+		_shm_response = new SharedMemory("response");
 
 		// Start the application if desired
 		if(start_application)
@@ -88,7 +97,7 @@ class ServerProcess {
 
 	protected void write_request(char[] type, char[] request) {
 		// Send the request to the app
-		_shm.set_value(toStringz(request));
+		_shm_request.set_value(toStringz(request));
 		_app.stdin.write(_request_signal);
 		_app.stdin.flush();
 
@@ -103,7 +112,7 @@ class ServerProcess {
 		// Get the response from the app
 		_app.stdout.read(_response_signal);
 		_app.stdout.flush();
-		char[] response = fromStringz(_shm.get_value());
+		char[] response = fromStringz(_shm_response.get_value());
 
 		// Write to the log
 		if(_log) {
