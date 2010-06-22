@@ -20,6 +20,7 @@ public import dornado.ioloop;
 private import file_system;
 private import regex;
 private import shared_memory;
+private import app_builder;
 private import rootintootin;
 private import rootintootin_server;
 
@@ -164,11 +165,10 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected void on_started() {
-//		// Have the builder build the app when it changes
-//		auto builder = new AppBuilder(_app_path);
-//		builder.on_build_success(&on_build);
-//		builder.start();
-		this.on_build();//FIXME: Remove! only here to start the process, because we are not building it.
+		// Have the builder build the app when it changes
+		auto builder = new AppBuilder(_app_path);
+		builder.on_build_success(&on_build);
+		builder.start();
 
 		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
 	}
