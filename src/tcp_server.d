@@ -16,17 +16,8 @@ private import tango.io.Console;
 private import tango.sys.Process;
 public import dornado.ioloop;
 
-private import server_process;
-private import app_process;
 
-
-public class TcpApp : AppProcess {
-	protected override char[] on_stdin(char[] request) {
-		throw new Exception("The on_request method of TcpApp needs to be overloaded on children.");
-	}
-}
-
-class TcpServer : ServerProcess {
+class TcpServer {
 	private ServerSocket _sock;
 	private char[1024] _buffer;
 	private char[] _response;
@@ -34,19 +25,10 @@ class TcpServer : ServerProcess {
 	protected int _max_waiting_clients;
 	protected bool _is_address_reusable;
 
-	public this(ushort port, int max_waiting_clients, char[] app_name, bool start_application) {
-		super(app_name, start_application);
+	public this(ushort port, int max_waiting_clients) {
 		_port = port;
 		_max_waiting_clients = max_waiting_clients;
 		_is_address_reusable = true;
-	}
-
-	protected void on_started() {
-		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
-	}
-
-	private char[] on_request(char[] request) {
-		return this.process_request(request);
 	}
 
 	public void start() {
@@ -60,13 +42,21 @@ class TcpServer : ServerProcess {
 		io_loop.start(_sock);
 	}
 
+	protected void on_started() {
+		Stdout.format("Server running on http://localhost:{}\n", this._port).flush;
+	}
+
+	protected char[] process_request(char[] request) {
+		return "default tcp server response";
+	}
+
 	private void handle_connection(Socket connection, string address) {
 		// Get the request from the client
 		size_t buffer_length = connection.read(_buffer);
 		char[] request = _buffer[0 .. buffer_length];
 
 		// Process the request and get the response
-		char[] response = on_request(request);
+		char[] response = this.process_request(request);
 
 		// Write the response to the socket
 		connection.write(response);

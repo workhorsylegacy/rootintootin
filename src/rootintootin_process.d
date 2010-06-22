@@ -13,15 +13,81 @@ private import tango.net.InternetAddress;
 private import tango.io.Stdout;
 private import tango.io.Console;
 private import tango.sys.Process;
-public import dornado.ioloop;
-
 private import tango.io.device.File;
 private import tango.stdc.stringz;
+
+public import dornado.ioloop;
 private import file_system;
+private import regex;
 private import shared_memory;
+private import rootintootin;
+private import rootintootin_server;
 
 
-class ServerProcess {
+class RootinTootinAppProcess : RootinTootinApp {
+	private char[1] _request_signal;
+	private char[] _response_signal = "r";
+
+	private File _log = null;
+	private SharedMemory _shm_request = null;
+	private SharedMemory _shm_response = null;
+
+	public this(RunnerBase runner, string[Regex][string][string] routes, 
+				string db_host, string db_user, string db_password, string db_name) {
+		super(runner, routes, 
+			db_host, db_user, db_password, db_name);
+	}
+
+	public void start() {
+		//_log = new File("log_child", File.WriteCreate);
+
+		// Create the shared memory
+		_shm_request = new SharedMemory("request");
+		_shm_response = new SharedMemory("response");
+
+		// Read each request, and write the response
+		char[] response = null;
+		while(true) {
+			char[] request = this.read_request();
+			response = process_request(request);
+			write_response("r", response);
+		}
+	}
+
+	protected char[] read_request() {
+		auto ins = Cin.stream;
+
+		// Read the request
+		ins.read(_request_signal);
+		char[] request = fromStringz(_shm_request.get_value());
+
+		// Write to the log
+		if(_log) {
+			_log.write(request ~ "\n\n");
+			_log.flush();
+		}
+
+		return request;
+	}
+
+	protected void write_response(char[] type, char[] response) {
+		auto outs = Cout.stream;
+
+		// Write the response
+		_shm_response.set_value(toStringz(response));
+		outs.write(_response_signal);
+		outs.flush();
+
+		// Write to the log
+		if(_log) {
+			_log.write(response ~ "\n\n");
+			_log.flush();
+		}
+	}
+}
+
+class RootinTootinServerProcess : RootinTootinServer {
+	private char[] _app_path = null;
 	private char[] _app_name = null;
 	private Process _app = null;
 	private char[] _request_signal = "r";
@@ -30,7 +96,11 @@ class ServerProcess {
 	private SharedMemory _shm_request = null;
 	private SharedMemory _shm_response = null;
 
-	public this(char[] app_name, bool start_application) {
+	public this(ushort port, int max_waiting_clients, 
+				char[] app_path, char[] app_name, bool start_application) {
+		super(port, max_waiting_clients);
+
+		_app_path = app_path;
 		_app_name = app_name;
 		//_log = new File("log_parent", File.WriteCreate);
 
@@ -47,14 +117,12 @@ class ServerProcess {
 			this.start_application();
 
 		// Read any startup messages from the app
-/*
-		char[] message;
-		while(true) {
-			message = this.read_response();
-			if(message == "") break;
-			Stdout(message).flush;
-		}
-*/
+//		char[] message;
+//		while(true) {
+//			message = this.read_response();
+//			if(message == "") break;
+//			Stdout(message).flush;
+//		}
 	}
 
 	public char[] process_request(char[] request) {
@@ -95,6 +163,21 @@ class ServerProcess {
 		_app = null;
 	}
 
+	protected void on_started() {
+//		// Have the builder build the app when it changes
+//		auto builder = new AppBuilder(_app_path);
+//		builder.on_build_success(&on_build);
+//		builder.start();
+		this.on_build();//FIXME: Remove! only here to start the process, because we are not building it.
+
+		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
+	}
+
+	protected void on_build() {
+		this.start_application();
+		Stdout("Application running ...\n").flush;
+	}
+
 	protected void write_request(char[] type, char[] request) {
 		// Send the request to the app
 		_shm_request.set_value(toStringz(request));
@@ -123,6 +206,5 @@ class ServerProcess {
 		return response;
 	}
 }
-
 
 

@@ -17,7 +17,6 @@ private import helper;
 private import db;
 private import regex;
 private import rootintootin;
-private import app_builder;
 
 
 public class RootinTootinApp : HttpApp {
@@ -151,25 +150,12 @@ public class RootinTootinApp : HttpApp {
 }
 
 public class RootinTootinServer : HttpServer {
-	private string _app_path;
-
-	public this(string app_path, ushort port, int max_waiting_clients, char[] app_name) {
-		super(port, max_waiting_clients, app_name, false);
-		_app_path = app_path;
+	public this(ushort port, int max_waiting_clients) {
+		super(port, max_waiting_clients);
 	}
 
 	protected void on_started() {
-		// Have the builder build and start the app when it changes
-		auto builder = new AppBuilder(_app_path);
-		builder.on_build_success(&on_build);
-		builder.start();
-
 		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
-	}
-
-	private void on_build() {
-		this.start_application();
-		Stdout("Application running ...\n").flush;
 	}
 }
 

@@ -1,28 +1,34 @@
-/*------------------------------------------------------------------------------
-#
-#    This file is part of the Rootin Tootin web framework and licensed under the
-#    GPL version 3 or greater. See the COPYRIGHT file for copyright information.
-#    This project is hosted at http://rootin.toot.in .
-#
-#-----------------------------------------------------------------------------*/
 
-
+private import tango.text.convert.Integer;
+private import tango.text.Util;
+private import tango.time.chrono.Gregorian;
+private import tango.time.WallClock;
 private import tango.io.Stdout;
 private import tango.io.Console;
-private import language_helper;
-
 private import tango.io.device.File;
 private import tango.stdc.stringz;
-private import shared_memory;
 
+private import language_helper;
+private import helper;
+private import regex;
+private import rootintootin;
+private import http_server;
+private import rootintootin_process;
 
-class AppProcess {
+/*
+class RootinTootinAppProcess : RootinTootinApp {
 	private char[1] _request_signal;
 	private char[] _response_signal = "r";
 
 	private File _log = null;
 	private SharedMemory _shm_request = null;
 	private SharedMemory _shm_response = null;
+
+	public this(RunnerBase runner, string[Regex][string][string] routes, 
+				string db_host, string db_user, string db_password, string db_name) {
+		super(runner, routes, 
+			db_host, db_user, db_password, db_name);
+	}
 
 	public void start() {
 		//_log = new File("log_child", File.WriteCreate);
@@ -35,7 +41,7 @@ class AppProcess {
 		char[] response = null;
 		while(true) {
 			char[] request = this.read_request();
-			response = on_stdin(request);
+			response = process_request(request);
 			write_response("r", response);
 		}
 	}
@@ -70,10 +76,26 @@ class AppProcess {
 			_log.flush();
 		}
 	}
-
-	protected char[] on_stdin(char[] request) {
-		throw new Exception("The on_request method of AppProcess needs to be overloaded on children.");
+}
+*/
+class Runner : RunnerBase {
+	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {
+		return "da action";
 	}
 }
 
+int main() {
+	// Create the routes
+	string[Regex][string][string] routes;
+
+	// Create and start the app
+	RunnerBase runner = new Runner();
+	auto app = new RootinTootinAppProcess(
+				runner, routes, 
+				"localhost", "root", 
+				"letmein", "users");
+	app.start();
+
+	return 0;
+}
 

@@ -68,7 +68,7 @@ public class Request {
 	}
 }
 
-class HttpApp : TcpApp {
+class HttpApp {
 	private int _session_id = 0;
 	private string[string][string] _sessions;
 	private string _salt;
@@ -81,7 +81,7 @@ class HttpApp : TcpApp {
 		delete random;
 	}
 
-	protected override char[] on_stdin(char[] request) {
+	protected char[] process_request(char[] request) {
 		try {
 			return this.trigger_on_request(request);
 		} catch(Exception err) {
@@ -394,13 +394,8 @@ class HttpApp : TcpApp {
 }
 
 class HttpServer : TcpServer {
-	public this(ushort port, int max_waiting_clients, char[] app_name, bool start_application) {
-		super(port, max_waiting_clients, app_name, start_application);
-	}
-
-	protected char[] on_request(char[] request) {
-//		return this.trigger_on_request(request);
-		return null;
+	public this(ushort port, int max_waiting_clients) {
+		super(port, max_waiting_clients);
 	}
 
 	protected void on_started() {
