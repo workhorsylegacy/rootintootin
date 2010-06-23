@@ -33,9 +33,10 @@ class RootinTootinAppProcess : RootinTootinApp {
 	private SharedMemory _shm_request = null;
 	private SharedMemory _shm_response = null;
 
-	public this(RunnerBase runner, string[Regex][string][string] routes, 
+	public this(string server_name, 
+				RunnerBase runner, string[Regex][string][string] routes, 
 				string db_host, string db_user, string db_password, string db_name) {
-		super(runner, routes, 
+		super(server_name, runner, routes, 
 			db_host, db_user, db_password, db_name);
 	}
 

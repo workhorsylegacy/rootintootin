@@ -23,8 +23,10 @@ public class RootinTootinApp : HttpApp {
 	private RunnerBase _runner = null;
 	private string[Regex][string][string] _routes = null;
 
-	public this(RunnerBase runner, string[Regex][string][string] routes, 
+	public this(string server_name, 
+				RunnerBase runner, string[Regex][string][string] routes, 
 				string db_host, string db_user, string db_password, string db_name) {
+		super(server_name);
 		_routes = routes;
 		_runner = runner;
 

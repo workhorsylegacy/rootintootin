@@ -28,7 +28,7 @@ elif not os.path.exists(sys.argv[1]):
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
-def generate_app(routes, table_map, reference_map):
+def generate_app(version, routes, table_map, reference_map):
 	generator = Generator()
 
 	# Get the names of all the views
@@ -168,6 +168,7 @@ def generate_app(routes, table_map, reference_map):
 	"	// Create and start the app\n" + 
 	"	RunnerBase runner = new Runner();\n" + 
 	"	auto app = new RootinTootinAppProcess(\n" + 
+	"				\"" + version + "\", \n" + 
 	"				runner, routes, \n" + 
 	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
 	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
@@ -681,12 +682,17 @@ def setup_app(pwd, scratch):
 		globals()['database_configuration'] = config['database_configuration']
 		globals()['server_configuration'] = config['server_configuration']
 
+	# Get the Rootin Tootin version
+	f = open(scratch+'version')
+	version = f.read().strip()
+	f.close()
+
 	# Do code generation
 	table_map, reference_map = generate_models()
 	generate_controllers()
 	generate_layouts()
 	generate_views(routes)
-	generate_app(routes, table_map, reference_map)
+	generate_app(version, routes, table_map, reference_map)
 
 # FIXME: This does not need to be a thread anymore, as we don't rebuild the server
 class BuilderThread(threading.Thread):

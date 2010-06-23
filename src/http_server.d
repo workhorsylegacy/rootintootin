@@ -72,8 +72,13 @@ class HttpApp {
 	private int _session_id = 0;
 	private string[string][string] _sessions;
 	private string _salt;
+	private string _server_name;
 
-	public this() {
+	public this(string server_name) {
+		if(server_name == null)
+			throw new Exception("The server name is invalid");
+		_server_name = server_name;
+
 		// Get a random salt for salting sessions
 		Twister* random = new Twister();
 		random.seed(cast(uint)Clock.now.span.millis);
@@ -114,7 +119,7 @@ class HttpApp {
 		// See: https://developer.mozilla.org/En/HTTP_Access_Control
 		string response = 
 		"HTTP/1.1 200 OK\r\n" ~ 
-		"Server: RootinTootin_0.1\r\n" ~ 
+		"Server: " ~ _server_name ~ "\r\n" ~ 
 		"Status: 200 OK\r\n" ~ 
 		"Access-Control-Allow-Origin: *\r\n" ~ 
 		"Content-Length: 0\r\n" ~  
@@ -361,7 +366,7 @@ class HttpApp {
 		string[] reply = [
 		"HTTP/1.1 ", status, "\r\n", 
 		"Date: ", to_s(date.day), to_s(date.month), to_s(date.year), "\r\n", 
-		"Server: RootinTootin_0.3.0\r\n", 
+		"Server: " ~ _server_name ~ "\r\n", 
 		set_cookies, 
 		"Status: ", status, "\r\n",
 		//"X-Runtime: 0.15560\r\n",
