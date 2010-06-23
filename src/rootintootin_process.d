@@ -96,6 +96,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 	private File _log = null;
 	private SharedMemory _shm_request = null;
 	private SharedMemory _shm_response = null;
+	private char[] _compile_error = null;
 
 	public this(ushort port, int max_waiting_clients, 
 				char[] app_path, char[] app_name, bool start_application) {
@@ -127,6 +128,10 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	public char[] process_request(char[] request) {
+		// Just return the compile error if there is one
+		if(_compile_error)
+			return _compile_error;
+
 		// Write the request to the app
 		write_request("r", request);
 
@@ -142,6 +147,28 @@ class RootinTootinServerProcess : RootinTootinServer {
 		}
 
 		return response;
+	}
+
+	protected void on_started() {
+		// Have the builder build the app when it changes
+		auto builder = new AppBuilder(
+							_app_path, 
+							&on_build_success, 
+							&on_build_failure);
+		builder.start();
+
+		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
+	}
+
+	protected void on_build_success() {
+		_compile_error = null;
+		this.start_application();
+		Stdout("Application running ...\n").flush;
+	}
+
+	protected void on_build_failure(char[] compile_error) {
+		_compile_error = compile_error;
+		this.stop_application();
 	}
 
 	public void start_application() {
@@ -164,20 +191,6 @@ class RootinTootinServerProcess : RootinTootinServer {
 		_app = null;
 	}
 
-	protected void on_started() {
-		// Have the builder build the app when it changes
-		auto builder = new AppBuilder(_app_path);
-		builder.on_build_success(&on_build);
-		builder.start();
-
-		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
-	}
-
-	protected void on_build() {
-		this.start_application();
-		Stdout("Application running ...\n").flush;
-	}
-
 	protected void write_request(char[] type, char[] request) {
 		// Send the request to the app
 		_shm_request.set_value(toStringz(request));
@@ -192,10 +205,12 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected char[] read_response() {
+		char[] response = null;
+
 		// Get the response from the app
 		_app.stdout.read(_response_signal);
 		_app.stdout.flush();
-		char[] response = fromStringz(_shm_response.get_value());
+		response = fromStringz(_shm_response.get_value());
 
 		// Write to the log
 		if(_log) {

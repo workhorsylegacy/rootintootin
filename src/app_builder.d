@@ -20,20 +20,19 @@ private import file_system;
 
 public class AppBuilder {
 	private Thread _thread = null;
-	private void delegate() _on_build_func = null;
+	private void delegate() _on_success_func = null;
+	private void delegate(char[]) _on_failure_func = null;
 	private string _app_path = null;
 
-	public this(string app_path) {
+	public this(string app_path, void delegate() on_build_success=null, void delegate(char[]) on_build_failure=null) {
 		_app_path = app_path;
+		_on_success_func = on_build_success;
+		_on_failure_func = on_build_failure;
 	}
 
 	public void start() {
 		_thread = new Thread(&build_loop);
 		_thread.start();
-	}
-
-	public void on_build_success(void delegate() func) {
-		_on_build_func = func;
 	}
 
 	private void wait_for_changes() {
@@ -59,13 +58,21 @@ public class AppBuilder {
 	}
 
 	private void build_loop() {
+		char[] compile_error = null;
+
 		// Loop forever, and rebuild
 		do {
 			// Rebuild the application
-			this.build_method();
-
-			if(_on_build_func)
-				_on_build_func();
+			compile_error = this.build_method();
+			if(compile_error == null) {
+				Stdout("\nApplication build successful!").newline.flush;
+				if(_on_success_func)
+					_on_success_func();
+			} else {
+				Stdout("\nApplication build failed!").newline.flush;
+				if(_on_failure_func)
+					_on_failure_func(compile_error);
+			}
 
 			// Wait here and block till files change
 			wait_for_changes();
@@ -73,7 +80,9 @@ public class AppBuilder {
 		} while(true);
 	}
 
-	private void build_method() {
+	private char[] build_method() {
+		char[] compile_error = null;
+
 		// Copy all the app files, and do code generation
 		this.run_command("python /usr/bin/rootintootin_run " ~ _app_path ~ " application");
 
@@ -173,6 +182,7 @@ public class AppBuilder {
 		files ~= "view_layouts_default.d";
 
 		// Build the app
+		char[] c_stdout, c_stderr;
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
 			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d rootintootin_process.d app_builder.d db.d db.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
@@ -181,24 +191,26 @@ public class AppBuilder {
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
 //			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
 			Stdout("\nRebuilding application ...").newline.flush;
-			this.run_command(command);
+			this.run_command(command, c_stdout, c_stderr);
 
 			// Make sure the application was built
 			if(file_system.file_exist("application_new")) {
-				Stdout("\nApplication build successful!").newline.flush;
-
 				// Replace the old app with the new one
 				if(file_system.file_exist("application"))
 					(new FilePath("application")).remove();
 				(new FilePath("application_new")).rename("application");
 			} else {
-				Stdout("\nApplication build failed!").newline.flush;
+				compile_error = c_stdout ~ c_stderr;
+				Stdout(c_stdout).flush;
+				Stdout(c_stderr).flush;
 			}
 
 			// FIXME: Run the app
 		} catch {
 
 		}
+
+		return compile_error;
 	}
 
 	private void run_command(string command) {
