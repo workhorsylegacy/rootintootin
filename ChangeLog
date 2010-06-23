@@ -8,6 +8,7 @@
 	* Fixed Bug #585528: 'Move the server and app to separate processes'.
 	* Fixed Bug #597053: 'Failed builds should show in the browser'.
 	* Fixed Bug #590977: 'Server is always old version RootinTootin_0.1'.
+	* Fixed Bug #597049: '404 pages do not show in Chrome'.
 
 2010-03-02 Release 0.4.0
 	* Fixed bug #511025: 'Controller template uses wrong view on create fail'.

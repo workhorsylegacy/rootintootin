@@ -404,7 +404,7 @@ public static string after_last(string value, string separator) {
 public string rjust(string value, uint width, string pad_char=" ") {
 	int len = width - value.length;
 	char[] retval = new char[width];
-	tango.text.Util.repeat("0", width, retval);
+	tango.text.Util.repeat(pad_char, width, retval);
 	retval[len .. length] = value;
 	return retval;
 }
@@ -412,7 +412,7 @@ public string rjust(string value, uint width, string pad_char=" ") {
 public string ljust(string value, uint width, string pad_char=" ") {
 	int len = value.length;
 	char[] retval = new char[width];
-	tango.text.Util.repeat("0", width, retval);
+	tango.text.Util.repeat(pad_char, width, retval);
 	retval[0 .. len] = value;
 	return retval;
 }

@@ -137,12 +137,27 @@ public class RootinTootinApp : HttpApp {
 		} catch(RenderNoActionException e) {
 			retval = this.render_text(request, e.msg, 404);
 		} catch(RenderNoControllerException e) {
-			string response = "<h1>404 Unknown Resource</h1>\n<ul>\n";
-			response ~= "<p>Resources we know about:</p>";
+			string response = 
+`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+		<title>404 Unknown Resource</title>
+	</head>
+	<body>
+		<h1>404 Unknown Resource</h1>
+			<p>Resources we know about:</p>
+				<ul>`;
 			foreach(string controller_name ; e._controllers) {
 				response ~= "	<li><a href=\"/" ~ controller_name ~ "\">" ~ controller_name ~ "</a></li>\n";
 			}
-			response ~= "</ul>\n";
+			response ~= 
+`		</ul>
+	</body>
+</html>`;
+
 			retval = this.render_text(request, response, 404, "html");
 		}
 

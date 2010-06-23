@@ -335,6 +335,13 @@ class HttpApp {
 	protected string render_text(Request request, string text, ushort status_code = 200, string format = null) {
 		if(format==null) format = request.format;
 		string content_type = Helper.mimetype_map[format];
+
+		// If a 404 page is less than 512 bytes, we pad it for Chrome/Chromium
+		// Otherwise the "Friendly 404" will show in the browser.
+		// https://bugs.launchpad.net/rester/+bug/597049
+		if(status_code == 404 && text.length < 512)
+			text = ljust(text, 512, " ");
+
 		return generate_text(request, text, status_code, content_type);
 	}
 
