@@ -59,11 +59,12 @@ public class AppBuilder {
 
 	private void build_loop() {
 		char[] compile_error = null;
+		bool is_first_loop = true;
 
 		// Loop forever, and rebuild
 		do {
 			// Rebuild the application
-			compile_error = this.build_method();
+			compile_error = this.build_method(is_first_loop);
 			if(compile_error == null) {
 				Stdout("\nApplication build successful!").newline.flush;
 				if(_on_success_func)
@@ -77,10 +78,11 @@ public class AppBuilder {
 			// Wait here and block till files change
 			wait_for_changes();
 
+			is_first_loop = false;
 		} while(true);
 	}
 
-	private char[] build_method() {
+	private char[] build_method(bool is_first_loop) {
 		char[] compile_error = null;
 
 		// Copy all the app files, and do code generation
@@ -169,17 +171,45 @@ public class AppBuilder {
 			}
 		}
 
+		// FIXME: this needs to compare the *.o file in the scratch to 
+		// the *.d file in the code project(not the *.d file in the scratch).
 		// Get all the app's files to compile
 		string[] files;
-		foreach(string model_name; model_names)
-			files ~= model_name ~ "_base.d";
-		foreach(string model_name; model_names)
-			files ~= model_name ~ ".d";
-		foreach(string controller_name, string[string][string] route_maps; routes)
-			files ~= singularize(nouns, controller_name) ~ "_controller.d";
-		foreach(string view_name; view_names)
-			files ~= view_name ~ ".d";
-		files ~= "view_layouts_default.d";
+		bool is_newer;
+		if(!is_first_loop) {
+			foreach(string model_name; model_names) {
+				is_newer = is_file_newer(model_name ~ "_base.d", model_name ~ "_base.o");
+				files ~= model_name ~ "_base" ~ (is_newer ? ".d" : ".o");
+			}
+			foreach(string model_name; model_names) {
+				is_newer = is_file_newer(model_name ~ ".d", model_name ~ ".o");
+				files ~= model_name ~ (is_newer ? ".d" : ".o");
+			}
+			foreach(string controller_name, string[string][string] route_maps; routes) {
+				is_newer = is_file_newer(controller_name ~ "_controller.d", controller_name ~ "_controller.o");
+				files ~= singularize(nouns, controller_name) ~ "_controller.d";
+			}
+			foreach(string view_name; view_names) {
+				is_newer = is_file_newer(view_name ~ ".d", view_name ~ ".o");
+				files ~= view_name ~ (is_newer ? ".d" : ".o");
+			}
+			is_newer = is_file_newer("view_layouts_default.d", "view_layouts_default.o");
+			files ~= "view_layouts_default" ~ (is_newer ? ".d" : ".o");
+		}
+
+
+		if(is_first_loop) {
+			foreach(string model_name; model_names)
+				files ~= model_name ~ "_base.d";
+			foreach(string model_name; model_names)
+				files ~= model_name ~ ".d";
+			foreach(string controller_name, string[string][string] route_maps; routes)
+				files ~= singularize(nouns, controller_name) ~ "_controller.d";
+			foreach(string view_name; view_names)
+				files ~= view_name ~ ".d";
+			files ~= "view_layouts_default.d";
+		}
+
 
 		// Build the app
 		char[] c_stdout, c_stderr;
@@ -190,10 +220,8 @@ public class AppBuilder {
 				"ldc -g -w -of application_new application.d " ~ 
 				tango.text.Util.join(files, " ") ~ 
 				" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " ~ CORELIB;
+			Stdout.format("command: {}", command).newline.flush;
 
-//			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
-//			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
-//			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;
 			Stdout("\nRebuilding application ...").newline.flush;
 			this.run_command(command, c_stdout, c_stderr);
 

@@ -9,11 +9,20 @@
 
 module file_system;
 private import tango.stdc.stringz;
+private import tango.stdc.time;
 
 enum EntryType { 
 	unknown = 0, 
 	file = 1, 
 	dir = 2
+}
+
+bool is_file_newer(char[] a, char[] b) {
+	return file_modify_time(a) > file_modify_time(b);
+}
+
+time_t file_modify_time(char[] file_name) {
+	return c_file_modify_time(toStringz(file_name));
 }
 
 char[][] dir_entries(char[] dir_name, EntryType type) {
@@ -54,6 +63,7 @@ private:
 
 extern (C):
 
+time_t c_file_modify_time(char* file_name);
 char** c_dir_entries(char* dir_name, int* len, EntryType type);
 void c_free_dir_entries(char** entries, int len);
 

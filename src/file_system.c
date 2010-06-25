@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
-
+#include <sys/stat.h>
 #include <stdio.h>
 
 typedef enum { 
@@ -20,6 +20,12 @@ typedef enum {
 	entry_type_file = 1, 
 	entry_type_dir = 2
 } EntryType;
+
+time_t c_file_modify_time(char* file_name) {
+	struct stat buffer;
+	stat(file_name, &buffer);
+	return buffer.st_ctime;
+}
 
 char** c_dir_entries(char* dir_name, int* len, EntryType type) {
 	char** retval;
