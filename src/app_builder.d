@@ -185,8 +185,12 @@ public class AppBuilder {
 		char[] c_stdout, c_stderr;
 		try {
 			string CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a";
-			string ROOTINLIB = "language_helper.d helper.d rootintootin.d ui.d rootintootin_server.d http_server.d tcp_server.d rootintootin_process.d app_builder.d db.d db.a shared_memory.d shared_memory.a file_system.d file_system.a regex.d regex.a dornado/ioloop.d -L=\"-lmysqlclient\" -L=\"-lpcre\"";
-			string command = "ldc -g -w -of application_new application.d " ~ tango.text.Util.join(files, " ") ~ " " ~ CORELIB ~ " " ~ ROOTINLIB;
+
+			string command = 
+				"ldc -g -w -of application_new application.d " ~ 
+				tango.text.Util.join(files, " ") ~ 
+				" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " ~ CORELIB;
+
 //			Stdout.format("view_names: {}", tango.text.Util.join(view_names, " ")).newline.flush;
 //			Stdout.format("model_names: {}", tango.text.Util.join(model_names, " ")).newline.flush;
 //			Stdout.format("files: {}", tango.text.Util.join(files, " ")).newline.flush;

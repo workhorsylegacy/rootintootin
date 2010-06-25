@@ -750,23 +750,28 @@ class BuilderThread(threading.Thread):
 		# Compile the application into an executable
 		additional_imports = get_link_files(routes)
 
+		tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+
 		result = ''
 		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
-		result += commands.getoutput("ar rcs db.a db.o")
 		result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
-		result += commands.getoutput("ar rcs file_system.a file_system.o")
 		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
-		result += commands.getoutput("ar rcs regex.a regex.o")
 		result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
-		result += commands.getoutput("ar rcs shared_memory.a shared_memory.o")
-		command = "ldc -g -w -of server server.d " + \
-					"language_helper.d helper.d rootintootin.d ui.d " + \
-					"rootintootin_server.d http_server.d tcp_server.d " + \
-					"rootintootin_process.d app_builder.d " + \
-					"db.d db.a file_system.d file_system.a " + \
-					"shared_memory.d shared_memory.a regex.d regex.a dornado/ioloop.d " + \
-					" -L=\"-lmysqlclient\" -L=\"-lpcre\"" + \
-					" -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+		result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o")
+		command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
+				"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
+				"rootintootin_process.d app_builder.d dornado/ioloop.d " + \
+				" db.d file_system.d regex.d shared_memory.d " + tango
+		result += commands.getoutput(command)
+
+		command = "ar rcs rootintootin.a language_helper.o helper.o " + \
+				"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
+				"tcp_server.o rootintootin_process.o app_builder.o ioloop.o " + \
+				"db.o file_system.o regex.o shared_memory.o"
+		result += commands.getoutput(command)
+
+		command = "ldc -g -w -of server server.d -L rootintootin.a " + \
+				"-L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + tango
 		result += commands.getoutput(command)
 
 		if os.path.exists("server"):
