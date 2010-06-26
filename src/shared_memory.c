@@ -14,32 +14,22 @@
 #include <string.h>
 
 
-size_t c_create_key(char* name) {
-	return ftok(name, 'S');
+int c_create_key(char* name) {
+	key_t r = ftok(name, 1);
+	return (int)r;
 }
 
-key_t ftok_check (char *name, int index) {
-	key_t temp;
-
-	temp = ftok (name, index);
-	if (temp == (key_t) - 1) {
-		exit (1);
-	}
-	return temp;
-}
-
-
-int c_shm_open(size_t key, size_t buffer_size) {
-	key_t mykey = ftok_check("server", 1);
+int c_shm_open(int key, size_t buffer_size) {
+	key_t k = (key_t)key;
 
 	// Create a new memory block
-	int shmid = shmget(mykey, buffer_size, 0777 | IPC_CREAT);
+	int shmid = shmget(k, buffer_size, 0777 | IPC_CREAT);
 	if(shmid != -1) {
 		return shmid;
 	}
 
 	// If that failed, use the existing memory block
-	shmid = shmget(mykey, buffer_size, 0);
+	shmid = shmget(k, buffer_size, 0);
 	if(shmid == -1) {
 //		perror("shmget");
 //		exit(1);

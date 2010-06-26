@@ -24,7 +24,7 @@ public class SharedMemory {
 			throw new Exception("Failed to create shared memory. The min size of the buffer is 100.");
 
 		// Get the key
-		size_t key = c_create_key(toStringz(name));
+		int key = c_create_key(toStringz(name));
 		if(key == -1)
 			throw new Exception("Failed to create shared memory key. The name may not be an existing path, or may be invalid.");
 
@@ -66,8 +66,8 @@ private:
 
 extern (C):
 
-size_t c_create_key(char* name);
-int c_shm_open(size_t key, size_t buffer_size);
+int c_create_key(char* name);
+int c_shm_open(int key, size_t buffer_size);
 char* c_shm_attach(int shmid);
 void c_shm_set_value(int shmid, char* segptr, char* text);
 char* c_shm_get_value(int shmid, char* segptr);
