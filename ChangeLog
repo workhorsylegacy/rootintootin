@@ -10,6 +10,7 @@
 	* Fixed Bug #590977: 'Server is always old version RootinTootin_0.1'.
 	* Fixed Bug #597049: '404 pages do not show in Chrome'.
 	* Fixed Bug #586631: 'Rebuilding is too slow'.
+	* Fixed Bug #598700: 'The server needs to show unhandled exceptions'.
 
 2010-03-02 Release 0.4.0
 	* Fixed bug #511025: 'Controller template uses wrong view on create fail'.

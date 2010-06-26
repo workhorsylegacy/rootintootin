@@ -75,7 +75,14 @@ public class AppBuilder {
 		// Loop forever, and rebuild
 		do {
 			// Rebuild the application
-			compile_error = this.build_method(is_first_loop);
+			try {
+				compile_error = this.build_method(is_first_loop);
+			} catch(Exception err) {
+				compile_error = "Unhandled exception while building: '" ~ err.msg ~ "' line: '" ~ to_s(err.line) ~ "' file: '" ~ err.file ~ "'";
+				Stdout(compile_error).newline.flush;
+			}
+
+			// Show success or failure
 			if(compile_error == null) {
 				Stdout("\nApplication build successful!").newline.flush;
 				if(_on_success_func)
