@@ -108,9 +108,9 @@ class RootinTootinServerProcess : RootinTootinServer {
 		//_log = new File("log_parent", File.WriteCreate);
 
 		// Create the shared memory
-		if(!file_system.file_exist("request"))
+		if(!file_system.file_exist(".", "request"))
 			(new File("request", File.WriteCreate)).close();
-		if(!file_system.file_exist("response"))
+		if(!file_system.file_exist(".", "response"))
 			(new File("response", File.WriteCreate)).close();
 		_shm_request = new SharedMemory("request");
 		_shm_response = new SharedMemory("response");

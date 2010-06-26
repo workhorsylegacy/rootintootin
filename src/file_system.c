@@ -24,7 +24,7 @@ typedef enum {
 time_t c_file_modify_time(char* file_name) {
 	struct stat buffer;
 	stat(file_name, &buffer);
-	return buffer.st_ctime;
+	return buffer.st_mtime;
 }
 
 char** c_dir_entries(char* dir_name, int* len, EntryType type) {

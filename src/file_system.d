@@ -8,6 +8,7 @@
 
 
 module file_system;
+private import tango.io.Stdout;
 private import tango.stdc.stringz;
 private import tango.stdc.time;
 
@@ -17,12 +18,23 @@ enum EntryType {
 	dir = 2
 }
 
-bool is_file_newer(char[] a, char[] b) {
-	return file_modify_time(a) > file_modify_time(b);
+bool is_file_newer(char[] a_path, char[] a, char[] b_path, char[] b) {
+	time_t ta = file_modify_time(a_path, a);
+	time_t tb = file_modify_time(b_path, b);
+
+	return ta > tb;
 }
 
-time_t file_modify_time(char[] file_name) {
-	return c_file_modify_time(toStringz(file_name));
+time_t file_modify_time(char[] path, char[] file_name) {
+	if(!file_exist(path, file_name)) {
+		//Stdout("The file '" ~ path ~ file_name ~ "' does not exist.").newline.flush;
+		throw new Exception("The file '" ~ path ~ file_name ~ "' does not exist.");
+	}
+
+	if(path == ".")
+		path = "";
+
+	return c_file_modify_time(toStringz(path ~ file_name));
 }
 
 char[][] dir_entries(char[] dir_name, EntryType type) {
@@ -42,16 +54,16 @@ char[][] dir_entries(char[] dir_name, EntryType type) {
 	return d_entries;
 }
 
-bool file_exist(char[] file_name, char[] path=".") {
-	return exist(file_name, EntryType.file, path);
+bool file_exist(char[] path, char[] file_name) {
+	return exist(path, file_name, EntryType.file);
 }
 
-bool dir_exist(char[] file_name, char[] path=".") {
-	return exist(file_name, EntryType.dir, path);
+bool dir_exist(char[] path, char[] dir_name) {
+	return exist(path, dir_name, EntryType.dir);
 }
 
-bool exist(char[] name, EntryType type, char[] path=".") {
-	foreach(char[] n; file_system.dir_entries(path, type)) {
+bool exist(char[] path, char[] name, EntryType type) {
+	foreach(char[] n; dir_entries(path, type)) {
 		if(n == name)
 			return true;
 	}

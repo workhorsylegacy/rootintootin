@@ -57,6 +57,17 @@ public class AppBuilder {
 		throw new Exception("Can't singularize unknown noun '" ~ noun ~ "'.");
 	}
 
+	private string pluralize(string[string] nouns, string noun) {
+		foreach(string singular, string plural; nouns) {
+			if(noun == singular || noun == plural) {
+				return plural;
+			} else if(noun == capitalize(singular) || noun == capitalize(plural)) {
+				return capitalize(plural);
+			}
+		}
+		throw new Exception("Can't pluralize unknown noun '" ~ noun ~ "'.");
+	}
+
 	private void build_loop() {
 		char[] compile_error = null;
 		bool is_first_loop = true;
@@ -166,50 +177,47 @@ public class AppBuilder {
 			foreach(string entry; dir_entries(name, type)) {
 //				Stdout.format("view name: {}", entry).newline.flush;
 				if(ends_with(entry, ".html.ed")) {
-					view_names ~= "view_" ~ controller_name ~ "_" ~ split(entry, ".html.ed")[0];
+					view_names ~= controller_name ~ "_" ~ split(entry, ".html.ed")[0];
 				}
 			}
 		}
 
-		// FIXME: this needs to compare the *.o file in the scratch to 
-		// the *.d file in the code project(not the *.d file in the scratch).
-		// Get all the app's files to compile
+		// Get all the app's files for a rebuild
 		string[] files;
 		bool is_newer;
 		if(!is_first_loop) {
 			foreach(string model_name; model_names) {
-				is_newer = is_file_newer(model_name ~ "_base.d", model_name ~ "_base.o");
+				is_newer = is_file_newer("app/models/", model_name ~ ".d", ".", model_name ~ ".o");
+				files ~= model_name ~ (is_newer ? ".d" : ".o");
 				files ~= model_name ~ "_base" ~ (is_newer ? ".d" : ".o");
 			}
-			foreach(string model_name; model_names) {
-				is_newer = is_file_newer(model_name ~ ".d", model_name ~ ".o");
-				files ~= model_name ~ (is_newer ? ".d" : ".o");
-			}
 			foreach(string controller_name, string[string][string] route_maps; routes) {
-				is_newer = is_file_newer(controller_name ~ "_controller.d", controller_name ~ "_controller.o");
-				files ~= singularize(nouns, controller_name) ~ "_controller.d";
+				string controller = singularize(nouns, controller_name);
+				is_newer = is_file_newer("app/controllers/", controller ~ "_controller.d", ".", controller ~ "_controller.o");
+				files ~= controller ~ "_controller" ~ (is_newer ? ".d" : ".o");
 			}
 			foreach(string view_name; view_names) {
-				is_newer = is_file_newer(view_name ~ ".d", view_name ~ ".o");
-				files ~= view_name ~ (is_newer ? ".d" : ".o");
+				string controller = split(view_name, "_")[0];
+				string action = split(view_name, "_")[1];
+				is_newer = is_file_newer("app/views/" ~ controller ~ "/",  action ~ ".html.ed", ".", "view_" ~ controller ~ "_" ~ action ~ ".o");
+				files ~= "view_" ~ controller ~ "_" ~ action ~ (is_newer ? ".d" : ".o");
 			}
-			is_newer = is_file_newer("view_layouts_default.d", "view_layouts_default.o");
+			is_newer = is_file_newer("app/views/layouts/", "default.html.ed", ".", "view_layouts_default.o");
 			files ~= "view_layouts_default" ~ (is_newer ? ".d" : ".o");
 		}
 
-
+		// Get all the app's files for a first build
 		if(is_first_loop) {
-			foreach(string model_name; model_names)
-				files ~= model_name ~ "_base.d";
-			foreach(string model_name; model_names)
+			foreach(string model_name; model_names) {
 				files ~= model_name ~ ".d";
+				files ~= model_name ~ "_base.d";
+			}
 			foreach(string controller_name, string[string][string] route_maps; routes)
 				files ~= singularize(nouns, controller_name) ~ "_controller.d";
 			foreach(string view_name; view_names)
-				files ~= view_name ~ ".d";
+				files ~= "view_" ~ view_name ~ ".d";
 			files ~= "view_layouts_default.d";
 		}
-
 
 		// Build the app
 		char[] c_stdout, c_stderr;
@@ -220,15 +228,14 @@ public class AppBuilder {
 				"ldc -g -w -of application_new application.d " ~ 
 				tango.text.Util.join(files, " ") ~ 
 				" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " ~ CORELIB;
-			Stdout.format("command: {}", command).newline.flush;
 
 			Stdout("\nRebuilding application ...").newline.flush;
 			this.run_command(command, c_stdout, c_stderr);
 
 			// Make sure the application was built
-			if(file_system.file_exist("application_new")) {
+			if(file_system.file_exist(".", "application_new")) {
 				// Replace the old app with the new one
-				if(file_system.file_exist("application"))
+				if(file_system.file_exist(".", "application"))
 					(new FilePath("application")).remove();
 				(new FilePath("application_new")).rename("application");
 			} else {
