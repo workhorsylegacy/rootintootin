@@ -17,8 +17,11 @@ public class SharedMemory {
 	private char* _segptr;
 	private size_t _buffer_size;
 
-	public this(char[] name, size_t buffer_size = 100) {
+	public this(char[] name, size_t buffer_size = 1024*256) {
 		_buffer_size = buffer_size;
+
+		if(buffer_size < 100)
+			throw new Exception("Failed to create shared memory. The min size of the buffer is 100.");
 
 		// Get the key
 		size_t key = c_create_key(toStringz(name));
@@ -38,12 +41,10 @@ public class SharedMemory {
 
 	public void set_value(char* value) {
 		// Make sure the length isn't bigger than the buffer
-		/*
 		size_t len = strlenz(value);
 		if(len > _buffer_size) {
-			throw new Exception("The string with the length of " ~ to_s(len) ~ " is too big for the buffer with the length of " ~ to_s(_buffer_size) ~ ".");
+			throw new Exception("Shared memory error: The message is " ~ to_s(len) ~ " bytes long, but the max size is " ~ to_s(_buffer_size) ~ ".");
 		}
-		*/
 
 		c_shm_set_value(_shmid, _segptr, value);
 	}

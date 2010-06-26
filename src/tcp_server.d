@@ -59,7 +59,14 @@ class TcpServer {
 		char[] response = this.process_request(request);
 
 		// Write the response to the socket
-		connection.write(response);
+		for(size_t i=0; i<response.length; i+=5) {
+			char[] r;
+			if(i+5 < response.length)
+				r = response[i .. i+5];
+			else
+				r = response[i .. length];
+			connection.write(r);
+		}
 		connection.shutdown();
 		connection.detach();
 	}

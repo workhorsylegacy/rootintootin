@@ -52,7 +52,11 @@ class RootinTootinAppProcess : RootinTootinApp {
 		while(true) {
 			char[] request = this.read_request();
 			response = process_request(request);
-			write_response("r", response);
+			try {
+				write_response("r", response);
+			} catch(Exception err) {
+				write_response("r", err.msg);
+			}
 		}
 	}
 
@@ -75,16 +79,16 @@ class RootinTootinAppProcess : RootinTootinApp {
 	protected void write_response(char[] type, char[] response) {
 		auto outs = Cout.stream;
 
-		// Write the response
-		_shm_response.set_value(toStringz(response));
-		outs.write(_response_signal);
-		outs.flush();
-
 		// Write to the log
 		if(_log) {
 			_log.write(response ~ "\n\n");
 			_log.flush();
 		}
+
+		// Write the response
+		_shm_response.set_value(toStringz(response));
+		outs.write(_response_signal);
+		outs.flush();
 	}
 }
 
@@ -134,7 +138,11 @@ class RootinTootinServerProcess : RootinTootinServer {
 			return _compile_error;
 
 		// Write the request to the app
-		write_request("r", request);
+		try {
+			write_request("r", request);
+		} catch(Exception err) {
+			return err.msg;
+		}
 
 		// Read the messages and response from the app
 		char[] response;
@@ -193,16 +201,16 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected void write_request(char[] type, char[] request) {
-		// Send the request to the app
-		_shm_request.set_value(toStringz(request));
-		_app.stdin.write(_request_signal);
-		_app.stdin.flush();
-
 		// Write to the log
 		if(_log) {
 			_log.write(request ~ "\n\n");
 			_log.flush();
 		}
+
+		// Send the request to the app
+		_shm_request.set_value(toStringz(request));
+		_app.stdin.write(_request_signal);
+		_app.stdin.flush();
 	}
 
 	protected char[] read_response() {
