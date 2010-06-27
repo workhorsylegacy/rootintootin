@@ -49,7 +49,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 		// Read each request, and write the response
 		string[] responses = null;
 		while(true) {
-			string request = this.read_request();
+			string request = this.shm_read_request();
 			responses = process_request(request);
 			foreach(string response; responses) {
 				if(response[0 .. 3] != "R;;")
@@ -58,9 +58,9 @@ class RootinTootinAppProcess : RootinTootinApp {
 					else
 						response = "M;;" ~ response;
 				try {
-					write_response(response[0 .. 3], response[3 .. length]);
+					shm_write_response(response[0 .. 3], response[3 .. length]);
 				} catch(Exception err) {
-					write_response(response[0 .. 3], err.msg);
+					shm_write_response(response[0 .. 3], err.msg);
 				}
 			}
 		}
@@ -74,7 +74,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 		_responses ~= response;
 	}
 
-	protected char[] read_request() {
+	protected char[] shm_read_request() {
 		auto ins = Cin.stream;
 
 		// Read the request
@@ -90,7 +90,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 		return request;
 	}
 
-	protected void write_response(char[] response_signal, char[] response) {
+	protected void shm_write_response(char[] response_signal, char[] response) {
 		auto outs = Cout.stream;
 
 		// Write to the log
@@ -139,7 +139,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		// Read any startup messages from the app
 //		char[] message;
 //		while(true) {
-//			message = this.read_response();
+//			message = this.shm_read_response();
 //			if(message == "") break;
 //			Stdout(message).flush;
 //		}
@@ -152,7 +152,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		// Write the request to the app
 		try {
-			write_request("R;;", request);
+			shm_write_request("R;;", request);
 		} catch(Exception err) {
 			return err.msg;
 		}
@@ -160,7 +160,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		// Read the messages and response from the app
 		char[] response;
 		while(true) {
-			response = this.read_response();
+			response = this.shm_read_response();
 			if(_response_signal == "R;;") {
 				break;
 			} else if(_response_signal == "M;;") {
@@ -214,7 +214,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		_app = null;
 	}
 
-	protected void write_request(char[] request_signal, char[] request) {
+	protected void shm_write_request(char[] request_signal, char[] request) {
 		// Write to the log
 		if(_log) {
 			_log.write(request ~ "\n\n");
@@ -227,7 +227,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		_app.stdin.flush();
 	}
 
-	protected char[] read_response() {
+	protected char[] shm_read_response() {
 		char[] response = null;
 
 		// Get the response from the app
