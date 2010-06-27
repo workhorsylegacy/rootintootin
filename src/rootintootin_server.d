@@ -49,7 +49,7 @@ public class RootinTootinApp : HttpApp {
 				foreach(Regex regex, string method ; routes_map) {
 					if(request.method == method) {
 						if(regex.is_match(raw_uri)) {
-//							stdout_message("regex: " ~ regex.pattern ~ "\n");
+							this.write_to_log("regex: " ~ regex.pattern ~ "\n");
 							new_action = route_action;
 							if(split(regex.pattern, r"\d*").length > 1 || split(regex.pattern, r"\d+").length > 1)
 								new_id = before(after_last(raw_uri, "/"), ";");
@@ -93,7 +93,7 @@ public class RootinTootinApp : HttpApp {
 		// Send any files
 		string normalized = Path.normalize(request.uri);
 		if(normalized != "/" && Path.exists("public" ~ normalized)) {
-//			stdout_message("file: " ~ normalized ~ "\n");
+			this.write_to_log("file: " ~ normalized ~ "\n");
 			bool read_file_broke = false;
 			File file = null;
 			// FIXME: Use the existing buffer instead of creating a new one here
@@ -118,10 +118,10 @@ public class RootinTootinApp : HttpApp {
 		// Add the id to the params if we have one
 		if(id != null) request._params["id"].value = to_s(id);
 
-//		stdout_message("uri: " ~ request.uri ~ "\n");
-//		stdout_message("format: " ~ request.format ~ "\n");
-//		stdout_message("controller: " ~ controller ~ "\n");
-//		stdout_message("action: " ~ action ~ "\n\n");
+		this.write_to_log("uri: " ~ request.uri ~ "\n");
+		this.write_to_log("format: " ~ request.format ~ "\n");
+		this.write_to_log("controller: " ~ controller ~ "\n");
+		this.write_to_log("action: " ~ action ~ "\n\n");
 
 		// Generate and send the request
 		string[] events_to_trigger;

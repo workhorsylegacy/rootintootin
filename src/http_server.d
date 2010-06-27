@@ -73,6 +73,7 @@ class HttpApp {
 	private string[string][string] _sessions;
 	private string _salt;
 	private string _server_name;
+	protected string[] _responses;
 
 	public this(string server_name) {
 		if(server_name == null)
@@ -88,7 +89,8 @@ class HttpApp {
 
 	protected string[] process_request(char[] request) {
 		try {
-			return this.trigger_on_request(request);
+			this.trigger_on_request(request);
+			return _responses;
 		} catch(Exception err) {
 			return ["Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file];
 		}
@@ -128,10 +130,18 @@ class HttpApp {
 		return response;
 	}
 
-	protected string[] trigger_on_request(string raw_request) {
+	protected void respond_to_client(string response) {
+		_responses ~= response;
+	}
+
+	protected void write_to_log(string response) {
+		Stdout(response).newline.flush;
+	}
+
+	protected void trigger_on_request(string raw_request) {
 		string[] pair = null;
 		Request request = Request.new_blank();
-		string[] responses;
+		_responses = [];
 
 		// Get the raw header body and header from the buffer
 		string[] buffer_pair = ["", ""];
@@ -167,7 +177,7 @@ class HttpApp {
 			foreach(string cookie ; split(request._fields["Cookie"], "; ")) {
 				pair = split(cookie, "=");
 				if(pair.length != 2) {
-					responses ~= "Malformed cookie: " ~ cookie ~ "\n";
+					this.write_to_log("Malformed cookie: " ~ cookie ~ "\n");
 				} else {
 					request._cookies[pair[0]] = Helper.unescape(pair[1]);
 				}
@@ -203,7 +213,7 @@ class HttpApp {
 		// Determine if the session id is invalid
 		if(has_session && (request._cookies["_appname_session"] in _sessions) == null) {
 			string hashed_session_id = request._cookies["_appname_session"];
-			responses ~= "Unknown session id '" ~ hashed_session_id ~ "'\n";
+			this.write_to_log("Unknown session id '" ~ hashed_session_id ~ "'\n");
 			has_session = false;
 		}
 
@@ -221,10 +231,10 @@ class HttpApp {
 			// Make the new session blank
 			string[string] new_empty_session;
 			_sessions[hashed_session_id] = new_empty_session;
-			responses ~= "Created session number '" ~ to_s(new_session_id) ~ "' '" ~ hashed_session_id ~ "'\n";
+			this.write_to_log("Created session number '" ~ to_s(new_session_id) ~ "' '" ~ hashed_session_id ~ "'\n");
 		} else {
 			hashed_session_id = request._cookies["_appname_session"];
-			responses ~= "Using existing session '" ~ request._cookies["_appname_session"] ~ "'\n";
+			this.write_to_log("Using existing session '" ~ request._cookies["_appname_session"] ~ "'\n");
 		}
 
 		// Copy the current session to the request
@@ -233,19 +243,19 @@ class HttpApp {
 		// Process the remainder of the request based on its method
 		switch(request.method) {
 			case "GET":
-				responses ~= "R;;" ~ this.trigger_on_request_get(request, raw_header, raw_body);
+				this.respond_to_client(this.trigger_on_request_get(request, raw_header, raw_body));
 				break;
 			case "POST":
-				responses ~= "R;;" ~ this.trigger_on_request_post(request, raw_header, raw_body);
+				this.respond_to_client(this.trigger_on_request_post(request, raw_header, raw_body));
 				break;
 			case "PUT":
-				responses ~= "R;;" ~ this.trigger_on_request_put(request, raw_header, raw_body);
+				this.respond_to_client(this.trigger_on_request_put(request, raw_header, raw_body));
 				break;
 			case "DELETE":
-				responses ~= "R;;" ~ this.trigger_on_request_delete(request, raw_header, raw_body);
+				this.respond_to_client(this.trigger_on_request_delete(request, raw_header, raw_body));
 				break;
 			case "OPTIONS":
-				responses ~= "R;;" ~ this.trigger_on_request_options(request, raw_header, raw_body);
+				this.respond_to_client(this.trigger_on_request_options(request, raw_header, raw_body));
 				break;
 			default:
 				throw new Exception("Unknown http request method '" ~ request.method ~ "'.");
@@ -266,8 +276,6 @@ class HttpApp {
 			Stdout.format("\t{} => {}\n", name, value).flush;
 		}
 		*/
-
-		return responses;
 	}
 
 	protected string trigger_on_request_get(Request request, string raw_header, string raw_body) {

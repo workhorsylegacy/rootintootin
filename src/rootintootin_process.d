@@ -66,6 +66,14 @@ class RootinTootinAppProcess : RootinTootinApp {
 		}
 	}
 
+	protected void respond_to_client(string response) {
+		_responses ~= "R;;" ~ response;
+	}
+
+	protected void write_to_log(string response) {
+		_responses ~= response;
+	}
+
 	protected char[] read_request() {
 		auto ins = Cin.stream;
 
