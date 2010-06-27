@@ -26,8 +26,7 @@ private import rootintootin_server;
 
 
 class RootinTootinAppProcess : RootinTootinApp {
-	private char[1] _request_signal;
-	private char[] _response_signal = "r";
+	private char[3] _request_signal;
 
 	private File _log = null;
 	private SharedMemory _shm_request = null;
@@ -48,14 +47,21 @@ class RootinTootinAppProcess : RootinTootinApp {
 		_shm_response = new SharedMemory("response");
 
 		// Read each request, and write the response
-		char[] response = null;
+		string[] responses = null;
 		while(true) {
-			char[] request = this.read_request();
-			response = process_request(request);
-			try {
-				write_response("r", response);
-			} catch(Exception err) {
-				write_response("r", err.msg);
+			string request = this.read_request();
+			responses = process_request(request);
+			foreach(string response; responses) {
+				if(response[0 .. 3] != "R;;")
+					if(responses.length == 1)
+						response = "R;;" ~ response;
+					else
+						response = "M;;" ~ response;
+				try {
+					write_response(response[0 .. 3], response[3 .. length]);
+				} catch(Exception err) {
+					write_response(response[0 .. 3], err.msg);
+				}
 			}
 		}
 	}
@@ -76,7 +82,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 		return request;
 	}
 
-	protected void write_response(char[] type, char[] response) {
+	protected void write_response(char[] response_signal, char[] response) {
 		auto outs = Cout.stream;
 
 		// Write to the log
@@ -87,7 +93,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		// Write the response
 		_shm_response.set_value(toStringz(response));
-		outs.write(_response_signal);
+		outs.write(response_signal);
 		outs.flush();
 	}
 }
@@ -96,8 +102,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 	private char[] _app_path = null;
 	private char[] _app_name = null;
 	private Process _app = null;
-	private char[] _request_signal = "r";
-	private char[1] _response_signal;
+	private char[3] _response_signal;
 	private File _log = null;
 	private SharedMemory _shm_request = null;
 	private SharedMemory _shm_response = null;
@@ -139,7 +144,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		// Write the request to the app
 		try {
-			write_request("r", request);
+			write_request("R;;", request);
 		} catch(Exception err) {
 			return err.msg;
 		}
@@ -148,10 +153,11 @@ class RootinTootinServerProcess : RootinTootinServer {
 		char[] response;
 		while(true) {
 			response = this.read_response();
-			if(_response_signal == "r") {
+			if(_response_signal == "R;;") {
 				break;
-			} else if(_response_signal == "m") {
+			} else if(_response_signal == "M;;") {
 				Stdout(response).flush;
+			} else {
 			}
 		}
 
@@ -200,7 +206,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		_app = null;
 	}
 
-	protected void write_request(char[] type, char[] request) {
+	protected void write_request(char[] request_signal, char[] request) {
 		// Write to the log
 		if(_log) {
 			_log.write(request ~ "\n\n");
@@ -209,7 +215,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		// Send the request to the app
 		_shm_request.set_value(toStringz(request));
-		_app.stdin.write(_request_signal);
+		_app.stdin.write(request_signal);
 		_app.stdin.flush();
 	}
 

@@ -23,20 +23,6 @@ public import db;
 private import helper;
 private import http_server;
 
-public void stdout_error(char[] message) {
-	stdout_message(message, "e");
-}
-
-public void stdout_message(char[] message, char[] type="m") {
-	auto outs = Cout.stream;
-
-	char[] message_length = rjust(to_s(message.length), 9, "0");
-	outs.write(type);
-	outs.write(message_length);
-	outs.flush();
-	outs.write(message);
-	outs.flush();
-}
 
 public class RunnerBase {
 	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {
