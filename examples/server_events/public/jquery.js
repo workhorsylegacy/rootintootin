@@ -1,1 +1,1 @@
-../../../src/empty_project/public/jquery.js
+/usr/share/rootintootin/src/empty_project/public/jquery.js

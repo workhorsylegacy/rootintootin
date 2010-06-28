@@ -1,8 +1,9 @@
 
-
-Rootin Tootin is a fast RESTful web server and framework written in D. It is 
+Rootin Tootin is a fast RESTful MVC web framework that is written in D. It is 
 designed to scale well by default, while still providing a developer experience 
 similar to Ruby on Rails.
+
+See http://rootin.toot.in for details.
 
 
 1. Install the dependencies for your distro:
@@ -19,10 +20,12 @@ sudo yum groupinstall "Development Tools"
 sudo yum install mysql mysql-server MySQL-python pexpect python-mako python-inotify bzr ldc pcre pcre-devel inotify-tools
 sudo service mysqld start
 
-2. Move to your install location, download the code, add path to bashrc:
+
+2. Install Rootin Tootin from source
 cd ~
-bzr branch lp:rester rootintootin
-cd rootintootin
+wget http://launchpad.net/rester/trunk/0.5.0/+download/rootintootin-0.5.0.tar.gz
+tar -zxvf rootintootin-0.5.0.tar.gz
+cd rootintootin-0.5.0
 sudo make install
 
 
@@ -31,18 +34,15 @@ cp -r examples/ ~/Desktop/examples/
 cd ~/Desktop/examples/users
 
 
-4. Change the site's database user and port:
+4. Configure and run the user example:
 ./gen configure database user:root password:password
 ./gen configure server port:3000
-
-
-5. Generate, build, run:
-./gen create database
+./gen recreate database
 ./gen migrate
 ./run
 
 
-6. In your web browser navigate to http://localhost:3000/users and you should 
+6. Navigate your web browser to http://localhost:3000/users and you should 
 see a basic CRUD example.
 
 

@@ -1,4 +1,4 @@
-* Release 0.5.0
+2010-06-28 Release 0.5.0
 	* Fixed bug #591855: 'Compilation needs to be more strict'.
 	* Fixed bug #589959: 'gen configure server header_max_size is ignored'.
 	* Fixed Bug #589820: 'Change configuration files to json'.
@@ -13,6 +13,7 @@
 	* Fixed Bug #598700: 'The server needs to show unhandled exceptions'.
 	* Fixed Bug #598609: 'Large responses break the server'.
 	* Fixed Bug #598615: 'Application console output should show on the server'.
+	* Fixed Bug #584744: 'ppa does not work on ubuntu 10.04'.
 
 2010-03-02 Release 0.4.0
 	* Fixed bug #511025: 'Controller template uses wrong view on create fail'.

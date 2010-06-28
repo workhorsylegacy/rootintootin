@@ -1,8 +1,8 @@
 
 all:
-	@echo "'sudo make install' - Installs it into the system."
-	@echo "'sudo make remove' - Removes it from the system."
-	@echo "'sudo make install_dev' - Links it to the system for development."
+	@echo "'sudo make install' - Installs Rootin Tootin for normal web development."
+	@echo "'sudo make dev'     - Installs Rootin Tootin for development on the framework itself."
+	@echo "'sudo make remove'  - Removes Rootin Tootin from the system."
 
 remove:
 	rm -f /usr/bin/rootintootin
@@ -17,7 +17,7 @@ install: remove
 	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 
-install_dev: remove
+dev: remove
 	ln -s `pwd` /usr/share/rootintootin
 	ln -s /usr/share/rootintootin/bin/rootintootin /usr/bin/rootintootin
 	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
