@@ -14,6 +14,7 @@ private import tango.math.random.engines.Twister;
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
 private import tango.time.Clock;
+private import tango.io.device.File;
 
 public import dornado.ioloop;
 private import tcp_server;
@@ -88,6 +89,7 @@ class HttpApp {
 	}
 
 	protected string[] process_request(char[] request) {
+		this.write_to_log("app request.length: " ~ to_s(request.length) ~ "\n");
 		try {
 			this.trigger_on_request(request);
 			return _responses;
@@ -144,10 +146,15 @@ class HttpApp {
 		_responses = [];
 
 		// Get the raw header body and header from the buffer
+//		this.write_to_log("[" ~ raw_request ~ "]\n");
 		string[] buffer_pair = ["", ""];
 		int header_end = tango.text.Util.locatePattern(raw_request, "\r\n\r\n", 0);
 		string raw_header = raw_request[0 .. header_end];
 		string raw_body = raw_request[header_end+4 .. length];
+		this.write_to_log("app raw_request.length: " ~ to_s(raw_request.length) ~ "\n");
+		this.write_to_log("app raw_header.length: " ~ to_s(raw_header.length) ~ "\n");
+		this.write_to_log("app raw_body.length: " ~ to_s(raw_body.length) ~ "\n");
+		this.write_to_log("app raw_body.length+raw_header.length: " ~ to_s(raw_body.length+raw_header.length) ~ "\n");
 		//Stdout.format("raw_header: {}\n", raw_header).flush;
 		//Stdout.format("raw_body: {}\n", raw_body).flush;
 
@@ -297,7 +304,8 @@ class HttpApp {
 
 		// Get the params from the body
 		if(("Content-Type" in request._fields) != null) {
-			switch(request._fields["Content-Type"]) {
+			string content_type = request._fields["Content-Type"];
+			switch(before(content_type, ";")) {
 				case "application/x-www-form-urlencoded":
 					urlencode_to_dict(request._params, raw_body);
 					break;
@@ -306,6 +314,10 @@ class HttpApp {
 					break;
 				case "application/xml":
 					xml_to_dict(request._params, raw_body);
+					break;
+				case "multipart/form-data":
+					string boundary = after(content_type, "; boundary=");
+					multipart_to_dict_and_file(request._params, raw_body, boundary);
 					break;
 				default:
 					throw new Exception("Unknown Content-Type '" ~ request._fields["Content-Type"] ~ "'.");
@@ -410,6 +422,40 @@ class HttpApp {
 					dict[pair[0]].value = pair[1];
 			}
 		}
+	}
+
+	private void multipart_to_dict_and_file(ref Dictionary dict, string multipart_in_a_string, string boundary) {
+//		this.write_to_log("length: " ~ to_s(multipart_in_a_string.length) ~ "\n");
+//		this.write_to_log("multipart_in_a_string: " ~ multipart_in_a_string ~ "\n");
+
+		char[] data = split(multipart_in_a_string, "--" ~ boundary)[1];
+//		this.write_to_log("data: " ~ data ~ "\r\n\r\n");
+
+		char[] header = split(multipart_in_a_string, "\r\n\r\n")[0];
+//		this.write_to_log("header: " ~ header ~ "\n\n");
+
+		char[] disposition = split(header, "\n")[1];
+//		this.write_to_log("disposition: " ~ disposition ~ "\n\n");
+
+		char[] field_name = between(disposition, "; name=\"", "\"; ");
+		char[] file_name = between(disposition, "; filename=\"", "\"");
+		this.write_to_log(field_name ~ ": [" ~ file_name ~ "]\n\n");
+
+		char[] file_content_type = split(header, "Content-Type: ")[1];
+		this.write_to_log("app file_content_type: [" ~ file_content_type ~ "]\n\n");
+
+		char[] file_data = split(data, "\r\n\r\n")[1][0 .. length-3];
+		this.write_to_log("app data length: [" ~ to_s(file_data.length) ~ "]\n\n");
+//		this.write_to_log("file_data: [" ~ file_data ~ "]\n\n");
+
+		dict["file_name"].value = file_name;
+		dict["file_path"].value = "uploads/" ~ file_name;
+		dict["file_content_type"].value = file_content_type;
+
+		// Write the file to disk
+		File file = new File(dict["file_path"].value, File.WriteCreate);
+		file.write(file_data);
+		file.close();
 	}
 }
 

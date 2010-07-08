@@ -3,12 +3,12 @@
 <% if(controller._files.length > 0) { %>
 <table>
 	<tr>
-		<th>Name</th>
+		<th>Path</th>
 	</tr>
 
 <% foreach(File file ; controller._files) { %>
 	<tr>
-		<td><%= file.name %></td>
+		<td><%= file.path %></td>
 		<td><%#link_to("Show", "/files/" ~ to_s(file.id))%></td>
 		<td><%#link_to("Edit", "/files/" ~ to_s(file.id) ~ ";edit")%></td>
 		<td><%#link_to("Destroy", "/files/" ~ to_s(file.id) ~ "?method=DELETE", "\"post_href('delete'); return false;\"")%></td>

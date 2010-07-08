@@ -267,6 +267,10 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		return null;
 	}
 
+	bool is_saved() {
+		return _id > 0;
+	}
+
 	bool save() {
 		// Return false if the validation failed
 		if(this.is_valid() == false)
@@ -276,7 +280,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		db.QueryResult result;
 
 		// If there is no id, use an insert query
-		if(this._id < 1) {
+		if(!this.is_saved) {
 			query ~= "insert into " ~ typeof(this)._table_name ~ "(" ~ unique_field_names_as_comma_string ~ ")";
 			query ~= " values(";
 			query ~= this.unique_fields_as_comma_string();

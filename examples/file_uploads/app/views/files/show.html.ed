@@ -1,5 +1,5 @@
 
-<p><b>Name:</b> <%=controller._file.name%></p>
+<p><b>Path:</b> <%=controller._file.path%></p>
 
 <%#link_to("Edit", "/files/" ~ to_s(controller._file.id) ~ ";edit")%> | 
 <%#link_to("Back", "/files")%>

@@ -19,7 +19,7 @@ public import dornado.ioloop;
 
 class TcpServer {
 	private ServerSocket _sock;
-	private char[1024] _buffer;
+	private char[1024 * 100] _buffer;
 	private char[] _response;
 	protected ushort _port;
 	protected int _max_waiting_clients;
@@ -54,6 +54,8 @@ class TcpServer {
 		// Get the request from the client
 		size_t buffer_length = connection.read(_buffer);
 		char[] request = _buffer[0 .. buffer_length];
+		Stdout.format("server buffer_length: {}", buffer_length).newline.flush;
+		Stdout.format("server request.length: {}", request.length).newline.flush;
 
 		// Process the request and get the response
 		char[] response = this.process_request(request);

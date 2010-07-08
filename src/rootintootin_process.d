@@ -83,7 +83,10 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		// Write to the log
 		if(_log) {
-			_log.write(request ~ "\n\n");
+			if(_request_signal == "R;;")
+				_log.write(to_s(request.length) ~ "\n\n");
+			else
+				_log.write(request ~ "\n\n");
 			_log.flush();
 		}
 
@@ -95,7 +98,10 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		// Write to the log
 		if(_log) {
-			_log.write(response ~ "\n\n");
+			if(response_signal == "R;;")
+				_log.write(to_s(response.length) ~ "\n\n");
+			else
+				_log.write(response ~ "\n\n");
 			_log.flush();
 		}
 
@@ -217,7 +223,10 @@ class RootinTootinServerProcess : RootinTootinServer {
 	protected void shm_write_request(char[] request_signal, char[] request) {
 		// Write to the log
 		if(_log) {
-			_log.write(request ~ "\n\n");
+			if(request_signal == "R;;")
+				_log.write(to_s(request.length) ~ "\n\n");
+			else
+				_log.write(request ~ "\n\n");
 			_log.flush();
 		}
 
@@ -237,7 +246,10 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		// Write to the log
 		if(_log) {
-			_log.write(response ~ "\n\n");
+			if(_response_signal == "R;;")
+				_log.write(to_s(response.length) ~ "\n\n");
+			else
+				_log.write(response ~ "\n\n");
 			_log.flush();
 		}
 

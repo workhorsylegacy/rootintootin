@@ -661,6 +661,8 @@ def setup_app(pwd, scratch):
 		shutil.rmtree(scratch+'db/')
 	if os.path.exists(scratch+'public/'):
 		shutil.rmtree(scratch+'public/')
+	if os.path.exists(scratch+'uploads/'):
+		shutil.rmtree(scratch+'uploads/')
 
 	# Copy all the app files into a scratch dir
 	if os.path.exists(pwd+'/app/'):
@@ -671,6 +673,7 @@ def setup_app(pwd, scratch):
 		shutil.copytree(pwd+'/db/', scratch+'db/')
 	if os.path.exists(pwd+'/public/'):
 		shutil.copytree(pwd+'/public/', scratch+'public/')
+	os.mkdir(scratch+'uploads/')
 	os.chdir(scratch)
 
 	# Load the config files
