@@ -14,7 +14,6 @@ private import tango.io.Stdout;
 private import tango.io.Console;
 private import tango.sys.Process;
 private import tango.io.device.File;
-private import tango.stdc.stringz;
 
 public import dornado.ioloop;
 private import file_system;
@@ -27,6 +26,7 @@ private import rootintootin_server;
 
 class RootinTootinAppProcess : RootinTootinApp {
 	private char[3] _request_signal;
+	private char[9] _request_length;
 
 	private File _log = null;
 	private SharedMemory _shm_request = null;
@@ -79,7 +79,8 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		// Read the request
 		ins.read(_request_signal);
-		char[] request = fromStringz(_shm_request.get_value());
+		ins.read(_request_length);
+		char[] request = _shm_request.get_value()[0 .. to_uint(_request_length)];
 
 		// Write to the log
 		if(_log) {
@@ -106,8 +107,9 @@ class RootinTootinAppProcess : RootinTootinApp {
 		}
 
 		// Write the response
-		_shm_response.set_value(toStringz(response));
+		_shm_response.set_value(response.ptr, response.length);
 		outs.write(response_signal);
+		outs.write(rjust(to_s(response.length), 9, "0"));
 		outs.flush();
 	}
 }
@@ -117,6 +119,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 	private char[] _app_name = null;
 	private Process _app = null;
 	private char[3] _response_signal;
+	private char[9] _response_length;
 	private File _log = null;
 	private SharedMemory _shm_request = null;
 	private SharedMemory _shm_response = null;
@@ -231,8 +234,9 @@ class RootinTootinServerProcess : RootinTootinServer {
 		}
 
 		// Send the request to the app
-		_shm_request.set_value(toStringz(request));
+		_shm_request.set_value(request.ptr, request.length);
 		_app.stdin.write(request_signal);
+		_app.stdin.write(rjust(to_s(request.length), 9, "0"));
 		_app.stdin.flush();
 	}
 
@@ -241,8 +245,9 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		// Get the response from the app
 		_app.stdout.read(_response_signal);
+		_app.stdout.read(_response_length);
 		_app.stdout.flush();
-		response = fromStringz(_shm_response.get_value());
+		response = _shm_response.get_value()[0 .. to_uint(_response_length)];
 
 		// Write to the log
 		if(_log) {

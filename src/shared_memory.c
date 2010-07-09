@@ -49,8 +49,8 @@ char* c_shm_attach(int shmid) {
 	return segptr;
 }
 
-void c_shm_set_value(int shmid, char* segptr, char* text) {
-	strcpy(segptr, text);
+void c_shm_set_value(int shmid, char* segptr, char* text, size_t len) {
+	memcpy(segptr, text, len);
 }
 
 char* c_shm_get_value(int shmid, char* segptr) {
