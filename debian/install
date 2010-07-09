@@ -1,5 +1,6 @@
 bin/* usr/share/rootintootin/bin
 examples/* usr/share/rootintootin/examples
+dornado/* usr/share/rootintootin/dornado
 src/* usr/share/rootintootin/src
 COPYRIGHT usr/share/rootintootin
 LICENSE usr/share/rootintootin
