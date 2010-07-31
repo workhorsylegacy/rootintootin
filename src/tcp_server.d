@@ -19,7 +19,7 @@ public import dornado.ioloop;
 
 class TcpServer {
 	private ServerSocket _sock;
-	private char[1024 * 100] _buffer;
+	private char[1024*256] _buffer;
 	private char[] _response;
 	protected ushort _port;
 	protected int _max_waiting_clients;

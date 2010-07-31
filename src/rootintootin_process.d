@@ -40,7 +40,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 	}
 
 	public void start() {
-		//_log = new File("log_child", File.WriteCreate);
+		_log = new File("log_child", File.WriteCreate);
 
 		// Create the shared memory
 		_shm_request = new SharedMemory("request");
@@ -84,10 +84,8 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		// Write to the log
 		if(_log) {
-			if(_request_signal == "R;;")
-				_log.write(to_s(request.length) ~ "\n\n");
-			else
-				_log.write(request ~ "\n\n");
+			_log.write(to_s(request.length) ~ "\n\n");
+			_log.write(request ~ "\n\n");
 			_log.flush();
 		}
 
@@ -99,10 +97,8 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		// Write to the log
 		if(_log) {
-			if(response_signal == "R;;")
-				_log.write(to_s(response.length) ~ "\n\n");
-			else
-				_log.write(response ~ "\n\n");
+			_log.write(to_s(response.length) ~ "\n\n");
+			_log.write(response ~ "\n\n");
 			_log.flush();
 		}
 
@@ -131,7 +127,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		_app_path = app_path;
 		_app_name = app_name;
-		//_log = new File("log_parent", File.WriteCreate);
+		_log = new File("log_parent", File.WriteCreate);
 
 		// Create the shared memory
 		if(!file_system.file_exist(".", "request"))
@@ -226,10 +222,8 @@ class RootinTootinServerProcess : RootinTootinServer {
 	protected void shm_write_request(char[] request_signal, char[] request) {
 		// Write to the log
 		if(_log) {
-			if(request_signal == "R;;")
-				_log.write(to_s(request.length) ~ "\n\n");
-			else
-				_log.write(request ~ "\n\n");
+			_log.write(to_s(request.length) ~ "\n\n");
+			_log.write(request ~ "\n\n");
 			_log.flush();
 		}
 
@@ -251,10 +245,8 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		// Write to the log
 		if(_log) {
-			if(_response_signal == "R;;")
-				_log.write(to_s(response.length) ~ "\n\n");
-			else
-				_log.write(response ~ "\n\n");
+			_log.write(to_s(response.length) ~ "\n\n");
+			_log.write(response ~ "\n\n");
 			_log.flush();
 		}
 
