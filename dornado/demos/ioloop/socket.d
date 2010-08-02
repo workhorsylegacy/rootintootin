@@ -3,18 +3,18 @@
 private import tango.stdc.stringz;
 
 
-int send_connection(int fd) {
-	return c_send_connection(fd);
+int write_client_fd(int fd) {
+	return c_write_client_fd(fd);
 }
 
-int open_unix_fd(char[] path) {
-	return c_open_unix_fd(toStringz(path));
+int connect_unix_socket_fd(char[] path) {
+	return c_connect_unix_socket_fd(toStringz(path));
 }
 
 private:
 
 extern (C):
 
-int c_send_connection(int fd);
-int c_open_unix_fd(char* path);
+int c_write_client_fd(int fd);
+int c_connect_unix_socket_fd(char* path);
 

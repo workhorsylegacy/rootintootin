@@ -31,7 +31,7 @@ class HelloServer {
 	private char[1024] buffer;
 
 	public void handle_connection(Socket connection, string address) {
-		send_connection(connection.fileHandle);
+		write_client_fd(connection.fileHandle);
 		//connection.read(buffer);
 
 		//connection.write("hello world!");
@@ -68,7 +68,7 @@ class HelloServer {
 		this.sock = new ServerSocket(new InternetAddress("0.0.0.0", port), max_waiting_clients, is_address_reusable);
 		this.sock.socket.blocking(false);
 
-		open_unix_fd("socket");
+		connect_unix_socket_fd("socket");
 
 		auto io_loop = IOLoop.instance();
 		auto callback = &this.call_connection_ready;
