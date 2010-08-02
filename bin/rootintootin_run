@@ -760,17 +760,18 @@ class BuilderThread(threading.Thread):
 		result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
 		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
 		result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
-		result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o")
+		result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
+		result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o")
 		command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
 				"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
 				"rootintootin_process.d app_builder.d dornado/ioloop.d " + \
-				" db.d file_system.d regex.d shared_memory.d " + tango
+				" db.d file_system.d regex.d shared_memory.d socket.d " + tango
 		result += commands.getoutput(command)
 
 		command = "ar rcs rootintootin.a language_helper.o helper.o " + \
 				"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
 				"tcp_server.o rootintootin_process.o app_builder.o ioloop.o " + \
-				"db.o file_system.o regex.o shared_memory.o"
+				"db.o file_system.o regex.o shared_memory.o socket.o"
 		result += commands.getoutput(command)
 
 		command = "ldc -g -w -of server server.d -L rootintootin.a " + \

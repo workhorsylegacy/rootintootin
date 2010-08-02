@@ -1,3 +1,11 @@
+/*------------------------------------------------------------------------------
+#
+#    This file is part of the Rootin Tootin web framework and licensed under the
+#    GPL version 3 or greater. See the COPYRIGHT file for copyright information.
+#    This project is hosted at http://rootin.toot.in .
+#
+#-----------------------------------------------------------------------------*/
+
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -53,6 +61,15 @@ int c_connect_unix_socket_fd(char* path) {
 		return 0;
 
 	return 1;
+}
+
+void c_socket_read(int fd, char* buffer) {
+	read(fd, buffer, sizeof(buffer));
+}
+
+void c_socket_write(int fd, char* buffer) {
+	write(fd, buffer, strlen(buffer));
+	close(fd);
 }
 
 int c_write_client_fd(int fd) {

@@ -50,7 +50,7 @@ class TcpServer {
 		return "default tcp server response";
 	}
 
-	private void handle_connection(Socket connection, string address) {
+	protected void handle_connection(Socket connection, string address) {
 		// Get the request from the client
 		size_t buffer_length = connection.read(_buffer);
 		char[] request = _buffer[0 .. buffer_length];

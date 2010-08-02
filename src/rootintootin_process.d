@@ -19,9 +19,12 @@ public import dornado.ioloop;
 private import file_system;
 private import regex;
 private import shared_memory;
+private import socket;
 private import app_builder;
 private import rootintootin;
 private import rootintootin_server;
+
+private import tango.stdc.stringz;
 
 
 class RootinTootinAppProcess : RootinTootinApp {
@@ -46,23 +49,20 @@ class RootinTootinAppProcess : RootinTootinApp {
 		_shm_request = new SharedMemory("request");
 		_shm_response = new SharedMemory("response");
 
-		// Read each request, and write the response
+		int unix_fd = create_unix_socket_fd("socket");
+
+		string request;
 		string[] responses = null;
+
+		char* buffer = (new char[1024]).ptr;
 		while(true) {
-			string request = this.shm_read_request();
+			int fd = read_client_fd(unix_fd);
+
+			socket_read(fd, buffer);
+			request = fromStringz(buffer);
+
 			responses = process_request(request);
-			foreach(string response; responses) {
-				if(response[0 .. 3] != "R;;")
-					if(responses.length == 1)
-						response = "R;;" ~ response;
-					else
-						response = "M;;" ~ response;
-				try {
-					shm_write_response(response[0 .. 3], response[3 .. length]);
-				} catch(Exception err) {
-					shm_write_response(response[0 .. 3], err.msg);
-				}
-			}
+			socket_write(fd, "HTTP/1.1 200 OK\r\nContent-Length: 7\r\nConnection: close\r\nContent-Type: text/html; charset=UTF-8\r\n\r\npoopies");
 		}
 	}
 
@@ -137,44 +137,15 @@ class RootinTootinServerProcess : RootinTootinServer {
 		_shm_request = new SharedMemory("request");
 		_shm_response = new SharedMemory("response");
 
+		connect_unix_socket_fd("socket");
+
 		// Start the application if desired
 		if(start_application)
 			this.start_application();
-
-		// Read any startup messages from the app
-//		char[] message;
-//		while(true) {
-//			message = this.shm_read_response();
-//			if(message == "") break;
-//			Stdout(message).flush;
-//		}
 	}
 
-	public char[] process_request(char[] request) {
-		// Just return the compile error if there is one
-		if(_compile_error)
-			return _compile_error;
-
-		// Write the request to the app
-		try {
-			shm_write_request("R;;", request);
-		} catch(Exception err) {
-			return err.msg;
-		}
-
-		// Read the messages and response from the app
-		char[] response;
-		while(true) {
-			response = this.shm_read_response();
-			if(_response_signal == "R;;") {
-				break;
-			} else if(_response_signal == "M;;") {
-				Stdout(response).flush;
-			} else {
-			}
-		}
-
-		return response;
+	protected override void handle_connection(Socket connection, string address) {
+		write_client_fd(connection.fileHandle);
 	}
 
 	protected void on_started() {
