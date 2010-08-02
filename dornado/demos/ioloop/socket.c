@@ -17,8 +17,6 @@ static int unix_socket_fd = -1;
 static struct sockaddr_un unix_socket_name = {0};
 
 int c_create_unix_socket_fd(char* path) {
-	struct sockaddr_un unix_socket_name = {0};
-
 	// Remove any old fd from the previous unix socket
 	if(unlink(path) < 0) {
 		if(errno != ENOENT) {
