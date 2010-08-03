@@ -55,17 +55,20 @@ class RootinTootinAppProcess : RootinTootinApp {
 		string request;
 		string response = null;
 
-		// FIXME: Make sure we are not sending the extra stuff in the buffer to
-		// the client. Make it work with requests and responses greater than 1024.
-		char* buffer = (new char[1024]).ptr;
+		char* buffer = toStringz(new char[1024]);
 		while(true) {
+			request = "";
 			int fd = read_client_fd(_unix_socket_fd);
-			socket_read(fd, buffer);
-			request = fromStringz(buffer);
 
-			//Stdout.format("request: {}", request).newline.flush;
+			while(true) {
+				int len = socket_read(fd, buffer);
+				if(len < 1) break;
+				request ~= buffer[0 .. len];
+			}
+
 			response = process_request(request);
 			socket_write(fd, response.ptr);
+			socket_close(fd);
 		}
 	}
 
