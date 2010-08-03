@@ -10,12 +10,12 @@
 private import tango.stdc.stringz;
 
 
-int write_client_fd(int fd) {
-	return c_write_client_fd(fd);
+int write_client_fd(int unix_socket_fd, int fd) {
+	return c_write_client_fd(unix_socket_fd, fd);
 }
 
-int read_client_fd(int fd) {
-	return c_read_client_fd(fd);
+int read_client_fd(int unix_socket_fd) {
+	return c_read_client_fd(unix_socket_fd);
 }
 
 void socket_read(int fd, char* buffer) {
@@ -38,8 +38,8 @@ private:
 
 extern (C):
 
-int c_write_client_fd(int fd);
-int c_read_client_fd(int fd);
+int c_write_client_fd(int unix_socket_fd, int fd);
+int c_read_client_fd(int unix_socket_fd);
 void c_socket_read(int fd, char* buffer);
 void c_socket_write(int fd, char* buffer);
 int c_connect_unix_socket_fd(char* path);

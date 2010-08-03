@@ -28,12 +28,13 @@ private import tango.stdc.stringz;
 
 
 class RootinTootinAppProcess : RootinTootinApp {
-	private char[3] _request_signal;
-	private char[9] _request_length;
+	//private char[3] _request_signal;
+	//private char[9] _request_length;
 
 	private File _log = null;
-	private SharedMemory _shm_request = null;
-	private SharedMemory _shm_response = null;
+	private int _unix_socket_fd;
+	//private SharedMemory _shm_request = null;
+	//private SharedMemory _shm_response = null;
 
 	public this(string server_name, 
 				RunnerBase runner, string[Regex][string][string] routes, 
@@ -46,34 +47,37 @@ class RootinTootinAppProcess : RootinTootinApp {
 		_log = new File("log_child", File.WriteCreate);
 
 		// Create the shared memory
-		_shm_request = new SharedMemory("request");
-		_shm_response = new SharedMemory("response");
+		//_shm_request = new SharedMemory("request");
+		//_shm_response = new SharedMemory("response");
 
-		int unix_fd = create_unix_socket_fd("socket");
+		_unix_socket_fd = create_unix_socket_fd("socket");
 
 		string request;
-		string[] responses = null;
+		string response = null;
 
+		// FIXME: Make sure we are not sending the extra stuff in the buffer to
+		// the client. Make it work with requests and responses greater than 1024.
 		char* buffer = (new char[1024]).ptr;
 		while(true) {
-			int fd = read_client_fd(unix_fd);
-
+			int fd = read_client_fd(_unix_socket_fd);
 			socket_read(fd, buffer);
 			request = fromStringz(buffer);
 
-			responses = process_request(request);
-			socket_write(fd, "HTTP/1.1 200 OK\r\nContent-Length: 7\r\nConnection: close\r\nContent-Type: text/html; charset=UTF-8\r\n\r\npoopies");
+			//Stdout.format("request: {}", request).newline.flush;
+			response = process_request(request);
+			socket_write(fd, response.ptr);
 		}
 	}
 
-	protected void respond_to_client(string response) {
-		_responses ~= "R;;" ~ response;
-	}
+	//protected void respond_to_client(string response) {
+	//	_responses ~= "R;;" ~ response;
+	//}
 
-	protected void write_to_log(string response) {
-		_responses ~= response;
-	}
+	//protected void write_to_log(string response) {
+	//	_responses ~= response;
+	//}
 
+/*
 	protected char[] shm_read_request() {
 		auto ins = Cin.stream;
 
@@ -108,18 +112,20 @@ class RootinTootinAppProcess : RootinTootinApp {
 		outs.write(rjust(to_s(response.length), 9, "0"));
 		outs.flush();
 	}
+*/
 }
 
 class RootinTootinServerProcess : RootinTootinServer {
 	private char[] _app_path = null;
 	private char[] _app_name = null;
 	private Process _app = null;
-	private char[3] _response_signal;
-	private char[9] _response_length;
+	//private char[3] _response_signal;
+	//private char[9] _response_length;
 	private File _log = null;
-	private SharedMemory _shm_request = null;
-	private SharedMemory _shm_response = null;
+	//private SharedMemory _shm_request = null;
+	//private SharedMemory _shm_response = null;
 	private char[] _compile_error = null;
+	private int _unix_socket_fd;
 
 	public this(ushort port, int max_waiting_clients, 
 				char[] app_path, char[] app_name, bool start_application) {
@@ -134,10 +140,10 @@ class RootinTootinServerProcess : RootinTootinServer {
 			(new File("request", File.WriteCreate)).close();
 		if(!file_system.file_exist(".", "response"))
 			(new File("response", File.WriteCreate)).close();
-		_shm_request = new SharedMemory("request");
-		_shm_response = new SharedMemory("response");
+		//_shm_request = new SharedMemory("request");
+		//_shm_response = new SharedMemory("response");
 
-		connect_unix_socket_fd("socket");
+		_unix_socket_fd = connect_unix_socket_fd("socket");
 
 		// Start the application if desired
 		if(start_application)
@@ -145,7 +151,8 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected override void handle_connection(Socket connection, string address) {
-		write_client_fd(connection.fileHandle);
+		int fd = cast(int)connection.fileHandle;
+		write_client_fd(_unix_socket_fd, fd);
 	}
 
 	protected void on_started() {
@@ -189,7 +196,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		_app.kill();
 		_app = null;
 	}
-
+/*
 	protected void shm_write_request(char[] request_signal, char[] request) {
 		// Write to the log
 		if(_log) {
@@ -223,6 +230,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		return response;
 	}
+*/
 }
 
 

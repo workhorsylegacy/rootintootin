@@ -23,7 +23,6 @@ private import tango.io.model.IConduit;
 private import tango.net.InternetAddress;
 private import tango.io.Stdout;
 public import dornado.ioloop;
-public import socket;
 
 
 class HelloServer {
@@ -31,12 +30,11 @@ class HelloServer {
 	private char[1024] buffer;
 
 	public void handle_connection(Socket connection, string address) {
-		write_client_fd(connection.fileHandle);
-		//connection.read(buffer);
+		connection.read(buffer);
 
-		//connection.write("hello world!");
-		//connection.shutdown();
-		//connection.detach();
+		connection.write("hello world!");
+		connection.shutdown();
+		connection.detach();
 	}
 
 	public void connection_ready(ServerSocket sock, ISelectable.Handle fd, uint events) {
@@ -67,8 +65,6 @@ class HelloServer {
 		bool is_address_reusable = true;
 		this.sock = new ServerSocket(new InternetAddress("0.0.0.0", port), max_waiting_clients, is_address_reusable);
 		this.sock.socket.blocking(false);
-
-		connect_unix_socket_fd("socket");
 
 		auto io_loop = IOLoop.instance();
 		auto callback = &this.call_connection_ready;

@@ -21,7 +21,6 @@
 #include <errno.h>
 
 
-static int unix_socket_fd = -1;
 static struct sockaddr_un unix_socket_name = {0};
 
 int c_create_unix_socket_fd(char* path) {
@@ -41,14 +40,14 @@ int c_create_unix_socket_fd(char* path) {
 	strcpy(unix_socket_name.sun_path, path);
 
 	// Connect to the unix socket and return the fd
-	int fd = socket(PF_UNIX, SOCK_DGRAM, 0);
-	if(fd == -1)
+	int unix_socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
+	if(unix_socket_fd == -1)
 		return -1;
-	if(bind(fd, (const struct sockaddr*)&unix_socket_name, sizeof(unix_socket_name))) {
-		close(fd);
+	if(bind(unix_socket_fd, (const struct sockaddr*)&unix_socket_name, sizeof(unix_socket_name))) {
+		close(unix_socket_fd);
 		return -1;
 	}
-	return fd;
+	return unix_socket_fd;
 }
 
 int c_connect_unix_socket_fd(char* path) {
@@ -56,15 +55,13 @@ int c_connect_unix_socket_fd(char* path) {
 	if(strlen(path) >= sizeof(unix_socket_name.sun_path) - 1)
 		return 0;
 	strcpy(unix_socket_name.sun_path, path);
-	unix_socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
-	if(unix_socket_fd == -1)
-		return 0;
+	int unix_socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
 
-	return 1;
+	return unix_socket_fd;
 }
 
 void c_socket_read(int fd, char* buffer) {
-	read(fd, buffer, sizeof(buffer));
+	read(fd, buffer, strlen(buffer));
 }
 
 void c_socket_write(int fd, char* buffer) {
@@ -72,8 +69,8 @@ void c_socket_write(int fd, char* buffer) {
 	close(fd);
 }
 
-int c_write_client_fd(int fd) {
-	char ccmsg[CMSG_SPACE(sizeof(fd))];
+int c_write_client_fd(int unix_socket_fd, int fd) {
+	char ccmsg[CMSG_SPACE(sizeof(int)-1)];
 
 	struct iovec vec;
 	vec.iov_base = "X";
@@ -101,9 +98,9 @@ int c_write_client_fd(int fd) {
 	return rv;
 }
 
-int c_read_client_fd(int fd) {
+int c_read_client_fd(int unix_socket_fd) {
 	char buf[1];
-	char ccmsg[CMSG_SPACE(sizeof((int)-1))];
+	char ccmsg[CMSG_SPACE(sizeof(int)-1)];
 
 	struct iovec iov;
 	iov.iov_base = buf;
@@ -117,7 +114,7 @@ int c_read_client_fd(int fd) {
 	msg.msg_control = ccmsg;
 	msg.msg_controllen = sizeof(ccmsg);
 
-	if(recvmsg(fd, &msg, 0) == -1) {
+	if(recvmsg(unix_socket_fd, &msg, 0) == -1) {
 		perror("recvmsg");
 		return -1;
 	}

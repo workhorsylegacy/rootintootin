@@ -74,7 +74,7 @@ class HttpApp {
 	private string[string][string] _sessions;
 	private string _salt;
 	private string _server_name;
-	protected string[] _responses;
+	protected string _response;
 
 	public this(string server_name) {
 		if(server_name == null)
@@ -88,13 +88,13 @@ class HttpApp {
 		delete random;
 	}
 
-	protected string[] process_request(char[] request) {
+	protected string process_request(char[] request) {
 		this.write_to_log("app request.length: " ~ to_s(request.length) ~ "\n");
 		try {
 			this.trigger_on_request(request);
-			return _responses;
+			return _response;
 		} catch(Exception err) {
-			return ["Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file];
+			return "Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
 		}
 	}
 
@@ -133,7 +133,7 @@ class HttpApp {
 	}
 
 	protected void respond_to_client(string response) {
-		_responses ~= response;
+		_response = response;
 	}
 
 	protected void write_to_log(string response) {
@@ -143,7 +143,7 @@ class HttpApp {
 	protected void trigger_on_request(string raw_request) {
 		string[] pair = null;
 		Request request = Request.new_blank();
-		_responses = [];
+		_response = null;
 
 		// Get the raw header body and header from the buffer
 //		this.write_to_log("[" ~ raw_request ~ "]\n");
