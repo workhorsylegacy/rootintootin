@@ -73,7 +73,7 @@ void c_socket_close(int fd) {
 }
 
 int c_write_client_fd(int unix_socket_fd, int fd) {
-	char ccmsg[CMSG_SPACE(sizeof(int)-1)];
+	char ccmsg[CMSG_SPACE(sizeof(int))];
 
 	struct iovec vec;
 	vec.iov_base = "X";
@@ -103,7 +103,7 @@ int c_write_client_fd(int unix_socket_fd, int fd) {
 
 int c_read_client_fd(int unix_socket_fd) {
 	char buf[1];
-	char ccmsg[CMSG_SPACE(sizeof(int)-1)];
+	char ccmsg[CMSG_SPACE(sizeof(int))];
 
 	struct iovec iov;
 	iov.iov_base = buf;
