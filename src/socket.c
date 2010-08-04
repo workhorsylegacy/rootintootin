@@ -131,3 +131,46 @@ int c_read_client_fd(int unix_socket_fd) {
 	return *(int*)CMSG_DATA(cmsg);
 }
 
+int c_create_socket_fd(int port, int max_waiting_clients) {
+	int sock = socket(PF_INET, SOCK_STREAM, 0);
+	struct sockaddr_in sin;
+	int one = 1;
+	
+	if(sock == -1)
+		return sock;
+	memset(&sin, '\0', sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(port);
+	sin.sin_addr.s_addr = INADDR_ANY;
+
+	if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&one, sizeof(one)) 
+			|| bind(sock, (struct sockaddr*)&sin, sizeof(sin)) 
+			|| listen(sock, max_waiting_clients)) {
+		close(sock);
+		return -1;
+	}
+	return sock;
+}
+
+int c_accept_socket_fd(int fd) {
+	int connection_fd = accept(fd, 0, 0);
+
+	if(connection_fd == -1) {
+		perror("accept");
+		/* stupid Linux returns pending network errors on the new socket as
+		 * error codes from accept(); this monstrosity is what accept(2) 
+		 * actually recommends doing: */
+		switch(errno) {
+			case ENETDOWN: case EPROTO: case ENOPROTOOPT: 
+			case EHOSTDOWN: case ENONET: case EHOSTUNREACH: 
+			case EOPNOTSUPP: case ENETUNREACH:
+				return -1;
+			default:
+				// Close the connection to the client
+				if(fd != -1)
+					close(fd);
+		}
+	}
+	return connection_fd;
+}
+

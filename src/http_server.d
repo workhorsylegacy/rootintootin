@@ -16,7 +16,6 @@ private import tango.time.WallClock;
 private import tango.time.Clock;
 private import tango.io.device.File;
 
-public import dornado.ioloop;
 private import tcp_server;
 
 private import language_helper;
@@ -137,7 +136,7 @@ class HttpApp {
 	}
 
 	protected void write_to_log(string response) {
-		Stdout(response).newline.flush;
+		//Stdout(response).newline.flush;
 	}
 
 	protected void trigger_on_request(string raw_request) {

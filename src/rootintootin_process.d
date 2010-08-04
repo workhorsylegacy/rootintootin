@@ -7,15 +7,11 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.net.device.Socket;
-private import tango.io.model.IConduit;
-private import tango.net.InternetAddress;
 private import tango.io.Stdout;
 private import tango.io.Console;
 private import tango.sys.Process;
 private import tango.io.device.File;
 
-public import dornado.ioloop;
 private import file_system;
 private import regex;
 private import shared_memory;
@@ -44,7 +40,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 	}
 
 	public void start() {
-		_log = new File("log_child", File.WriteCreate);
+		//_log = new File("log_child", File.WriteCreate);
 
 		// Create the shared memory
 		//_shm_request = new SharedMemory("request");
@@ -56,17 +52,33 @@ class RootinTootinAppProcess : RootinTootinApp {
 		string response = null;
 
 		char* buffer = toStringz(new char[1024]);
+		int fd, len;
 		while(true) {
 			request = "";
-			int fd = read_client_fd(_unix_socket_fd);
+			fd = read_client_fd(_unix_socket_fd);
 
 			while(true) {
-				int len = socket_read(fd, buffer);
-				if(len < 1) break;
+				len = socket_read(fd, buffer);
+				if(len == -1) break;
 				request ~= buffer[0 .. len];
+				if(len < 1024) break;
+			}
+			response = process_request(request);
+
+			// Write to the log
+			if(_log) {
+				_log.write("request.length: " ~ to_s(request.length) ~ "\n\n");
+				_log.write("request: " ~ request ~ "\n\n");
+				_log.flush();
 			}
 
-			response = process_request(request);
+			// Write to the log
+			if(_log) {
+				_log.write("response.length: " ~ to_s(response.length) ~ "\n\n");
+				_log.write("response: " ~ response ~ "\n\n");
+				_log.flush();
+			}
+
 			socket_write(fd, response.ptr);
 			socket_close(fd);
 		}
@@ -136,7 +148,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		_app_path = app_path;
 		_app_name = app_name;
-		_log = new File("log_parent", File.WriteCreate);
+		//_log = new File("log_parent", File.WriteCreate);
 
 		// Create the shared memory
 		if(!file_system.file_exist(".", "request"))
@@ -153,8 +165,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 			this.start_application();
 	}
 
-	protected override void handle_connection(Socket connection, string address) {
-		int fd = cast(int)connection.fileHandle;
+	protected override void on_connection_ready(int fd) {
 		write_client_fd(_unix_socket_fd, fd);
 	}
 

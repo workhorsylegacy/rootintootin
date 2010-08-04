@@ -45,7 +45,6 @@ int main(string[] args) {
 	}
 
 	// Create and start the sever
-	IOLoop.use_epoll = true;
 	ushort port = to_ushort(config["server_configuration"]["port"]);
 	int max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
 	auto server = new RootinTootinServerProcess(

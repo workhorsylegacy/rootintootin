@@ -38,6 +38,14 @@ int create_unix_socket_fd(char[] path) {
 	return c_create_unix_socket_fd(toStringz(path));
 }
 
+int create_socket_fd(int port, int max_waiting_clients) {
+	return c_create_socket_fd(port, max_waiting_clients);
+}
+
+int accept_socket_fd(int fd) {
+	return c_accept_socket_fd(fd);
+}
+
 private:
 
 extern (C):
@@ -49,4 +57,6 @@ void c_socket_write(int fd, char* buffer);
 void c_socket_close(int fd);
 int c_connect_unix_socket_fd(char* path);
 int c_create_unix_socket_fd(char* path);
+int c_create_socket_fd(int port, int max_waiting_clients);
+int c_accept_socket_fd(int fd);
 
