@@ -22,6 +22,11 @@ private import tango.util.encode.Base64;
 public class Helper {
 	private static string[ushort] status_code;
 	private static string[string] mimetype_map;
+	private static Sha256 _sha_encoder;
+
+	public static this() {
+		_sha_encoder = new Sha256();
+	}
 
 	public static char[] escape(char[] unescaped) {
 		size_t len = unescaped.length;
@@ -126,9 +131,8 @@ public class Helper {
 	}
 
 	public static string hash_and_base64(string value, string salt) {
-		Sha256 sha_encoder = new Sha256();
-		sha_encoder.update(value ~ salt);
-		ubyte[] encoded = sha_encoder.binaryDigest();
+		_sha_encoder.update(value ~ salt);
+		ubyte[] encoded = _sha_encoder.binaryDigest();
 
 		string encodebuf = new char[tango.util.encode.Base64.allocateEncodeSize(encoded)];
 		return tango.util.encode.Base64.encode(encoded, encodebuf);

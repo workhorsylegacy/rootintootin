@@ -45,6 +45,10 @@ public class Request {
 		_cookies = cookies;
 	}
 
+	public this() {
+		_params = new Dictionary();
+	}
+
 	public bool has_rendered() { return _has_rendered; }
 	public bool was_format_specified() { return _was_format_specified; }
 	public string method() { return _method; }
@@ -74,11 +78,13 @@ class HttpApp {
 	private string _salt;
 	private string _server_name;
 	protected string _response;
+	private string[] _pair;
 
 	public this(string server_name) {
 		if(server_name == null)
 			throw new Exception("The server name is invalid");
 		_server_name = server_name;
+		_pair = new string[2];
 
 		// Get a random salt for salting sessions
 		Twister* random = new Twister();
@@ -88,7 +94,6 @@ class HttpApp {
 	}
 
 	protected string process_request(char[] request) {
-		this.write_to_log("app request.length: " ~ to_s(request.length) ~ "\n");
 		try {
 			this.trigger_on_request(request);
 			return _response;
@@ -136,29 +141,21 @@ class HttpApp {
 	}
 
 	protected void write_to_log(string response) {
-		//Stdout(response).newline.flush;
+		Stdout(response).flush;
 	}
 
 	protected void trigger_on_request(string raw_request) {
-		string[] pair = null;
-		Request request = Request.new_blank();
+		Request request = new Request();
 		_response = null;
 
 		// Get the raw header body and header from the buffer
-//		this.write_to_log("[" ~ raw_request ~ "]\n");
-		string[] buffer_pair = ["", ""];
-		int header_end = tango.text.Util.locatePattern(raw_request, "\r\n\r\n", 0);
+		size_t header_end = index(raw_request, "\r\n\r\n");
 		string raw_header = raw_request[0 .. header_end];
 		string raw_body = raw_request[header_end+4 .. length];
-		this.write_to_log("app raw_request.length: " ~ to_s(raw_request.length) ~ "\n");
-		this.write_to_log("app raw_header.length: " ~ to_s(raw_header.length) ~ "\n");
-		this.write_to_log("app raw_body.length: " ~ to_s(raw_body.length) ~ "\n");
-		this.write_to_log("app raw_body.length+raw_header.length: " ~ to_s(raw_body.length+raw_header.length) ~ "\n");
-		//Stdout.format("raw_header: {}\n", raw_header).flush;
-		//Stdout.format("raw_body: {}\n", raw_body).flush;
 
 		// Get the header info
-		string[] header_lines = tango.text.Util.splitLines(raw_header);
+		string[] header_lines = split_lines(raw_header);
+
 		string[] first_line = split(header_lines[0], " ");
 		request.method = first_line[0];
 		request.uri = first_line[1];
@@ -172,35 +169,40 @@ class HttpApp {
 			// Break if we are at the end of the fields
 			if(line.length == 0) break;
 
-			pair = split(line, ": ");
-			if(pair.length == 2) {
-				request._fields[pair[0]] = pair[1];
+			if(pair(line, ": ", _pair)) {
+				request._fields[_pair[0]] = _pair[1];
 			}
 		}
 
+		// Determine if the client has cookie support
+		bool has_cookie_support = true;
+		if("User-Agent" in request._fields) {
+			has_cookie_support = !contains(request._fields["User-Agent"], "ApacheBench");
+		}
+
 		// Get the cookies
-		if(("Cookie" in request._fields) != null) {
+		if(has_cookie_support && ("Cookie" in request._fields) != null) {
 			foreach(string cookie ; split(request._fields["Cookie"], "; ")) {
-				pair = split(cookie, "=");
-				if(pair.length != 2) {
-					this.write_to_log("Malformed cookie: " ~ cookie ~ "\n");
+				if(pair(cookie, "=", _pair)) {
+					request._cookies[_pair[0]] = Helper.unescape(_pair[1]);
 				} else {
-					request._cookies[pair[0]] = Helper.unescape(pair[1]);
+					this.write_to_log("Malformed cookie: " ~ cookie ~ "\n");
 				}
 			}
 		}
 
 		// Get the HTTP GET params
-		if(tango.text.Util.contains(request.uri, '?')) {
-			foreach(string param ; split(split(request.uri, "?")[1], "&")) {
-				pair = split(param, "=");
-				request._params[Helper.unescape(pair[0])].value = Helper.unescape(pair[1]);
+		if(contains(request.uri, '?')) {
+			foreach(string param ; split(after(request.uri, "?"), "&")) {
+				if(pair(param, "=", _pair)) {
+					request._params[Helper.unescape(_pair[0])].value = Helper.unescape(_pair[1]);
+				}
 			}
 		}
 
 		// Monkey Patch the http method
 		// This lets browsers fake http put, and delete
-		if(request._params.has_key("method")) {
+		if(has_cookie_support && request._params.has_key("method")) {
 			switch(request._params["method"].value) {
 				case "GET":
 				case "POST":
@@ -217,7 +219,7 @@ class HttpApp {
 		has_session = (("_appname_session" in request._cookies) != null);
 
 		// Determine if the session id is invalid
-		if(has_session && (request._cookies["_appname_session"] in _sessions) == null) {
+		if(has_cookie_support && has_session && (request._cookies["_appname_session"] in _sessions) == null) {
 			string hashed_session_id = request._cookies["_appname_session"];
 			this.write_to_log("Unknown session id '" ~ hashed_session_id ~ "'\n");
 			has_session = false;
@@ -227,24 +229,26 @@ class HttpApp {
 		string hashed_session_id = null;
 		if(!has_session) {
 			// Get the next session_id and increment the sequence
-			int new_session_id = _session_id;
-			_session_id++;
+			int new_session_id = _session_id++;
 
 			// Create the hashed session id
-			hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
+			// Don't bother hashing or base64ing the session 
+			// if it is not going to be used by the client.
+			if(has_cookie_support)
+				hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
+			else
+				hashed_session_id = to_s(new_session_id);
 			request._cookies["_appname_session"] = hashed_session_id;
 
-			// Make the new session blank
-			string[string] new_empty_session;
-			_sessions[hashed_session_id] = new_empty_session;
 			this.write_to_log("Created session number '" ~ to_s(new_session_id) ~ "' '" ~ hashed_session_id ~ "'\n");
 		} else {
 			hashed_session_id = request._cookies["_appname_session"];
 			this.write_to_log("Using existing session '" ~ request._cookies["_appname_session"] ~ "'\n");
 		}
 
-		// Copy the current session to the request
-		request._sessions = _sessions[hashed_session_id];
+		// Copy the existing session to the request
+		if(hashed_session_id in _sessions)
+			request._sessions = _sessions[hashed_session_id];
 
 		// Process the remainder of the request based on its method
 		switch(request.method) {
@@ -268,7 +272,8 @@ class HttpApp {
 		}
 
 		// Copy the modified session back to the sessions
-		_sessions[hashed_session_id] = request._sessions;
+		if(request._sessions.length > 0)
+			_sessions[hashed_session_id] = request._sessions;
 
 		// FIXME: this prints out all the values we care about
 		/*
@@ -389,23 +394,23 @@ class HttpApp {
 		auto now = WallClock.now;
 		auto time = now.time;
 		auto date = Gregorian.generic.toDate(now);
-		string[] reply = [
-		"HTTP/1.1 ", status, "\r\n", 
-		"Date: ", to_s(date.day), to_s(date.month), to_s(date.year), "\r\n", 
-		"Server: " ~ _server_name ~ "\r\n", 
-		set_cookies, 
-		"Status: ", status, "\r\n",
+		string reply = 
+		"HTTP/1.1 " ~ status ~ "\r\n" ~ 
+		"Date: " ~ to_s(date.day) ~ to_s(date.month) ~ to_s(date.year) ~ "\r\n" ~ 
+		"Server: " ~ _server_name ~ "\r\n" ~ 
+		set_cookies ~ 
+		"Status: " ~ status ~ "\r\n" ~ 
 		//"X-Runtime: 0.15560\r\n",
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
-		"Access-Control-Allow-Origin: *\r\n",
-		"Cache-Control: private, max-age=0\r\n",
-		"Content-Type: ", content_type, "\r\n",
-		"Content-Length: ", to_s(text.length), "\r\n",
+		"Access-Control-Allow-Origin: *\r\n" ~ 
+		"Cache-Control: private, max-age=0\r\n" ~ 
+		"Content-Type: " ~ content_type ~ "\r\n" ~ 
+		"Content-Length: " ~ to_s(text.length) ~ "\r\n" ~
 		//"Vary: User-Agent\r\n",
-		"\r\n",
-		text];
+		"\r\n" ~
+		text;
 
-		return tango.text.Util.join(reply, "");
+		return reply;
 	}
 
 	private void urlencode_to_dict(ref Dictionary dict, string urlencode_in_a_string) {
@@ -438,13 +443,13 @@ class HttpApp {
 
 		char[] field_name = between(disposition, "; name=\"", "\"; ");
 		char[] file_name = between(disposition, "; filename=\"", "\"");
-		this.write_to_log(field_name ~ ": [" ~ file_name ~ "]\n\n");
+//		this.write_to_log(field_name ~ ": [" ~ file_name ~ "]\n\n");
 
 		char[] file_content_type = split(header, "Content-Type: ")[1];
-		this.write_to_log("app file_content_type: [" ~ file_content_type ~ "]\n\n");
+//		this.write_to_log("app file_content_type: [" ~ file_content_type ~ "]\n\n");
 
 		char[] file_data = split(data, "\r\n\r\n")[1][0 .. length-3];
-		this.write_to_log("app data length: [" ~ to_s(file_data.length) ~ "]\n\n");
+//		this.write_to_log("app data length: [" ~ to_s(file_data.length) ~ "]\n\n");
 //		this.write_to_log("file_data: [" ~ file_data ~ "]\n\n");
 
 		dict["file_name"].value = file_name;

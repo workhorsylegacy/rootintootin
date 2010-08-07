@@ -9,6 +9,7 @@
 
 private import tango.io.device.File;
 private import Path = tango.io.Path;
+private import tango.time.Clock;
 
 public import tango.io.Stdout;
 public import http_server;
@@ -93,7 +94,7 @@ public class RootinTootinApp : HttpApp {
 		// Send any files
 		string normalized = Path.normalize(request.uri);
 		if(normalized != "/" && Path.exists("public" ~ normalized)) {
-			this.write_to_log("file: " ~ normalized ~ "\n");
+			this.write_to_log("file: " ~ normalized ~ "\n\n");
 			bool read_file_broke = false;
 			File file = null;
 			// FIXME: Use the existing buffer instead of creating a new one here
@@ -129,6 +130,7 @@ public class RootinTootinApp : HttpApp {
 		try {
 			// Run the action and get any event names to trigger
 			string response = _runner.run_action(request, controller, action, id, events_to_trigger);
+
 			retval = this.render_text(request, response, 200);
 		} catch(RenderTextException e) {
 			retval = this.render_text(request, e._text, e._status);

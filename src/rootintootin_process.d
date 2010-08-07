@@ -51,18 +51,23 @@ class RootinTootinAppProcess : RootinTootinApp {
 		string request;
 		string response = null;
 
-		char* buffer = toStringz(new char[1024]);
+		char[1024 * 10] b;
+		char* buffer = toStringz(b);
 		int fd, len;
 		while(true) {
-			request = "";
 			fd = read_client_fd(_unix_socket_fd);
 
+			// FIXME: Change this to read the request header into the buffer,
+			// instead of copying strings.
+			request = "";
 			while(true) {
 				len = socket_read(fd, buffer);
 				if(len == -1) break;
 				request ~= buffer[0 .. len];
 				if(len < 1024) break;
 			}
+			//len = socket_read(fd, buffer);
+			//request = buffer[0 .. len];
 			response = process_request(request);
 
 			// Write to the log

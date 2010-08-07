@@ -13,6 +13,7 @@ private import tango.text.convert.Integer;
 private import tango.text.convert.Float;
 private import tango.math.Math;
 
+private import tango.io.Stdout;
 private import tango.text.json.Json;
 private import tango.text.xml.Document;
 
@@ -322,16 +323,57 @@ public static size_t index(string value, string match) {
 	return tango.text.Util.index!(char)(value, match);
 }
 
+public static size_t count(string value, string match) {
+	return tango.text.Util.count!(char)(value, match);
+}
+
+public static bool contains(string value, char match) {
+	return tango.text.Util.contains!(char)(value, match);
+}
+
 public static bool contains(string value, string match) {
 	return tango.text.Util.containsPattern!(char)(value, match);
 }
 
 public static string[] split_lines(string value) {
-	return tango.text.Util.split(value, "\r\n");
+	return split(value, "\r\n");
+}
+
+public static bool pair(string value, string separator, ref string[] pair) {
+	size_t i = index(value, separator);
+	if(i == value.length)
+		return false;
+
+	pair[0] = value[0 .. i];
+	pair[1] = value[i+separator.length .. length];
+
+	return true;
 }
 
 public static string[] split(string value, string separator) {
-	return tango.text.Util.split(value, separator);
+	string[] retval = new string[count(value, separator)];
+	size_t start = 0;
+	size_t value_length = value.length;
+	size_t separator_length = separator.length;
+	size_t i, j;
+
+	while(true) {
+		// Get the location of the next split
+		i = tango.text.Util.index!(char)(value, separator, start);
+
+		// If there are no more splits, add the last string
+		if(i == value_length) {
+			retval[j] = value[start .. value_length];
+			break;
+		}
+
+		// Add the next string
+		retval[j] = value[start .. i];
+		start = i + separator_length;
+		j++;
+	}
+
+	return retval;
 }
 
 public static string trim(string value) {
@@ -369,36 +411,45 @@ public static bool ends_with(string value, string match) {
 	return value[length-match.length .. length] == match;
 }
 
-
-
-
-
 public static string between(string value, string before, string after) {
 	return split(split(value, before)[1], after)[0];
 }
 
+// Returns a substring before the separator. 
+// Returns the value if there are no separators.
 public static string before(string value, string separator) {
-	string[] sections = split(value, separator);
-	if(sections.length > 0)
-		return sections[0];
-	else
-		return "";
+	size_t i = index(value, separator);
+
+	if(i == value.length)
+		return value;
+
+	return value[0 .. i];
 }
 
+// Returns a substring after the separator. 
+// Returns "" if there are no separators.
 public static string after(string value, string separator) {
-	string[] sections = split(value, separator);
-	if(sections.length > 1)
-		return sections[1];
-	else
+	size_t i = index(value, separator);
+
+	if(i == value.length)
 		return "";
+
+	size_t start = i + separator.length;
+
+	return value[start .. length];
 }
 
+// Returns a substring after the last separator. 
+// Returns "" if there are no separators.
 public static string after_last(string value, string separator) {
-	string[] sections = split(value, separator);
-	if(sections.length > 1)
-		return sections[length-1];
-	else
+	size_t i = rindex(value, separator);
+
+	if(i == value.length)
 		return "";
+
+	size_t start = i + separator.length;
+
+	return value[start .. length];
 }
 
 public string rjust(string value, uint width, string pad_char=" ") {
