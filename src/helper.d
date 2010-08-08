@@ -105,23 +105,19 @@ public class Helper {
 	}
 
 	public static string html_escape(string value) {
-		auto keys = ["&", "\"", ">", "<"];
-		auto values = ["&amp;", "&quot;", "&gt;", "&lt;"];
-
-		for(size_t i=0; i<keys.length; i++) {
-			value = tango.text.Util.substitute(value, keys[i], values[i]);
-		}
+		value = substitute(value, "&", "&amp;");
+		value = substitute(value, "\"", "&quot;");
+		value = substitute(value, ">", "&gt;");
+		value = substitute(value, "<", "&lt;");
 
 		return value;
 	}
 
 	public static string html_unescape(string value) {
-		auto keys = ["&", "\"", ">", "<"];
-		auto values = ["&amp;", "&quot;", "&gt;", "&lt;"];
-
-		for(size_t i=0; i<keys.length; i++) {
-			value = tango.text.Util.substitute(value, values[i], keys[i]);
-		}
+		value = substitute(value, "&amp;", "&");
+		value = substitute(value, "&quot;", "\"");
+		value = substitute(value, "&gt;", ">");
+		value = substitute(value, "&lt;", "<");
 
 		return value;
 	}

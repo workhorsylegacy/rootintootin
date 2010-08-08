@@ -540,9 +540,9 @@ def generate_views(routes):
 			output.append(
 			"\n" +
 			"	if(controller.use_layout) {\n" + 
-			"		return DefaultLayout.render(controller, tango.text.Util.join(b.value, \"\")); \n" + 
+			"		return DefaultLayout.render(controller, b.toString()); \n" + 
 			"	} else {\n" + 
-			"		return tango.text.Util.join(b.value, \"\"); \n" + 
+			"		return b.toString(); \n" + 
 			"	}\n"
 			"}\n" +
 			"}\n")
@@ -577,7 +577,7 @@ def generate_layouts():
 
 		# Print the closing of the function
 		output.append(
-		"\n	return tango.text.Util.join(b.value, \"\"); \n" +
+		"\n	return b.toString(); \n" +
 		"}\n" +
 		"}\n")
 

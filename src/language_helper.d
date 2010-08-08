@@ -600,21 +600,60 @@ public static string to_string(char value) { return to_s(value); }
 public static string to_string(FixedPoint value) { return to_s(value); }
 
 
-// Can collect strings by auto converting any type you try to add
+// Collects strings by auto converting any type you try to add
+// For performance, it stores them in a buffer as they are added.
 public class AutoStringArray {
-	private string[] _value;
-	public string[] value() { return _value; }
-	public void opCatAssign(string value) { _value ~= value; }
-	public void opCatAssign(int value) { _value ~= to_s(value); }
-	public void opCatAssign(uint value) { _value ~= to_s(value); }
-	public void opCatAssign(long value) { _value ~= to_s(value); }
-	public void opCatAssign(ulong value) { _value ~= to_s(value); }
-	public void opCatAssign(float value) { _value ~= to_s(value); }
-	public void opCatAssign(double value) { _value ~= to_s(value); }
-	public void opCatAssign(real value) { _value ~= to_s(value); }
-	public void opCatAssign(bool value) { _value ~= to_s(value); }
-	public void opCatAssign(char value) { _value ~= to_s(value); }
-	public void opCatAssign(FixedPoint value) { _value ~= to_s(value); }
+	private string[] _buffers;
+	private size_t _i;
+	private size_t _j;
+	public static const size_t BUFFER_SIZE = 1024*50;
+	public this() { _buffers ~= new char[BUFFER_SIZE]; }
+	public void opCatAssign(int value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(uint value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(long value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(ulong value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(float value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(double value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(real value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(bool value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(char value) { opCatAssign(to_s(value)); }
+	public void opCatAssign(FixedPoint value) { opCatAssign(to_s(value)); }
+
+	public void opCatAssign(string value) {
+		size_t value_length = value.length;
+
+		// If the value wont fit in the buffer move to a new one
+		if(_i + value_length > BUFFER_SIZE) {
+			// Trim the extra space off the buffer
+			_buffers[_j] = _buffers[_j][0 .. _i];
+
+			// Use the regular buffer size. But if the value is too big, use its size.
+			size_t new_size;
+			if(value_length > BUFFER_SIZE)
+				new_size = value_length;
+			else
+				new_size = BUFFER_SIZE;
+
+			// Create a new buffer
+			_buffers ~= new char[new_size];
+			_j++;
+			_i = 0;
+		}
+
+		// Copy the value into the buffer
+		_buffers[_j][_i .. _i+value_length] = value[0 .. value_length];
+		_i+= value_length;
+	}
+
+	public string toString() {
+		string retval;
+		if(_buffers.length > 1) {
+			retval = join(_buffers[0 .. length-1], "");
+		}
+		retval ~= _buffers[length-1][0 .. _i];
+
+		return retval;
+	}
 }
 
 public class Dictionary {
