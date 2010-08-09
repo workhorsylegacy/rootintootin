@@ -36,36 +36,28 @@ public class RootinTootinApp : HttpApp {
 
 	private bool get_route_info(Request request, out string controller, out string action, out string id) {
 		// Get the controller, action, and id
-		string[] route = split(before(request.uri, "?"), "/");
 		string raw_uri = before(before(request.uri, "?"), ".");
-		route[length-1] = before(route[length-1], ".");
-		string new_controller = route.length > 1 ? route[1] : null;
-		string new_action, new_id;
 
 		// Make sure the route exists
 		bool has_valid_request = false;
 		foreach(string route_controller, string[Regex][string] routes_maps ; _routes) {
 			foreach(string route_action, string[Regex] routes_map ; routes_maps) {
 				foreach(Regex regex, string method ; routes_map) {
-					if(request.method == method) {
-						if(regex.is_match(raw_uri)) {
-							this.write_to_log("regex: " ~ regex.pattern ~ "\n");
-							new_action = route_action;
-							if(split(regex.pattern, r"\d*").length > 1 || split(regex.pattern, r"\d+").length > 1)
-								new_id = before(after_last(raw_uri, "/"), ";");
-							has_valid_request = true;
-						}
+					if(request.method == method && regex.is_match(raw_uri)) {
+						this.write_to_log("regex: " ~ regex.pattern ~ "\n");
+						controller = route_controller;
+						action = route_action;
+						if(starts_with(after_last(regex.pattern, "/"), r"\d"))
+							id = before(after_last(raw_uri, "/"), ";");
+						has_valid_request = true;
 					}
+					if(has_valid_request) break;
 				}
+				if(has_valid_request) break;
 			}
+			if(has_valid_request) break;
 		}
 
-		// Set the out return values
-		if(has_valid_request) {
-			controller = new_controller;
-			action = new_action;
-			id = new_id;
-		}
 		return has_valid_request;
 	}
 
@@ -116,7 +108,7 @@ public class RootinTootinApp : HttpApp {
 		}
 
 		// Add the id to the params if we have one
-		if(id != null) request._params["id"].value = to_s(id);
+		if(id) request._params["id"].value = id;
 
 		this.write_to_log("uri: " ~ request.uri ~ "\n");
 		this.write_to_log("format: " ~ request.format ~ "\n");
