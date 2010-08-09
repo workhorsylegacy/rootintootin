@@ -513,7 +513,7 @@ public static string to_s(bool value) {
 }
 
 public static string to_s(string value) {
-	return tango.text.Util.repeat(value, 1);
+	return value.dup;
 }
 
 public static string to_s(char value) {
@@ -608,7 +608,7 @@ public class AutoStringArray {
 	private string[] _buffers;
 	private size_t _i;
 	private size_t _j;
-	public static const size_t BUFFER_SIZE = 1024*50;
+	public static const size_t BUFFER_SIZE = 1024 * 10;
 	public this() { _buffers ~= new char[BUFFER_SIZE]; }
 	public void opCatAssign(int value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(uint value) { opCatAssign(to_s(value)); }
