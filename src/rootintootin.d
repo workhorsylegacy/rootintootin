@@ -7,17 +7,6 @@
 #-----------------------------------------------------------------------------*/
 
 
-private import tango.text.convert.Integer;
-private import tango.text.Util;
-private import tango.stdc.stringz;
-
-private import tango.io.Stdout;
-private import tango.io.Console;
-
-private import tango.time.chrono.Gregorian;
-private import tango.time.WallClock;
-private import tango.core.Thread;
-
 public import language_helper;
 public import db;
 private import helper;
@@ -133,7 +122,7 @@ public class ModelBase {
 		foreach(ModelBase model ; models) {
 			retval ~= model.to_json();
 		}
-		return "[" ~ tango.text.Util.join(retval, ", ") ~ "]";
+		return "[" ~ join(retval, ", ") ~ "]";
 	}
 
 	public static string to_xml(ModelBase[] models, string table_name) {
@@ -146,7 +135,7 @@ public class ModelBase {
 
 		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" ~ 
 				"<" ~ name ~ " type=\"array\">" ~ 
-				tango.text.Util.join(retval, "") ~ 
+				join(retval, "") ~ 
 				"</" ~ name ~ ">";
 	}
 }
@@ -180,11 +169,11 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	}
 
 	static string field_names_as_comma_string() {
-		return tango.text.Util.join(_field_names, ", ");
+		return join(_field_names, ", ");
 	}
 
 	static string unique_field_names_as_comma_string() {
-		return tango.text.Util.join(_unique_field_names, ", ");
+		return join(_unique_field_names, ", ");
 	}
 
 	string unique_fields_as_comma_string() {
@@ -193,7 +182,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			fields ~= "'" ~ this.get_field_by_name(field_name) ~ "'";
 		}
 
-		return tango.text.Util.join(fields, ", ");
+		return join(fields, ", ");
 	}
 
 	// Returns a single model that matches the id, or null.
@@ -309,7 +298,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			return true;
 		} else if(result == db.QueryResult.not_unique_error) {
 			char[] message = Db.get_error_message();
-			char[] field = tango.text.Util.split(tango.text.Util.split(message, "for key 'uc_")[1], "'")[0];
+			char[] field = before(after(message, "for key 'uc_"), "'");
 			this._errors ~= "The " ~ field ~ " is already used.";
 			return false;
 		}
@@ -346,7 +335,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	void validates_presence_of(string field_name) {
 		char[] field = this.get_field_by_name(field_name);
 
-		if(field == null || tango.text.Util.trim(field).length == 0) {
+		if(field == null || trim(field).length == 0) {
 			_errors ~= "The " ~ field_name ~ " cannot be blank.";
 		}
 	}

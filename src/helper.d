@@ -7,10 +7,8 @@
 #-----------------------------------------------------------------------------*/
 
 
-// FIXME: Rename to server_helper
+// FIXME: Rename to web_helper
 
-private import tango.text.Util;
-private import tango.text.convert.Integer;
 private import language_helper;
 
 private import tango.util.digest.Digest;
@@ -78,7 +76,7 @@ public class Helper {
 
 		// Get the length of the escaped and unescaped strings
 		size_t len = escaped.length;
-		size_t hexcount = tango.text.Util.count(escaped, "%")-1;
+		size_t hexcount = count(escaped, "%")-1;
 		size_t newlen = len - (hexcount * 2);
 		char[] unescaped = new char[newlen];
 

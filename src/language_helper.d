@@ -317,18 +317,20 @@ public class FixedPoint {
 	}
 }
 
+public static string substitute(string value, string before, string after) {
+	return tango.text.Util.substitute(value, before, after);
+}
 
+public static size_t index(string value, string match, size_t start=0) {
+	return tango.text.Util.index!(char)(value, match, start);
+}
 
-public static size_t index(string value, string match) {
-	return tango.text.Util.index!(char)(value, match);
+public static size_t rindex(string value, string match) {
+	return tango.text.Util.rindex!(char)(value, match);
 }
 
 public static size_t count(string value, string match) {
 	return tango.text.Util.count!(char)(value, match);
-}
-
-public static bool contains(string value, char match) {
-	return tango.text.Util.contains!(char)(value, match);
 }
 
 public static bool contains(string value, string match) {
@@ -359,7 +361,7 @@ public static string[] split(string value, string separator) {
 
 	while(true) {
 		// Get the location of the next split
-		i = tango.text.Util.index!(char)(value, separator, start);
+		i = index(value, separator, start);
 
 		// If there are no more splits, add the last string
 		if(i == value_length) {

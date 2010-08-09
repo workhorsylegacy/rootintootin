@@ -8,8 +8,6 @@
 
 
 private import tango.io.Stdout;
-private import tango.io.Console;
-
 private import tango.math.random.engines.Twister;
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
@@ -192,7 +190,7 @@ class HttpApp {
 		}
 
 		// Get the HTTP GET params
-		if(contains(request.uri, '?')) {
+		if(contains(request.uri, "?")) {
 			foreach(string param ; split(after(request.uri, "?"), "&")) {
 				if(pair(param, "=", _pair)) {
 					request._params[Helper.unescape(_pair[0])].value = Helper.unescape(_pair[1]);
@@ -299,7 +297,7 @@ class HttpApp {
 
 	protected string trigger_on_request_put(Request request, string raw_header, string raw_body) {
 		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
-		if(tango.text.Util.locatePattern(raw_header, "Content-Length: ", 0) == raw_header.length) {
+		if(count(raw_header, "Content-Length: ") == raw_header.length) {
 			return this.render_text(request, "Content-Length is required for HTTP POST and PUT.", 411);
 		}
 
@@ -432,23 +430,23 @@ class HttpApp {
 //		this.write_to_log("length: " ~ to_s(multipart_in_a_string.length) ~ "\n");
 //		this.write_to_log("multipart_in_a_string: " ~ multipart_in_a_string ~ "\n");
 
-		char[] data = split(multipart_in_a_string, "--" ~ boundary)[1];
+		char[] data = after(multipart_in_a_string, "--" ~ boundary);
 //		this.write_to_log("data: " ~ data ~ "\r\n\r\n");
 
-		char[] header = split(multipart_in_a_string, "\r\n\r\n")[0];
+		char[] header = before(multipart_in_a_string, "\r\n\r\n");
 //		this.write_to_log("header: " ~ header ~ "\n\n");
 
-		char[] disposition = split(header, "\n")[1];
+		char[] disposition = after(header, "\n");
 //		this.write_to_log("disposition: " ~ disposition ~ "\n\n");
 
 		char[] field_name = between(disposition, "; name=\"", "\"; ");
 		char[] file_name = between(disposition, "; filename=\"", "\"");
 //		this.write_to_log(field_name ~ ": [" ~ file_name ~ "]\n\n");
 
-		char[] file_content_type = split(header, "Content-Type: ")[1];
+		char[] file_content_type = after(header, "Content-Type: ");
 //		this.write_to_log("app file_content_type: [" ~ file_content_type ~ "]\n\n");
 
-		char[] file_data = split(data, "\r\n\r\n")[1][0 .. length-3];
+		char[] file_data = after(data, "\r\n\r\n")[0 .. length-3];
 //		this.write_to_log("app data length: [" ~ to_s(file_data.length) ~ "]\n\n");
 //		this.write_to_log("file_data: [" ~ file_data ~ "]\n\n");
 

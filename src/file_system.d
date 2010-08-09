@@ -8,7 +8,6 @@
 
 
 module file_system;
-private import tango.io.Stdout;
 private import tango.stdc.stringz;
 private import tango.stdc.time;
 

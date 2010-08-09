@@ -9,7 +9,6 @@
 
 private import tango.io.device.File;
 private import Path = tango.io.Path;
-private import tango.time.Clock;
 
 public import tango.io.Stdout;
 public import http_server;

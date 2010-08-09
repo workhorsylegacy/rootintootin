@@ -8,9 +8,6 @@
 
 
 private import tango.io.Stdout;
-private import tango.io.Console;
-private import tango.sys.Process;
-
 private import socket;
 
 
