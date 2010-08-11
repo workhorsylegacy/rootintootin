@@ -13,9 +13,10 @@ private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
 private import tango.time.Clock;
 private import tango.io.device.File;
+private import tango.stdc.stringz;
 
+private import socket;
 private import tcp_server;
-
 private import language_helper;
 private import helper;
 
@@ -62,12 +63,6 @@ public class Request {
 	public void format(string value) { _format = value; }
 	public void http_version(string value) { _http_version = value; }
 	public void content_length(uint value) { _content_length = value; }
-
-	public static Request new_blank() {
-		string[string] cookies, fields;
-		Dictionary params = new Dictionary();
-		return new Request("", "", "", "", params, fields, cookies);
-	}
 }
 
 class HttpApp {
@@ -76,6 +71,7 @@ class HttpApp {
 	private string _salt;
 	private string _server_name;
 	protected string _response;
+	protected string _buffer;
 	private string[] _pair;
 
 	public this(string server_name) {
@@ -91,9 +87,9 @@ class HttpApp {
 		delete random;
 	}
 
-	protected string process_request(char[] request) {
+	protected string process_request(int fd) {
 		try {
-			this.trigger_on_request(request);
+			this.trigger_on_request(fd);
 			return _response;
 		} catch(Exception err) {
 			return "Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
@@ -142,12 +138,23 @@ class HttpApp {
 		Stdout(response).flush;
 	}
 
-	protected void trigger_on_request(string raw_request) {
+	protected void trigger_on_request(int fd) {
 		Request request = new Request();
 		_response = null;
 
-		// Get the raw header body and header from the buffer
+		// Read the request header
+		char* buffer = toStringz(_buffer);
+		int len = socket_read(fd, buffer);
+		char[] raw_request = buffer[0 .. len];
 		size_t header_end = index(raw_request, "\r\n\r\n");
+
+		// If we have not found the end of the header return a 413 error
+		if(header_end == 0) {
+			_response = render_text(request, "413 Request Entity Too Large: The HTTP header is bigger than the max header size of " ~ to_s(_buffer.length) ~ " bytes.", 413);
+			return;
+		}
+
+		// Get the raw header body and header from the buffer
 		string raw_header = raw_request[0 .. header_end];
 		string raw_body = raw_request[header_end+4 .. length];
 
@@ -298,7 +305,7 @@ class HttpApp {
 	protected string trigger_on_request_put(Request request, string raw_header, string raw_body) {
 		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
 		if(count(raw_header, "Content-Length: ") == raw_header.length) {
-			return this.render_text(request, "Content-Length is required for HTTP POST and PUT.", 411);
+			return this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
 		}
 
 		// Get the content length
@@ -356,6 +363,7 @@ class HttpApp {
 
 	protected string render_text(Request request, string text, ushort status_code = 200, string format = null) {
 		if(format==null) format = request.format;
+		if(format==null) format = "txt";
 		string content_type = Helper.mimetype_map[format];
 
 		// If a 404 page is less than 512 bytes, we pad it for Chrome/Chromium
@@ -370,7 +378,7 @@ class HttpApp {
 	private string generate_text(Request request, string text, ushort status_code, string content_type) {
 		// Use a blank request if there was none
 		if(request is null) {
-			request = Request.new_blank();
+			request = new Request();
 		}
 
 		// If we have already rendered, show an error
@@ -378,37 +386,35 @@ class HttpApp {
 			throw new Exception("Something has already been rendered.");
 		}
 
-		// Get the status code.
+		// Get the status code
 		string status = Helper.get_verbose_status_code(status_code);
-
-		// Get all the new cookie values to send
-		// FIXME: This is sending all cookies. It should only send the ones that have changed
-		string set_cookies = "";
-		foreach(string name, string value ; request._cookies) {
-			set_cookies ~= "Set-Cookie: " ~ name ~ "=" ~ Helper.escape(value) ~ "\r\n";
-		}
 
 		// Add the HTTP headers
 		auto now = WallClock.now;
 		auto time = now.time;
 		auto date = Gregorian.generic.toDate(now);
-		string reply = 
-		"HTTP/1.1 " ~ status ~ "\r\n" ~ 
-		"Date: " ~ to_s(date.day) ~ to_s(date.month) ~ to_s(date.year) ~ "\r\n" ~ 
-		"Server: " ~ _server_name ~ "\r\n" ~ 
-		set_cookies ~ 
-		"Status: " ~ status ~ "\r\n" ~ 
+		auto b = new AutoStringArray(_buffer);
+		b ~= "HTTP/1.1 " ;b~= status ;b~= "\r\n" ;b~= 
+		"Date: " ;b~= to_s(date.day) ;b~= to_s(date.month) ;b~= to_s(date.year) ;b~= "\r\n" ;b~= 
+		"Server: " ;b~= _server_name ;b~= "\r\n" ;
+
+		// Get all the new cookie values to send
+		foreach(string name, string value ; request._cookies) {
+			b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= Helper.escape(value) ;b~= "\r\n";
+		}
+
+		b~= "Status: " ;b~= status ;b~= "\r\n" ;b~= 
 		//"X-Runtime: 0.15560\r\n",
 		//"ETag: \"53e91025a55dfb0b652da97df0e96e4d\"\r\n",
-		"Access-Control-Allow-Origin: *\r\n" ~ 
-		"Cache-Control: private, max-age=0\r\n" ~ 
-		"Content-Type: " ~ content_type ~ "\r\n" ~ 
-		"Content-Length: " ~ to_s(text.length) ~ "\r\n" ~
+		"Access-Control-Allow-Origin: *\r\n" ;b~= 
+		"Cache-Control: private, max-age=0\r\n" ;b~= 
+		"Content-Type: " ;b~= content_type ;b~= "\r\n" ;b~= 
+		"Content-Length: " ;b~= to_s(text.length) ;b~= "\r\n" ;b~=
 		//"Vary: User-Agent\r\n",
-		"\r\n" ~
+		"\r\n" ;b~=
 		text;
 
-		return reply;
+		return b.toString();
 	}
 
 	private void urlencode_to_dict(ref Dictionary dict, string urlencode_in_a_string) {

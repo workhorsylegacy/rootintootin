@@ -609,7 +609,6 @@ public class AutoStringArray {
 	private size_t _i;
 	private size_t _j;
 	public static const size_t BUFFER_SIZE = 1024 * 10;
-	public this() { _buffers ~= new char[BUFFER_SIZE]; }
 	public void opCatAssign(int value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(uint value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(long value) { opCatAssign(to_s(value)); }
@@ -620,6 +619,13 @@ public class AutoStringArray {
 	public void opCatAssign(bool value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(char value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(FixedPoint value) { opCatAssign(to_s(value)); }
+
+	public this(string buffer = null) { 
+		if(buffer)
+			_buffers ~= buffer;
+		else
+			_buffers ~= new char[BUFFER_SIZE];
+	}
 
 	public void opCatAssign(string value) {
 		size_t value_length = value.length;

@@ -190,6 +190,8 @@ public class Helper {
 		mimetype_map["htm"]  = "text/html; charset=utf-8";
 		mimetype_map["json"] = "application/json";
 		mimetype_map["xml"] = "text/xml";
+		mimetype_map["text"] = "text/plain";
+		mimetype_map["txt"] = "text/plain";
 	}
 
 	private static char hex_to_char(char c) {

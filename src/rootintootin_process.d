@@ -19,8 +19,6 @@ private import app_builder;
 private import rootintootin;
 private import rootintootin_server;
 
-private import tango.stdc.stringz;
-
 
 class RootinTootinAppProcess : RootinTootinApp {
 	//private char[3] _request_signal;
@@ -49,25 +47,14 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 		string request;
 		string response = null;
+		_buffer = new char[1024 * 10];
 
-		char[1024 * 10] b;
-		char* buffer = toStringz(b);
-		int fd, len;
+		int fd;
 		while(true) {
 			fd = read_client_fd(_unix_socket_fd);
 
-			// FIXME: Change this to read the request header into the buffer,
-			// instead of copying strings.
-			request = "";
-			while(true) {
-				len = socket_read(fd, buffer);
-				if(len == -1) break;
-				request ~= buffer[0 .. len];
-				if(len < 1024) break;
-			}
-			//len = socket_read(fd, buffer);
-			//request = buffer[0 .. len];
-			response = process_request(request);
+			// Read the request header into the buffer
+			response = process_request(fd);
 
 			// Write to the log
 			if(_log) {
