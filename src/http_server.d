@@ -160,7 +160,6 @@ class HttpApp {
 
 		// Get the header info
 		string[] header_lines = split_lines(raw_header);
-
 		string[] first_line = split(header_lines[0], " ");
 		request.method = first_line[0];
 		request.uri = first_line[1];
@@ -219,6 +218,19 @@ class HttpApp {
 			}
 		}
 
+		// Make sure POST/PUT have Content-Type and Content-Length fields
+		if(request.method == "POST" || request.method == "PUT") {
+			if(!("Content-Length" in request._fields)) {
+				return this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
+			}
+
+			if(!("Content-Type" in request._fields)) {
+				return this.render_text(request, "415 Unsupported Media Type: A valid Content-Type is required for HTTP POST and PUT.", 415);
+			}
+
+			request.content_length = to_uint(request._fields["Content-Length"]);
+		}
+
 		// Determine if we have a session id in the cookies
 		bool has_session = false;
 		has_session = (("_appname_session" in request._cookies) != null);
@@ -261,10 +273,10 @@ class HttpApp {
 				this.respond_to_client(this.trigger_on_request_get(request, raw_header, raw_body));
 				break;
 			case "POST":
-				this.respond_to_client(this.trigger_on_request_post(request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_post(fd, request, raw_header, raw_body));
 				break;
 			case "PUT":
-				this.respond_to_client(this.trigger_on_request_put(request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_put(fd, request, raw_header, raw_body));
 				break;
 			case "DELETE":
 				this.respond_to_client(this.trigger_on_request_delete(request, raw_header, raw_body));
@@ -298,42 +310,43 @@ class HttpApp {
 		return this.on_request_get(request, raw_header, raw_body);
 	}
 
-	protected string trigger_on_request_post(Request request, string raw_header, string raw_body) {
-		return this.trigger_on_request_put(request, raw_header, raw_body);
+	protected string trigger_on_request_post(int fd, Request request, string raw_header, string raw_body) {
+		return this.trigger_on_request_put(fd, request, raw_header, raw_body);
 	}
 
-	protected string trigger_on_request_put(Request request, string raw_header, string raw_body) {
-		// Show an 'HTTP 411 Length Required' error if there is no Content-Length
-		if(count(raw_header, "Content-Length: ") == raw_header.length) {
-			return this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
-		}
-
-		// Get the content length
-		request.content_length = to_uint(between(raw_header, "Content-Length: ", "\r\n"));
-
+	protected string trigger_on_request_put(int fd, Request request, string raw_header, string raw_body) {
 		// Get the params from the body
-		if(("Content-Type" in request._fields) != null) {
-			string content_type = request._fields["Content-Type"];
-			switch(before(content_type, ";")) {
-				case "application/x-www-form-urlencoded":
-					urlencode_to_dict(request._params, raw_body);
-					break;
-				case "application/json":
-					json_to_dict(request._params, raw_body);
-					break;
-				case "application/xml":
-					xml_to_dict(request._params, raw_body);
-					break;
-				case "multipart/form-data":
-					string boundary = after(content_type, "; boundary=");
-					multipart_to_dict_and_file(request._params, raw_body, boundary);
-					break;
-				default:
-					throw new Exception("Unknown Content-Type '" ~ request._fields["Content-Type"] ~ "'.");
-			}
+		string content_type = request._fields["Content-Type"];
+
+		// Get the start of the body that was read with the header
+		char[] file_body = new char[request.content_length];
+		file_body[0 .. raw_body.length] = raw_body[0 .. length];
+//		Stdout.format("b: {}", b).newline.flush;
+
+		// Read the rest of the body from the client
+		if(request.content_length > raw_body.length)
+			int len = socket_read(fd, file_body[raw_body.length .. length].ptr);
+//		Stdout.format("file_body: {}", file_body).newline.flush;
+
+		switch(before(content_type, ";")) {
+			case "application/x-www-form-urlencoded":
+				urlencode_to_dict(request._params, file_body);
+				break;
+			case "application/json":
+				json_to_dict(request._params, file_body);
+				break;
+			case "application/xml":
+				xml_to_dict(request._params, file_body);
+				break;
+			case "multipart/form-data":
+				string boundary = after(content_type, "; boundary=");
+				multipart_to_dict_and_file(request._params, file_body, boundary);
+				break;
+			default:
+				throw new Exception("Unknown Content-Type '" ~ request._fields["Content-Type"] ~ "'.");
 		}
 
-		return this.on_request_put(request, raw_header, raw_body);
+		return this.on_request_put(request, raw_header, file_body);
 	}
 
 	protected string trigger_on_request_delete(Request request, string raw_header, string raw_body) {
@@ -433,32 +446,15 @@ class HttpApp {
 	}
 
 	private void multipart_to_dict_and_file(ref Dictionary dict, string multipart_in_a_string, string boundary) {
-//		this.write_to_log("length: " ~ to_s(multipart_in_a_string.length) ~ "\n");
-//		this.write_to_log("multipart_in_a_string: " ~ multipart_in_a_string ~ "\n");
+		// Get the file data from the multipart encoded gibberish
+		string content_type = before(after(multipart_in_a_string, "Content-Type: "), "\r\n");
+		string file_name = before(after(before(after(multipart_in_a_string, boundary), "Content-Type: "~content_type), "; filename=\""), "\"");
+		string file_data = before(after(multipart_in_a_string, "Content-Type: "~content_type~"\r\n\r\n"), "\r\n--"~boundary);
 
-		char[] data = after(multipart_in_a_string, "--" ~ boundary);
-//		this.write_to_log("data: " ~ data ~ "\r\n\r\n");
-
-		char[] header = before(multipart_in_a_string, "\r\n\r\n");
-//		this.write_to_log("header: " ~ header ~ "\n\n");
-
-		char[] disposition = after(header, "\n");
-//		this.write_to_log("disposition: " ~ disposition ~ "\n\n");
-
-		char[] field_name = between(disposition, "; name=\"", "\"; ");
-		char[] file_name = between(disposition, "; filename=\"", "\"");
-//		this.write_to_log(field_name ~ ": [" ~ file_name ~ "]\n\n");
-
-		char[] file_content_type = after(header, "Content-Type: ");
-//		this.write_to_log("app file_content_type: [" ~ file_content_type ~ "]\n\n");
-
-		char[] file_data = after(data, "\r\n\r\n")[0 .. length-3];
-//		this.write_to_log("app data length: [" ~ to_s(file_data.length) ~ "]\n\n");
-//		this.write_to_log("file_data: [" ~ file_data ~ "]\n\n");
-
+		// Save the info in a dict
 		dict["file_name"].value = file_name;
 		dict["file_path"].value = "uploads/" ~ file_name;
-		dict["file_content_type"].value = file_content_type;
+		dict["file_content_type"].value = content_type;
 
 		// Write the file to disk
 		File file = new File(dict["file_path"].value, File.WriteCreate);
