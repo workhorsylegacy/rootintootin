@@ -72,6 +72,7 @@ class HttpApp {
 	private string _server_name;
 	protected string _response;
 	protected string _buffer;
+	protected string _file_buffer;
 	private string[] _pair;
 
 	public this(string server_name) {
@@ -96,27 +97,27 @@ class HttpApp {
 		}
 	}
 
-	protected string on_request_get(Request request, string raw_header, string raw_body) {
+	protected string on_request_get(Request request) {
 		string text = "200: Okay";
 		return render_text(request, text, 200);
 	}
 
-	protected string on_request_post(Request request, string raw_header, string raw_body) {
+	protected string on_request_post(Request request) {
 		string text = "200: Okay";
 		return render_text(request, text, 200);
 	}
 
-	protected string on_request_put(Request request, string raw_header, string raw_body) {
+	protected string on_request_put(Request request) {
 		string text = "200: Okay";
 		return render_text(request, text, 200);
 	}
 
-	protected string on_request_delete(Request request, string raw_header, string raw_body) {
+	protected string on_request_delete(Request request) {
 		string text = "200: Okay";
 		return render_text(request, text, 200);
 	}
 
-	protected string on_request_options(Request request, string raw_header, string raw_body) {
+	protected string on_request_options(Request request) {
 		// Send a basic options header for access control
 		// See: https://developer.mozilla.org/En/HTTP_Access_Control
 		string response = 
@@ -154,9 +155,8 @@ class HttpApp {
 			return;
 		}
 
-		// Get the raw header body and header from the buffer
+		// Get the raw header from the buffer
 		string raw_header = raw_request[0 .. header_end];
-		string raw_body = raw_request[header_end+4 .. length];
 
 		// Get the header info
 		string[] header_lines = split_lines(raw_header);
@@ -229,6 +229,21 @@ class HttpApp {
 			}
 
 			request.content_length = to_uint(request._fields["Content-Length"]);
+
+			// Read the body into a file
+			int remaining_length = request.content_length;
+			File file = new File("raw_body", File.WriteCreate);
+			string body_chunk = raw_request[header_end+4 .. length];
+			file.write(body_chunk);
+			remaining_length -= body_chunk.length;
+
+			while(remaining_length > 0 && (len = socket_read(fd, _file_buffer.ptr)) > 0) {
+				body_chunk = _file_buffer[0 .. len];
+				file.write(body_chunk);
+				remaining_length -= body_chunk.length;
+			}
+
+			file.close();
 		}
 
 		// Determine if we have a session id in the cookies
@@ -270,19 +285,19 @@ class HttpApp {
 		// Process the remainder of the request based on its method
 		switch(request.method) {
 			case "GET":
-				this.respond_to_client(this.trigger_on_request_get(request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_get(request));
 				break;
 			case "POST":
-				this.respond_to_client(this.trigger_on_request_post(fd, request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_post(request));
 				break;
 			case "PUT":
-				this.respond_to_client(this.trigger_on_request_put(fd, request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_put(request));
 				break;
 			case "DELETE":
-				this.respond_to_client(this.trigger_on_request_delete(request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_delete(request));
 				break;
 			case "OPTIONS":
-				this.respond_to_client(this.trigger_on_request_options(request, raw_header, raw_body));
+				this.respond_to_client(this.trigger_on_request_options(request));
 				break;
 			default:
 				throw new Exception("Unknown http request method '" ~ request.method ~ "'.");
@@ -306,27 +321,22 @@ class HttpApp {
 		*/
 	}
 
-	protected string trigger_on_request_get(Request request, string raw_header, string raw_body) {
-		return this.on_request_get(request, raw_header, raw_body);
+	protected string trigger_on_request_get(Request request) {
+		return this.on_request_get(request);
 	}
 
-	protected string trigger_on_request_post(int fd, Request request, string raw_header, string raw_body) {
-		return this.trigger_on_request_put(fd, request, raw_header, raw_body);
+	protected string trigger_on_request_post(Request request) {
+		return this.trigger_on_request_put(request);
 	}
 
-	protected string trigger_on_request_put(int fd, Request request, string raw_header, string raw_body) {
+	protected string trigger_on_request_put(Request request) {
 		// Get the params from the body
 		string content_type = request._fields["Content-Type"];
 
-		// Get the start of the body that was read with the header
-		char[] file_body = new char[request.content_length];
-		file_body[0 .. raw_body.length] = raw_body[0 .. length];
-//		Stdout.format("b: {}", b).newline.flush;
-
-		// Read the rest of the body from the client
-		if(request.content_length > raw_body.length)
-			int len = socket_read(fd, file_body[raw_body.length .. length].ptr);
-//		Stdout.format("file_body: {}", file_body).newline.flush;
+		File file = new File("raw_body", File.ReadExisting);
+		string file_body = new char[cast(size_t)file.length];
+		file.read(file_body);
+		file.close();
 
 		switch(before(content_type, ";")) {
 			case "application/x-www-form-urlencoded":
@@ -346,15 +356,15 @@ class HttpApp {
 				throw new Exception("Unknown Content-Type '" ~ request._fields["Content-Type"] ~ "'.");
 		}
 
-		return this.on_request_put(request, raw_header, file_body);
+		return this.on_request_put(request);
 	}
 
-	protected string trigger_on_request_delete(Request request, string raw_header, string raw_body) {
-		return this.on_request_delete(request, raw_header, raw_body);
+	protected string trigger_on_request_delete(Request request) {
+		return this.on_request_delete(request);
 	}
 
-	protected string trigger_on_request_options(Request request, string raw_header, string raw_body) {
-		return this.on_request_options(request, raw_header, raw_body);
+	protected string trigger_on_request_options(Request request) {
+		return this.on_request_options(request);
 	}
 
 	protected string redirect_to(Request request, string url) {

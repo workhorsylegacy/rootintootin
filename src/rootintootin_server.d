@@ -61,23 +61,23 @@ public class RootinTootinApp : HttpApp {
 		return has_valid_request;
 	}
 
-	protected string on_request_get(Request request, string raw_header, string raw_body) {
-		return this.on_request_all(request, raw_header, raw_body);
+	protected override string on_request_get(Request request) {
+		return this.on_request_all(request);
 	}
 
-	protected string on_request_post(Request request, string raw_header, string raw_body) {
-		return this.on_request_all(request, raw_header, raw_body);
+	protected override string on_request_post(Request request) {
+		return this.on_request_all(request);
 	}
 
-	protected string on_request_put(Request request, string raw_header, string raw_body) {
-		return this.on_request_all(request, raw_header, raw_body);
+	protected override string on_request_put(Request request) {
+		return this.on_request_all(request);
 	}
 
-	protected string on_request_delete(Request request, string raw_header, string raw_body) {
-		return this.on_request_all(request, raw_header, raw_body);
+	protected override string on_request_delete(Request request) {
+		return this.on_request_all(request);
 	}
 
-	protected string on_request_all(Request request, string raw_header, string raw_body) {
+	protected string on_request_all(Request request) {
 		// Get the controller, action, and id
 		string controller, action, id;
 		bool has_valid_request = get_route_info(request, controller, action, id);

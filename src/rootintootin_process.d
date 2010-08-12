@@ -48,6 +48,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 		string request;
 		string response = null;
 		_buffer = new char[1024 * 10];
+		_file_buffer = new char[1024 * 10];
 
 		int fd;
 		while(true) {
@@ -160,7 +161,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 		write_client_fd(_unix_socket_fd, fd);
 	}
 
-	protected void on_started() {
+	protected override void on_started() {
 		// Have the builder build the app when it changes
 		auto builder = new AppBuilder(
 							_app_path, 
