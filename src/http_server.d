@@ -13,7 +13,6 @@ private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
 private import tango.time.Clock;
 private import tango.io.device.File;
-private import tango.stdc.stringz;
 
 private import socket;
 private import tcp_server;
@@ -144,9 +143,8 @@ class HttpApp {
 		_response = null;
 
 		// Read the request header
-		char* buffer = toStringz(_buffer);
-		int len = socket_read(fd, buffer);
-		char[] raw_request = buffer[0 .. len];
+		int len = socket_read(fd, _buffer.ptr, _buffer.length);
+		char[] raw_request = _buffer[0 .. len];
 		size_t header_end = index(raw_request, "\r\n\r\n");
 
 		// If we have not found the end of the header return a 413 error
@@ -218,17 +216,17 @@ class HttpApp {
 			}
 		}
 
-		// Make sure POST/PUT have Content-Type and Content-Length fields
 		if(request.method == "POST" || request.method == "PUT") {
+			// Make sure the Content-Length field exist
 			if(!("Content-Length" in request._fields)) {
 				return this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
 			}
+			request.content_length = to_uint(request._fields["Content-Length"]);
 
+			// Make sure the Content-Type field exist
 			if(!("Content-Type" in request._fields)) {
 				return this.render_text(request, "415 Unsupported Media Type: A valid Content-Type is required for HTTP POST and PUT.", 415);
 			}
-
-			request.content_length = to_uint(request._fields["Content-Length"]);
 
 			// Read the body into a file
 			int remaining_length = request.content_length;
@@ -237,7 +235,8 @@ class HttpApp {
 			file.write(body_chunk);
 			remaining_length -= body_chunk.length;
 
-			while(remaining_length > 0 && (len = socket_read(fd, _file_buffer.ptr)) > 0) {
+			while(remaining_length > 0) {
+				len = socket_read(fd, _file_buffer.ptr, _file_buffer.length);
 				body_chunk = _file_buffer[0 .. len];
 				file.write(body_chunk);
 				remaining_length -= body_chunk.length;

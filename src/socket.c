@@ -60,8 +60,8 @@ int c_connect_unix_socket_fd(char* path) {
 	return unix_socket_fd;
 }
 
-int c_socket_read(int fd, char* buffer) {
-	return read(fd, buffer, strlen(buffer));
+int c_socket_read(int fd, char* buffer, int buffer_length) {
+	return read(fd, buffer, buffer_length);
 }
 
 void c_socket_write(int fd, char* buffer) {

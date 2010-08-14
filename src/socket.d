@@ -18,8 +18,8 @@ int read_client_fd(int unix_socket_fd) {
 	return c_read_client_fd(unix_socket_fd);
 }
 
-int socket_read(int fd, char* buffer) {
-	return c_socket_read(fd, buffer);
+int socket_read(int fd, char* buffer, int buffer_length) {
+	return c_socket_read(fd, buffer, buffer_length);
 }
 
 void socket_write(int fd, char* buffer) {
@@ -52,7 +52,7 @@ extern (C):
 
 int c_write_client_fd(int unix_socket_fd, int fd);
 int c_read_client_fd(int unix_socket_fd);
-int c_socket_read(int fd, char* buffer);
+int c_socket_read(int fd, char* buffer, int buffer_length);
 void c_socket_write(int fd, char* buffer);
 void c_socket_close(int fd);
 int c_connect_unix_socket_fd(char* path);
