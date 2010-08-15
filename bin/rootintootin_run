@@ -44,20 +44,13 @@ def generate_app(version, routes, table_map, reference_map):
 	# Write the imports
 	out_file.write(
 		"\n" +
-		"private import tango.text.convert.Integer;\n" +
-		"private import tango.text.Util;\n" +
 		"private import tango.io.Stdout;\n" +
-		"private import tango.time.chrono.Gregorian;\n" +
-		"private import tango.time.WallClock;\n" +
-
-		"\n" +
 		"private import language_helper;\n" +
 		"private import helper;\n" +
 		"private import regex;\n" +
 		"private import rootintootin;\n" +
 		"private import rootintootin_server;\n" +
-		"private import rootintootin_process;\n" +
-		"//private import ui;\n\n"
+		"private import rootintootin_process;\n\n"
 	)
 
 	for controller_name, route_maps in routes.items():
@@ -159,9 +152,6 @@ def generate_app(version, routes, table_map, reference_map):
 		for action_name, route_map in route_maps.iteritems():
 			for uri, method in route_map.iteritems():
 				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
-
-	out_file.write(
-	"	//stdout_message(\"\");\n")
 
 	# Write the server start in main
 	out_file.write("\n" + 
