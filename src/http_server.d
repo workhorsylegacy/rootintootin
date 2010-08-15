@@ -166,6 +166,12 @@ class HttpApp {
 		if(!request.was_format_specified) request.format = "html";
 		request.http_version = first_line[2];
 
+		// If the format is unknown, return a 415 error
+		if(!(request.format in Helper.mimetype_map)) {
+			_response = render_text(request, "415 Unsupported Media Type: The server does not understand the '" ~ request.format ~ "' format.", 415, "txt");
+			return;
+		}
+
 		// Get all the fields
 		foreach(string line ; header_lines) {
 			// Break if we are at the end of the fields
