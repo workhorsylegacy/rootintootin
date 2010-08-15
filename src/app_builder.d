@@ -194,22 +194,34 @@ public class AppBuilder {
 		bool is_newer;
 		if(!is_first_loop) {
 			foreach(string model_name; model_names) {
-				is_newer = is_file_newer("app/models/", model_name ~ ".d", ".", model_name ~ ".o");
+				if(file_exist(".",  model_name ~ ".o"))
+					is_newer = is_file_newer("app/models/", model_name ~ ".d", ".", model_name ~ ".o");
+				else
+					is_newer = true;
 				files ~= model_name ~ (is_newer ? ".d" : ".o");
 				files ~= model_name ~ "_base" ~ (is_newer ? ".d" : ".o");
 			}
 			foreach(string controller_name, string[string][string] route_maps; routes) {
 				string controller = singularize(nouns, controller_name);
-				is_newer = is_file_newer("app/controllers/", controller ~ "_controller.d", ".", controller ~ "_controller.o");
+				if(file_exist(".",  controller ~ "_controller.o"))
+					is_newer = is_file_newer("app/controllers/", controller ~ "_controller.d", ".", controller ~ "_controller.o");
+				else
+					is_newer = true;
 				files ~= controller ~ "_controller" ~ (is_newer ? ".d" : ".o");
 			}
 			foreach(string view_name; view_names) {
 				string controller = split(view_name, "_")[0];
 				string action = split(view_name, "_")[1];
-				is_newer = is_file_newer("app/views/" ~ controller ~ "/",  action ~ ".html.ed", ".", "view_" ~ controller ~ "_" ~ action ~ ".o");
+				if(file_exist(".",  "view_" ~ controller ~ "_" ~ action ~ ".o"))
+					is_newer = is_file_newer("app/views/" ~ controller ~ "/",  action ~ ".html.ed", ".", "view_" ~ controller ~ "_" ~ action ~ ".o");
+				else
+					is_newer = true;
 				files ~= "view_" ~ controller ~ "_" ~ action ~ (is_newer ? ".d" : ".o");
 			}
-			is_newer = is_file_newer("app/views/layouts/", "default.html.ed", ".", "view_layouts_default.o");
+			if(file_exist(".",  "view_layouts_default.o"))
+				is_newer = is_file_newer("app/views/layouts/", "default.html.ed", ".", "view_layouts_default.o");
+			else
+				is_newer = true;
 			files ~= "view_layouts_default" ~ (is_newer ? ".d" : ".o");
 		}
 
@@ -233,7 +245,7 @@ public class AppBuilder {
 
 			string command = 
 				"ldc -g -w -of application_new application.d " ~ 
-				tango.text.Util.join(files, " ") ~ 
+				join(files, " ") ~ 
 				" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " ~ CORELIB;
 
 			Stdout("\nRebuilding application ...").newline.flush;
