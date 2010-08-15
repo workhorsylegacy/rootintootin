@@ -134,8 +134,8 @@ class HttpApp {
 		_response = response;
 	}
 
-	protected void write_to_log(string response) {
-		Stdout(response).flush;
+	protected void write_to_log(string message) {
+		Stdout(message).flush;
 	}
 
 	protected void trigger_on_request(int fd) {

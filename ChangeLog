@@ -1,4 +1,5 @@
 * Release 0.6.0
+	* Fixed Bug #612828: 'The ipc is too slow for large strings'.
 	* Fixed Bug #509771: 'There is no way to upload files'.
 	* Fixed Bug #613310: 'Connections fail with ab test'.
 	* Fixed bug #603409: 'The ipc messages get truncated with binary data'.
