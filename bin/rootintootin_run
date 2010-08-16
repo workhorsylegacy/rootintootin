@@ -45,6 +45,8 @@ def generate_app(version, routes, table_map, reference_map):
 	out_file.write(
 		"\n" +
 		"private import tango.io.Stdout;\n" +
+		"private import tango.io.device.File;\n" +
+		"private import tango.text.json.Json;\n\n" +
 		"private import language_helper;\n" +
 		"private import helper;\n" +
 		"private import regex;\n" +
@@ -154,18 +156,38 @@ def generate_app(version, routes, table_map, reference_map):
 				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
 
 	# Write the server start in main
-	out_file.write("\n" + 
-	"	// Create and start the app\n" + 
-	"	RunnerBase runner = new Runner();\n" + 
-	"	auto app = new RootinTootinAppProcess(\n" + 
-	"				\"" + version + "\", \n" + 
-	"				runner, routes, \n" + 
-	"				\"" + db_host + "\", \"" + db_user + "\", \n" + 
-	"				\"" + db_password + "\", \"" + db_name + "\");\n" + 
-	"	app.start();\n" + 
-	"\n" +
-	"	return 0;\n" +
-	"}\n")
+	out_file.write("""
+	// Read the config from the config file
+	auto file = new File("config/config.json", File.ReadExisting);
+	auto content = new char[cast(size_t)file.length];
+	file.read(content);
+	file.close();
+	auto values = (new Json!(char)).parse(content).toObject();
+
+	string[string][string] config;
+	foreach(n1, v1; values.attributes()) {
+		foreach(n2, v2; v1.toObject().attributes()) {
+			config[n2] = null;
+			foreach(n3, v3; v2.toObject().attributes()) {
+				config[n2][n3] = v3.toString();
+			}
+		}
+	}
+
+	// Create and start the app
+	RunnerBase runner = new Runner();
+	auto app = new RootinTootinAppProcess(
+				"Rootin_Tootin_0.6.0", 
+				runner, routes, 
+				config["database_configuration"]["host"], 
+				config["database_configuration"]["user"], 
+				config["database_configuration"]["password"], 
+				config["database_configuration"]["name"]);
+	app.start();
+
+	return 0;
+}
+""")
 
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
