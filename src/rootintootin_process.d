@@ -8,6 +8,7 @@
 
 
 private import tango.io.Stdout;
+private import tango.core.Thread;
 private import tango.sys.Process;
 private import tango.io.device.File;
 
@@ -80,21 +81,42 @@ class RootinTootinServerProcess : RootinTootinServer {
 		write_client_fd(_unix_socket_fd, fd);
 	}
 
-	protected override void on_started() {
+	protected override void on_started(bool is_event_triggered = true) {
 		// Have the builder build the app when it changes
-		auto builder = new AppBuilder(
-							_app_path, 
-							&on_build_success, 
-							&on_build_failure);
-		builder.start();
+		if(is_event_triggered) {
+			auto builder = new AppBuilder(
+								_app_path, 
+								&on_build_success, 
+								&on_build_failure);
+			builder.start();
+		}
 
-		Stdout.format("Rootin Tootin running on http://localhost:{} ...\n", this._port).flush;
+		Stdout.format("Rootin Tootin running on http://localhost:{} ...", this._port).newline.flush;
 	}
 
-	protected void on_build_success() {
+	protected void on_build_success(AppBuilder builder) {
+		// Restart the server if the config changed
+		if(builder._port != _port || builder._max_waiting_clients != _max_waiting_clients) {
+			Stdout("Server restarting ...").newline.flush;
+
+			// Tell the server to restart
+			_port = builder._port;
+			_max_waiting_clients = builder._max_waiting_clients;
+			_is_configuration_changed = true;
+
+			// Wait for the server to restart
+			// FIXME: Polling like this is stupid
+			while(_is_configuration_changed == true) {
+				Thread.sleep(0.05);
+			}
+
+			Stdout("Server restart successful!").newline.flush;
+		}
+
+		// Start the application
 		_compile_error = null;
 		this.start_application();
-		Stdout("Application running ...\n").flush;
+		Stdout("Application running ...").newline.newline.flush;
 	}
 
 	protected void on_build_failure(char[] compile_error) {

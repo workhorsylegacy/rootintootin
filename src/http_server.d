@@ -483,8 +483,8 @@ class HttpServer : TcpServer {
 		super(port, max_waiting_clients);
 	}
 
-	protected void on_started() {
-		Stdout.format("Running on http://localhost:{} ...\n", this._port).flush;
+	protected override void on_started(bool is_event_triggered = true) {
+		Stdout.format("Running on http://localhost:{} ...", this._port).newline.flush;
 	}
 }
 

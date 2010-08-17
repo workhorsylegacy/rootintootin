@@ -20,11 +20,13 @@ private import file_system;
 
 public class AppBuilder {
 	private Thread _thread = null;
-	private void delegate() _on_success_func = null;
+	private void delegate(AppBuilder) _on_success_func = null;
 	private void delegate(char[]) _on_failure_func = null;
 	private string _app_path = null;
+	public ushort _port;
+	public int _max_waiting_clients;
 
-	public this(string app_path, void delegate() on_build_success=null, void delegate(char[]) on_build_failure=null) {
+	public this(string app_path, void delegate(AppBuilder) on_build_success=null, void delegate(char[]) on_build_failure=null) {
 		_app_path = app_path;
 		_on_success_func = on_build_success;
 		_on_failure_func = on_build_failure;
@@ -73,7 +75,7 @@ public class AppBuilder {
 		bool is_first_loop = true;
 
 		// Loop forever, and rebuild
-		do {
+		while(true) {
 			// Rebuild the application
 			try {
 				compile_error = this.build_method(is_first_loop);
@@ -84,11 +86,11 @@ public class AppBuilder {
 
 			// Show success or failure
 			if(compile_error == null) {
-				Stdout("\nApplication build successful!").newline.flush;
+				Stdout("Application build successful!").newline.flush;
 				if(_on_success_func)
-					_on_success_func();
+					_on_success_func(this);
 			} else {
-				Stdout("\nApplication build failed!").newline.flush;
+				Stdout("Application build failed!").newline.flush;
 				if(_on_failure_func)
 					_on_failure_func(compile_error);
 			}
@@ -97,7 +99,7 @@ public class AppBuilder {
 			wait_for_changes();
 
 			is_first_loop = false;
-		} while(true);
+		}
 	}
 
 	private char[] build_method(bool is_first_loop) {
@@ -238,6 +240,10 @@ public class AppBuilder {
 			files ~= "view_layouts_default.d";
 		}
 
+		// Save the configuration changes that will be needed by the running program
+		_port = to_ushort(config["server_configuration"]["port"]);
+		_max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
+
 		// Build the app
 		char[] c_stdout, c_stderr;
 		try {
@@ -248,7 +254,7 @@ public class AppBuilder {
 				join(files, " ") ~ 
 				" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " ~ CORELIB;
 
-			Stdout("\nRebuilding application ...").newline.flush;
+			Stdout("Application rebuilding ...").newline.flush;
 			this.run_command(command, c_stdout, c_stderr);
 
 			// Make sure the application was built

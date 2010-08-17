@@ -15,10 +15,12 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdbool.h>
 
 
 static struct sockaddr_un unix_socket_name = {0};
@@ -131,35 +133,41 @@ int c_read_client_fd(int unix_socket_fd) {
 	return *(int*)CMSG_DATA(cmsg);
 }
 
-int c_create_socket_fd(int port, int max_waiting_clients) {
-	int sock = socket(PF_INET, SOCK_STREAM, 0);
+int c_create_socket_fd(int port, int max_waiting_clients, bool is_blocking) {
+	// Create the socket
+	int fd = socket(PF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in sin;
-	int one = 1;
-	
-	if(sock == -1)
-		return sock;
+	if(fd == -1)
+		return fd;
 	memset(&sin, '\0', sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 	sin.sin_addr.s_addr = INADDR_ANY;
 
-	if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&one, sizeof(one)) 
-			|| bind(sock, (struct sockaddr*)&sin, sizeof(sin)) 
-			|| listen(sock, max_waiting_clients)) {
-		close(sock);
+	// Make the socket reuseable, bind it to the port, and have 
+	// it listen for a number of clients.
+	int one = 1;
+	if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void*)&one, sizeof(one)) 
+			|| bind(fd, (struct sockaddr*)&sin, sizeof(sin)) 
+			|| listen(fd, max_waiting_clients)) {
+		close(fd);
 		return -1;
 	}
-	return sock;
+
+	// Set the socket to non blocking
+	if(!is_blocking) {
+		int flags = fcntl(fd, F_GETFL, 0);
+		fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	}
+
+	return fd;
 }
 
 int c_accept_socket_fd(int fd) {
 	int connection_fd = accept(fd, 0, 0);
-
+/*
 	if(connection_fd == -1) {
 		perror("accept");
-		/* stupid Linux returns pending network errors on the new socket as
-		 * error codes from accept(); this monstrosity is what accept(2) 
-		 * actually recommends doing: */
 		switch(errno) {
 			case ENETDOWN: case EPROTO: case ENOPROTOOPT: 
 			case EHOSTDOWN: case ENONET: case EHOSTUNREACH: 
@@ -171,6 +179,7 @@ int c_accept_socket_fd(int fd) {
 					close(fd);
 		}
 	}
+*/
 	return connection_fd;
 }
 
