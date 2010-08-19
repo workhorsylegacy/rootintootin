@@ -223,12 +223,12 @@ class Blacklist(object):
 			exit()
 
 class Generator(object):
-	def __init__(self):
+	def __init__(self, mode):
 		self._db = None
 		self._database_configuration = None
 		self._server_configuration = None
 		self._nouns = None
-		self.load_configuration()
+		self.load_configuration(mode)
 		self.load_nouns()
 
 	def singularize(self, noun):
@@ -551,24 +551,25 @@ class Generator(object):
 
 #private
 
-	def load_configuration(self):
+	def load_configuration(self, mode):
 		with open('config/config.json', 'r') as f:
-			config = json.loads(f.read())["config"]
-			self._database_configuration = config['database_configuration']
-			self._server_configuration = config['server_configuration']
+			config = json.loads(f.read())[mode]
+			globals()['mode'] = mode
+			self._database_configuration = config['database']
+			self._server_configuration = config['server']
 
 	def save_configuration(self):
 		f = open('config/config.json', 'w')
 
 		f.write("\n{ \"config\" : {\n")
-		f.write("	\"database_configuration\" : {\n")
+		f.write("	\"database\" : {\n")
 		lines = []
 		for key, value in self._database_configuration.items():
 			lines.append("		\"" + key + "\" : \"" + value + "\"")
 		f.write(str.join(", \n", lines))
 		f.write("	},\n")
 
-		f.write("	\"server_configuration\" : {\n")
+		f.write("	\"server\" : {\n")
 		lines = []
 		for key, value in self._server_configuration.items():
 			lines.append("		\"" + str(key) + "\" : \"" + str(value) + "\"")

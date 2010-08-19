@@ -18,18 +18,22 @@ from lib_rootintootin import *
 
 
 # Make sure the first arg is a path
-if len(sys.argv) != 3:
-	print "usage: ./build 'working directory' [server|application]"
+if len(sys.argv) < 3:
+	print "usage: ./rootintootin_run 'working directory' [server|application] [development|production]"
 	exit(1)
 elif not os.path.exists(sys.argv[1]):
 	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
 	exit(1)
+elif sys.argv[2] == "server":
+	if len(sys.argv) < 4 or not sys.argv[3] in ['production', 'development']:
+		print "./run [development|production]"
+		exit(1)
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
 def generate_app(version, routes, table_map, reference_map):
-	generator = Generator()
+	generator = Generator(globals()['mode'])
 
 	# Get the names of all the views
 	view_names = []
@@ -134,13 +138,13 @@ def generate_app(version, routes, table_map, reference_map):
 	out_file.write("	}\n")
 	out_file.write("}\n")
 
-	port = str(int(globals()['server_configuration']['port']))
-	max_waiting_clients = globals()['server_configuration']['max_waiting_clients']
-	header_max_size = globals()['server_configuration']['header_max_size']
-	db_host = globals()['database_configuration']['host']
-	db_user = globals()['database_configuration']['user']
-	db_password = globals()['database_configuration']['password']
-	db_name = globals()['database_configuration']['name']
+	port = str(int(globals()['server']['port']))
+	max_waiting_clients = globals()['server']['max_waiting_clients']
+	header_max_size = globals()['server']['header_max_size']
+	db_host = globals()['database']['host']
+	db_user = globals()['database']['user']
+	db_password = globals()['database']['password']
+	db_name = globals()['database']['name']
 
 	# Write the main function header
 	out_file.write(
@@ -179,10 +183,10 @@ def generate_app(version, routes, table_map, reference_map):
 	auto app = new RootinTootinAppProcess(
 				"Rootin_Tootin_0.6.0", 
 				runner, routes, 
-				config["database_configuration"]["host"], 
-				config["database_configuration"]["user"], 
-				config["database_configuration"]["password"], 
-				config["database_configuration"]["name"]);
+				config["database"]["host"], 
+				config["database"]["user"], 
+				config["database"]["password"], 
+				config["database"]["name"]);
 	app.start();
 
 	return 0;
@@ -190,7 +194,7 @@ def generate_app(version, routes, table_map, reference_map):
 """)
 
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
-	generator = Generator()
+	generator = Generator(globals()['mode'])
 	# Add class opening
 	properties = \
 			"private import rootintootin;\n" + \
@@ -414,13 +418,13 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 
 def generate_models():
 	# Connect to the database
-	generator = Generator()
+	generator = Generator(globals()['mode'])
 	db = None
 	try:
-		db = MySQLdb.connect(host = globals()['database_configuration']['host'], 
-							user = globals()['database_configuration']['user'], 
-							passwd = globals()['database_configuration']['password'], 
-							db = globals()['database_configuration']['name'])
+		db = MySQLdb.connect(host = globals()['database']['host'], 
+							user = globals()['database']['user'], 
+							passwd = globals()['database']['password'], 
+							db = globals()['database']['name'])
 	except MySQLdb.OperationalError, err:
 		if err.args[0] == 2002:
 			print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
@@ -463,7 +467,7 @@ def generate_models():
 		cursor = db.cursor()
 		query = "select column_name, referenced_table_name, referenced_column_name from " + \
 				"information_schema.key_column_usage where " + \
-				"table_schema='" + globals()['database_configuration']['name'] + "' " + \
+				"table_schema='" + globals()['database']['name'] + "' " + \
 				"and table_name='" + table + "' and " + \
 				"referenced_table_name is not null and referenced_column_name is not null;"
 		cursor.execute(query)
@@ -508,7 +512,7 @@ def generate_controllers():
 				f_out.write(f_in.read())
 
 def generate_views(routes):
-	generator = Generator()
+	generator = Generator(globals()['mode'])
 
 	# Get the names of all the models
 	model_names = []
@@ -600,7 +604,7 @@ def generate_layouts():
 		out_file.close()
 
 def get_link_files(routes):
-	generator = Generator()
+	generator = Generator(globals()['mode'])
 	files = []
 
 	# Get the names of all the models
@@ -663,7 +667,7 @@ def process_template_body(body, output):
 		# Set the remaining text as the body, so it can be processed next
 		body = after
 
-def setup_app(pwd, scratch):
+def setup_app(pwd, scratch, mode):
 	# Remove all the old app files
 	if os.path.exists(scratch+'app/'):
 		shutil.rmtree(scratch+'app/')
@@ -693,9 +697,10 @@ def setup_app(pwd, scratch):
 		globals()['routes'] = json.loads(f.read())["routes"]
 
 	with open('config/config.json', 'r') as f:
-		config = json.loads(f.read())["config"]
-		globals()['database_configuration'] = config['database_configuration']
-		globals()['server_configuration'] = config['server_configuration']
+		config = json.loads(f.read())[mode]
+		globals()['mode'] = mode
+		globals()['database'] = config['database']
+		globals()['server'] = config['server']
 
 	# Get the Rootin Tootin version
 	f = open(scratch+'version')
@@ -709,7 +714,8 @@ def setup_app(pwd, scratch):
 	generate_views(routes)
 	generate_app(version, routes, table_map, reference_map)
 
-# FIXME: This does not need to be a thread anymore, as we don't rebuild the server
+# FIXME: This does not need to be a thread anymore, as this python
+# process is restarted when we rebuild the server.
 class BuilderThread(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -741,7 +747,7 @@ class BuilderThread(threading.Thread):
 			os.kill(self._server_pid, signal.SIGHUP)
 			self._server_pid = None
 
-	def _build_server(self):
+	def _build_server(self, mode):
 		print "Rebuilding server ..."
 		self._kill_server()
 
@@ -759,8 +765,8 @@ class BuilderThread(threading.Thread):
 		shutil.copytree(os.sys.path[0]+'/../src/', scratch)
 		shutil.copytree(os.sys.path[0]+'/../dornado/', scratch+'dornado')
 
-		setup_app(pwd, scratch)
-		self._port = int(globals()['server_configuration']['port'])
+		setup_app(pwd, scratch, mode)
+		self._port = int(globals()['server']['port'])
 
 		# Compile the application into an executable
 		additional_imports = get_link_files(routes)
@@ -800,12 +806,13 @@ class BuilderThread(threading.Thread):
 			exit()
 
 		# Run the server in its own process
-		self._server_pid = subprocess.Popen([scratch + "server", pwd]).pid
+		self._server_pid = subprocess.Popen([scratch + "server", pwd, mode]).pid
 
 # Build and start the server
 if sys.argv[2] == 'server':
+	mode = sys.argv[3]
 	builder_thread = BuilderThread()
-	builder_thread._build_server()
+	builder_thread._build_server(mode)
 	try:
 		builder_thread.start()
 		while True:
@@ -819,9 +826,10 @@ elif sys.argv[2] == 'application':
 	rootintootin_dir = os.path.expanduser('~/.rootintootin')
 	project_name = sys.argv[1].split('/')[-1]
 	pwd = sys.argv[1]
+	mode = sys.argv[3]
 	scratch = rootintootin_dir + '/' + project_name + '/scratch/'
 
-	setup_app(pwd, scratch)
+	setup_app(pwd, scratch, mode)
 else:
 	print "invalid option " + sys.argv[2]
 

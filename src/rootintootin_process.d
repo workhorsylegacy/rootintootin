@@ -62,14 +62,17 @@ class RootinTootinServerProcess : RootinTootinServer {
 	private char[] _app_name = null;
 	private Process _app = null;
 	private char[] _compile_error = null;
+	private bool _is_production = false;
 	private int _unix_socket_fd;
 
 	public this(ushort port, int max_waiting_clients, 
-				char[] app_path, char[] app_name, bool start_application) {
+				char[] app_path, char[] app_name, 
+				bool start_application, bool is_production) {
 		super(port, max_waiting_clients);
 
 		_app_path = app_path;
 		_app_name = app_name;
+		_is_production = is_production;
 		_unix_socket_fd = connect_unix_socket_fd("socket");
 
 		// Start the application if desired
@@ -86,12 +89,14 @@ class RootinTootinServerProcess : RootinTootinServer {
 		if(is_event_triggered) {
 			auto builder = new AppBuilder(
 								_app_path, 
+								_is_production, 
 								&on_build_success, 
 								&on_build_failure);
 			builder.start();
 		}
 
-		Stdout.format("Rootin Tootin running on http://localhost:{} ...", this._port).newline.flush;
+		string mode = _is_production ? "production" : "development";
+		Stdout.format("Rootin Tootin running in " ~ mode ~ " mode on http://localhost:{} ...", this._port).newline.flush;
 	}
 
 	protected void on_build_success(AppBuilder builder) {

@@ -1,13 +1,26 @@
 
 {
-	"config" : {
-		"database_configuration" : {
+	"development" : {
+		"database" : {
 			"host" : "localhost", 
 			"password" : "letmein", 
-			"name" : "server_events", 
+			"name" : "server_events_development", 
 			"user" : "root"
 		},
-		"server_configuration" : {
+		"server" : {
+			"header_max_size" : "8192", 
+			"port" : "3000", 
+			"max_waiting_clients" : "100"
+		}
+	}, 
+	"production" : {
+		"database" : {
+			"host" : "localhost", 
+			"password" : "letmein", 
+			"name" : "server_events_production", 
+			"user" : "root"
+		},
+		"server" : {
 			"header_max_size" : "8192", 
 			"port" : "3000", 
 			"max_waiting_clients" : "100"

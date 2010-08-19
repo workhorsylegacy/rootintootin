@@ -18,10 +18,12 @@ private import app_builder;
 
 
 int main(string[] args) {
-	// Make sure the first arg is the application path
-	if(args.length < 2)
-		throw new Exception("The first argument should be the application path.");
+	// Make sure the args are correct
+	if(args.length < 3)
+		throw new Exception("Usage: server 'application path' [development|production]");
 	string app_path = args[1];
+	string mode = args[2];
+	bool is_production = (mode == "production");
 
 	// Read the server config file
 	auto file = new File("config/config.json", File.ReadExisting);
@@ -32,20 +34,24 @@ int main(string[] args) {
 
 	string[string][string] config;
 	foreach(n1, v1; values.attributes()) {
-		foreach(n2, v2; v1.toObject().attributes()) {
-			config[n2] = null;
-			foreach(n3, v3; v2.toObject().attributes()) {
-				config[n2][n3] = v3.toString();
+		if((is_production && n1 == "production") || 
+			(!is_production && n1 == "development")) {
+			foreach(n2, v2; v1.toObject().attributes()) {
+				config[n2] = null;
+				foreach(n3, v3; v2.toObject().attributes()) {
+					config[n2][n3] = v3.toString();
+				}
 			}
 		}
 	}
 
 	// Create and start the sever
-	ushort port = to_ushort(config["server_configuration"]["port"]);
-	int max_waiting_clients = to_int(config["server_configuration"]["max_waiting_clients"]);
+	ushort port = to_ushort(config["server"]["port"]);
+	int max_waiting_clients = to_int(config["server"]["max_waiting_clients"]);
 	auto server = new RootinTootinServerProcess(
 				port, max_waiting_clients, 
-				app_path, "./application", false);
+				app_path, "./application", 
+				false, is_production);
 
 	server.start();
 
