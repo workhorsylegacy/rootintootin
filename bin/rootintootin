@@ -59,8 +59,11 @@ if mode == "new":
 	os.chdir(name)
 
 	# Update the configuration files and create the database
-	generator = Generator('development')
-	generator.configure_database(['user:'+db_user, 'password:'+db_password, 'name:'+name+'_development'])
+	generator = Generator()
+	for mode in ['development', 'production']:
+		generator.set_mode(mode)
+		generator.configure_database(['user:'+db_user, 'password:'+db_password, 'name:'+name+'_'+mode])
+	generator.set_mode('development')
 	generator.configure_server(['port:'+port])
 
 

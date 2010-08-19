@@ -32,22 +32,18 @@ int main(string[] args) {
 	file.close();
 	auto values = (new Json!(char)).parse(content).toObject();
 
-	string[string][string] config;
+	string[string][string][string] config;
 	foreach(n1, v1; values.attributes()) {
-		if((is_production && n1 == "production") || 
-			(!is_production && n1 == "development")) {
-			foreach(n2, v2; v1.toObject().attributes()) {
-				config[n2] = null;
-				foreach(n3, v3; v2.toObject().attributes()) {
-					config[n2][n3] = v3.toString();
-				}
+		foreach(n2, v2; v1.toObject().attributes()) {
+			foreach(n3, v3; v2.toObject().attributes()) {
+				config[n1][n2][n3] = v3.toString();
 			}
 		}
 	}
 
 	// Create and start the sever
-	ushort port = to_ushort(config["server"]["port"]);
-	int max_waiting_clients = to_int(config["server"]["max_waiting_clients"]);
+	ushort port = to_ushort(config[mode]["server"]["port"]);
+	int max_waiting_clients = to_int(config[mode]["server"]["max_waiting_clients"]);
 	auto server = new RootinTootinServerProcess(
 				port, max_waiting_clients, 
 				app_path, "./application", 

@@ -33,7 +33,9 @@ elif sys.argv[2] == "server":
 os.chdir(os.sys.path[0])
 
 def generate_app(version, routes, table_map, reference_map):
-	generator = Generator(globals()['mode'])
+	mode = globals()['mode']
+	generator = Generator()
+	generator.set_mode(mode)
 
 	# Get the names of all the views
 	view_names = []
@@ -168,25 +170,29 @@ def generate_app(version, routes, table_map, reference_map):
 	file.close();
 	auto values = (new Json!(char)).parse(content).toObject();
 
-	string[string][string] config;
+	string[string][string][string] config;
 	foreach(n1, v1; values.attributes()) {
 		foreach(n2, v2; v1.toObject().attributes()) {
-			config[n2] = null;
 			foreach(n3, v3; v2.toObject().attributes()) {
-				config[n2][n3] = v3.toString();
+				config[n1][n2][n3] = v3.toString();
 			}
 		}
 	}
+""")
 
-	// Create and start the app
+	out_file.write(" \
+	// Create and start the app \n\
+	string mode = \"" + mode + "\";")
+
+	out_file.write("""
 	RunnerBase runner = new Runner();
 	auto app = new RootinTootinAppProcess(
 				"Rootin_Tootin_0.6.0", 
 				runner, routes, 
-				config["database"]["host"], 
-				config["database"]["user"], 
-				config["database"]["password"], 
-				config["database"]["name"]);
+				config[mode]["database"]["host"], 
+				config[mode]["database"]["user"], 
+				config[mode]["database"]["password"], 
+				config[mode]["database"]["name"]);
 	app.start();
 
 	return 0;
@@ -194,7 +200,8 @@ def generate_app(version, routes, table_map, reference_map):
 """)
 
 def model_generated_properties_class(model_name, model_map, reference_map, model_names):
-	generator = Generator(globals()['mode'])
+	generator = Generator()
+	generator.set_mode(globals()['mode'])
 	# Add class opening
 	properties = \
 			"private import rootintootin;\n" + \
@@ -418,7 +425,8 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 
 def generate_models():
 	# Connect to the database
-	generator = Generator(globals()['mode'])
+	generator = Generator()
+	#generator.set_mode(globals()['mode'])
 	db = None
 	try:
 		db = MySQLdb.connect(host = globals()['database']['host'], 
@@ -512,7 +520,8 @@ def generate_controllers():
 				f_out.write(f_in.read())
 
 def generate_views(routes):
-	generator = Generator(globals()['mode'])
+	generator = Generator()
+	generator.set_mode(globals()['mode'])
 
 	# Get the names of all the models
 	model_names = []
@@ -604,7 +613,8 @@ def generate_layouts():
 		out_file.close()
 
 def get_link_files(routes):
-	generator = Generator(globals()['mode'])
+	generator = Generator()
+	generator.set_mode(globals()['mode'])
 	files = []
 
 	# Get the names of all the models

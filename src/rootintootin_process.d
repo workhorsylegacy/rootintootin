@@ -85,17 +85,18 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected override void on_started(bool is_event_triggered = true) {
+		string mode = _is_production ? "production" : "development";
+
 		// Have the builder build the app when it changes
 		if(is_event_triggered) {
 			auto builder = new AppBuilder(
 								_app_path, 
-								_is_production, 
+								mode, 
 								&on_build_success, 
 								&on_build_failure);
 			builder.start();
 		}
 
-		string mode = _is_production ? "production" : "development";
 		Stdout.format("Rootin Tootin running in " ~ mode ~ " mode on http://localhost:{} ...", this._port).newline.flush;
 	}
 

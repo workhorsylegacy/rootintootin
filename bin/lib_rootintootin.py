@@ -223,13 +223,16 @@ class Blacklist(object):
 			exit()
 
 class Generator(object):
-	def __init__(self, mode):
+	def __init__(self):
 		self._db = None
-		self._database_configuration = None
-		self._server_configuration = None
+		self._mode = None
+		self._config = None
 		self._nouns = None
-		self.load_configuration(mode)
+		self.load_configuration()
 		self.load_nouns()
+
+	def set_mode(self, mode):
+		self._mode = mode
 
 	def singularize(self, noun):
 		for singular, plural in self._nouns.items():
@@ -262,7 +265,7 @@ class Generator(object):
 		self.connect_to_database()
 
 		# Create the query that will create the table
-		db_name = self._database_configuration['name']
+		db_name = self._config[self._mode]['database']['name']
 		query = "create table `" + db_name + "`.`" + table_name + "` ("
 		query += "id int not null auto_increment primary key, "
 		for field_name, field_type in field_map.items():
@@ -292,7 +295,7 @@ class Generator(object):
 		self.connect_to_database()
 
 		# Create the query that will drop the table
-		db_name = self._database_configuration['name']
+		db_name = self._config[self._mode]['database']['name']
 		query = "drop table `" + db_name + "`.`" + table_name + "`;"
 		cursor = self._db.cursor()
 
@@ -309,12 +312,12 @@ class Generator(object):
 
 		# Create the database
 		cursor = self._db.cursor()
-		db_name = self._database_configuration['name']
+		db_name = self._config[self._mode]['database']['name']
 		try:
 			cursor.execute("create database " + db_name)
-			print "Created the database '" + self._database_configuration['name'] + "'."
+			print "Created the database '" + self._config[self._mode]['database']['name'] + "'."
 		except MySQLdb.ProgrammingError:
-			print "Database '" + self._database_configuration['name'] + "' already exists."
+			print "Database '" + self._config[self._mode]['database']['name'] + "' already exists."
 		finally:
 			cursor.close()
 
@@ -329,22 +332,20 @@ class Generator(object):
 	def drop_database(self):
 		self.connect_to_database()
 		cursor = self._db.cursor()
-		db_name = self._database_configuration['name']
+		db_name = self._config[self._mode]['database']['name']
 		try:
 			cursor.execute("drop database " + db_name)
-			print "Dropped the database '" + self._database_configuration['name'] + "'."
+			print "Dropped the database '" + self._config[self._mode]['database']['name'] + "'."
 		except MySQLdb.OperationalError:
-			print "Database '" + self._database_configuration['name'] + "' does not exists."
+			print "Database '" + self._config[self._mode]['database']['name'] + "' does not exists."
 		cursor.close()
 
 	def create_migration(self, model_name, pairs):
-		self.connect_to_database()
-
 		# Get the name singularized
 		model_name = self.singularize(model_name)
 
 		# Get the last schema version
-		last_version = self.get_schema_version()
+		last_version = self.get_schema_version_from_files()
 		version = str(last_version + 1).rjust(4, '0')
 
 		# Get the files and parameters
@@ -443,8 +444,9 @@ class Generator(object):
 
 	def migrate(self):
 		self.connect_to_database()
+
 		# Get the last schema version
-		last_version = self.get_schema_version()
+		last_version = self.get_schema_version_from_db()
 
 		migration_files = os.listdir('db/migrate/')
 		migration_files.sort()
@@ -475,7 +477,7 @@ class Generator(object):
 			migration_instance = locals()[class_name]()
 			try:
 				migration_instance.up(self)
-				self.add_schema_version(version)
+				self.save_schema_version(version)
 			except Exception as err:
 				print "Broke on migration file: '" + migration_file + "'."
 				print err.message
@@ -487,11 +489,11 @@ class Generator(object):
 			key, value = pair.split(':')
 
 			if key == 'user':
-				self._database_configuration['user'] = value
+				self._config[self._mode]['database']['user'] = value
 			elif key == 'password':
-				self._database_configuration['password'] = value
+				self._config[self._mode]['database']['password'] = value
 			elif key == 'name':
-				self._database_configuration['name'] = value
+				self._config[self._mode]['database']['name'] = value
 
 		self.save_configuration()
 
@@ -501,11 +503,11 @@ class Generator(object):
 			key, value = pair.split(':')
 
 			if key == 'port':
-				self._server_configuration['port'] = value
+				self._config[self._mode]['server']['port'] = value
 			elif key == 'max_waiting_clients':
-				self._server_configuration['max_waiting_clients'] = value
+				self._config[self._mode]['server']['max_waiting_clients'] = value
 			elif key == 'header_max_size':
-				self._server_configuration['header_max_size'] = value
+				self._config[self._mode]['server']['header_max_size'] = value
 
 		self.save_configuration()
 
@@ -551,33 +553,13 @@ class Generator(object):
 
 #private
 
-	def load_configuration(self, mode):
+	def load_configuration(self):
 		with open('config/config.json', 'r') as f:
-			config = json.loads(f.read())[mode]
-			globals()['mode'] = mode
-			self._database_configuration = config['database']
-			self._server_configuration = config['server']
+			self._config = json.loads(f.read())
 
 	def save_configuration(self):
-		f = open('config/config.json', 'w')
-
-		f.write("\n{ \"config\" : {\n")
-		f.write("	\"database\" : {\n")
-		lines = []
-		for key, value in self._database_configuration.items():
-			lines.append("		\"" + key + "\" : \"" + value + "\"")
-		f.write(str.join(", \n", lines))
-		f.write("	},\n")
-
-		f.write("	\"server\" : {\n")
-		lines = []
-		for key, value in self._server_configuration.items():
-			lines.append("		\"" + str(key) + "\" : \"" + str(value) + "\"")
-		f.write(str.join(", \n", lines))
-		f.write("	}\n")
-		f.write("} }\n")
-
-		f.close()
+		with open('config/config.json', 'w') as f:
+			f.write(json.dumps(self._config))
 
 	def load_nouns(self):
 		with open('config/nouns.json', 'r') as f:
@@ -603,9 +585,9 @@ class Generator(object):
 
 		try:
 			self._db = MySQLdb.connect(
-						host = self._database_configuration['host'], 
-						user = self._database_configuration['user'], 
-						passwd = self._database_configuration['password'])
+						host = self._config[self._mode]['database']['host'], 
+						user = self._config[self._mode]['database']['user'], 
+						passwd = self._config[self._mode]['database']['password'])
 		except MySQLdb.OperationalError, err:
 			if err.args[0] == 2002:
 				print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
@@ -615,10 +597,22 @@ class Generator(object):
 				print "MySQL error# " + str(err.args[0]) + " : " + err.args[1]
 			exit()
 
-	def get_schema_version(self):
+	def get_schema_version_from_files(self):
+		# Get all the migration files
+		migration_files = os.listdir('db/migrate/')
+		migration_files.sort()
+
+		# Return zero if there are no files
+		if len(migration_files) == 0:
+			return 0
+
+		# Return the version of the last file
+		return int(migration_files[-1][0:4])
+
+	def get_schema_version_from_db(self):
 		self.connect_to_database()
 
-		db_name = self._database_configuration['name']
+		db_name = self._config[self._mode]['database']['name']
 		query = "select max(version) from `" + db_name + "`.`schema_version`;"
 		cursor = self._db.cursor()
 		cursor.execute(query)
@@ -629,9 +623,8 @@ class Generator(object):
 		else:
 			return int(version[0])
 
-	def add_schema_version(self, version):
-		self.connect_to_database()
-		db_name = self._database_configuration['name']
+	def save_schema_version(self, version):
+		db_name = self._config[self._mode]['database']['name']
 
 		query = "insert into `" + db_name + \
 		"`.`schema_version`(version) values('" + \

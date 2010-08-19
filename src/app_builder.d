@@ -23,13 +23,13 @@ public class AppBuilder {
 	private void delegate(AppBuilder) _on_success_func = null;
 	private void delegate(char[]) _on_failure_func = null;
 	private string _app_path = null;
-	private bool _is_production = false;
+	private string _mode = null;
 	public ushort _port;
 	public int _max_waiting_clients;
 
-	public this(string app_path, bool is_production, void delegate(AppBuilder) on_build_success=null, void delegate(char[]) on_build_failure=null) {
+	public this(string app_path, string mode, void delegate(AppBuilder) on_build_success=null, void delegate(char[]) on_build_failure=null) {
 		_app_path = app_path;
-		_is_production = is_production;
+		_mode = mode;
 		_on_success_func = on_build_success;
 		_on_failure_func = on_build_failure;
 	}
@@ -108,8 +108,7 @@ public class AppBuilder {
 		char[] compile_error = null;
 
 		// Copy all the app files, and do code generation
-		string mode = _is_production ? "production" : "development";
-		this.run_command("python /usr/bin/rootintootin_run " ~ _app_path ~ " application " ~ mode);
+		this.run_command("python2.6 /usr/bin/rootintootin_run " ~ _app_path ~ " application " ~ _mode);
 
 		// Read the routes from the config file
 		auto file = new File("config/routes.json", File.ReadExisting);
@@ -158,18 +157,14 @@ public class AppBuilder {
 		file.close();
 		values = (new Json!(char)).parse(content).toObject();
 
-		string[string][string] config;
+		string[string][string][string] config;
 		foreach(n1, v1; values.attributes()) {
-			if((_is_production && n1 == "production") || 
-				(!_is_production && n1 == "development")) {
-				//Stdout.format("name: {}", n1).newline.flush;
-				foreach(n2, v2; v1.toObject().attributes()) {
-					//Stdout.format("	name: {}", n2).newline.flush;
-					config[n2] = null;
-					foreach(n3, v3; v2.toObject().attributes()) {
-						//Stdout.format("			name: {} value: {}", n3, v3.toString()).newline.flush;
-						config[n2][n3] = v3.toString();
-					}
+//			Stdout.format("name: {}", n1).newline.flush;
+			foreach(n2, v2; v1.toObject().attributes()) {
+//				Stdout.format("	name: {}", n2).newline.flush;
+				foreach(n3, v3; v2.toObject().attributes()) {
+//					Stdout.format("			name: {} value: {}", n3, v3.toString()).newline.flush;
+					config[n1][n2][n3] = v3.toString();
 				}
 			}
 		}
@@ -247,8 +242,8 @@ public class AppBuilder {
 		}
 
 		// Save the configuration changes that will be needed by the running program
-		_port = to_ushort(config["server"]["port"]);
-		_max_waiting_clients = to_int(config["server"]["max_waiting_clients"]);
+		_port = to_ushort(config[_mode]["server"]["port"]);
+		_max_waiting_clients = to_int(config[_mode]["server"]["max_waiting_clients"]);
 
 		// Build the app
 		char[] c_stdout, c_stderr;

@@ -8,7 +8,7 @@
 #
 #-------------------------------------------------------------------------------
 
-import os, sys
+import os, sys, re
 from lib_rootintootin import *
 
 def print_usage():
@@ -19,12 +19,12 @@ def print_usage():
 	print "./gen create scaffold [name] [field:type] ..."
 	print "    types: boolean, date, datetime, decimal, decimal[18,2]"
 	print "    more: float, integer, string, text, time, timestamp'"
-	print "./gen migrate"
+	print "./gen migrate [production|development]"
 	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
 	print "./gen configure server [port:number] [max_waiting_clients:number] [header_max_size:number]"
-	print "./gen create database"
-	print "./gen drop database"
-	print "./gen recreate database"
+	print "./gen create [production|development] database"
+	print "./gen drop [production|development] database"
+	print "./gen recreate [production|development] database"
 	exit(1)
 
 # Make sure the first arg is a path
@@ -38,16 +38,22 @@ elif not os.path.exists(sys.argv[1]):
 os.chdir(sys.argv[1])
 generator = Generator()
 
-# create database
-if str.join(' ', sys.argv[2:]) == "create database":
+# create [production|development] database
+if re.match("^create (production|development) database$", str.join(' ', sys.argv[2:])):
+	mode = str.join(' ', sys.argv[2:]).lstrip("create").strip("database").strip()
+	generator.set_mode(mode)
 	generator.create_database()
 
-# drop database
-elif str.join(' ', sys.argv[2:]) == "drop database":
+# drop [production|development] database
+elif re.match("^drop (production|development) database$", str.join(' ', sys.argv[2:])):
+	mode = str.join(' ', sys.argv[2:]).lstrip("drop").strip("database").strip()
+	generator.set_mode(mode)
 	generator.drop_database()
 
-# recreate database
-elif str.join(' ', sys.argv[2:]) == "recreate database":
+# recreate [production|development] database
+elif re.match("^recreate (production|development) database$", str.join(' ', sys.argv[2:])):
+	mode = str.join(' ', sys.argv[2:]).lstrip("recreate").strip("database").strip()
+	generator.set_mode(mode)
 	generator.drop_database()
 	generator.create_database()
 
@@ -84,8 +90,10 @@ elif str.join(' ', sys.argv[2:4]) == "create scaffold":
 	generator.create_migration(controller_name, pairs[5:])
 	generator.configure_routes(controller_name, pairs[4:])
 
-# migrate
-elif str.join(' ', sys.argv[2:]) == "migrate":
+# migrate [production|development]
+elif re.match("^migrate (production|development)$", str.join(' ', sys.argv[2:])):
+	mode = str.join(' ', sys.argv[2:]).lstrip("migrate").strip()
+	generator.set_mode(mode)
 	generator.migrate()
 
 # configure database [user:root] [password:password] \
