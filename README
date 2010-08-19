@@ -35,11 +35,11 @@ cd ~/Desktop/examples/users
 
 
 4. Configure and run the user example:
-./gen configure database user:root password:password
-./gen configure server port:3000
-./gen recreate database
-./gen migrate
-./run
+./gen configure development database user:root password:letmein
+./gen configure development server port:3000
+./gen recreate development database
+./gen migrate development
+./run development
 
 
 6. Navigate your web browser to http://localhost:3000/users and you should 

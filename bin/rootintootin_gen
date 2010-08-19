@@ -20,8 +20,8 @@ def print_usage():
 	print "    types: boolean, date, datetime, decimal, decimal[18,2]"
 	print "    more: float, integer, string, text, time, timestamp'"
 	print "./gen migrate [production|development]"
-	print "./gen configure database [user:root] [password:password] [host:location] [name:db_name]"
-	print "./gen configure server [port:number] [max_waiting_clients:number] [header_max_size:number]"
+	print "./gen configure [production|development] database [user:root] [password:password] [host:location] [name:db_name]"
+	print "./gen configure [production|development] server [port:number] [max_waiting_clients:number] [header_max_size:number]"
 	print "./gen create [production|development] database"
 	print "./gen drop [production|development] database"
 	print "./gen recreate [production|development] database"
@@ -96,15 +96,19 @@ elif re.match("^migrate (production|development)$", str.join(' ', sys.argv[2:]))
 	generator.set_mode(mode)
 	generator.migrate()
 
-# configure database [user:root] [password:password] \
+# configure [production|development] database [user:root] [password:password] \
 #						[host:location] [name:db_name]
-elif str.join(' ', sys.argv[2:4]) == "configure database":
-	generator.configure_database(sys.argv[4:])
+elif re.match("^configure (production|development) database$", str.join(' ', sys.argv[2:5])):
+	mode = sys.argv[3]
+	generator.set_mode(mode)
+	generator.configure_database(sys.argv[5:])
 
-# configure server [port:number] [max_waiting_clients:number] \
+# configure [production|development] server [port:number] [max_waiting_clients:number] \
 #					[header_max_size:number]
-elif str.join(' ', sys.argv[2:4]) == "configure server":
-	generator.configure_server(sys.argv[4:])
+elif re.match("^configure (production|development) server$", str.join(' ', sys.argv[2:5])):
+	mode = sys.argv[3]
+	generator.set_mode(mode)
+	generator.configure_server(sys.argv[5:])
 
 # create noun [singular:user] [plural:users]
 elif str.join(' ', sys.argv[2:4]) == "create noun":
