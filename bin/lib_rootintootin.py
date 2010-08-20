@@ -559,7 +559,7 @@ class Generator(object):
 
 	def save_configuration(self):
 		with open('config/config.json', 'w') as f:
-			f.write(json.dumps(self._config))
+			f.write(json.dumps(self._config, sort_keys=True, indent=4))
 
 	def load_nouns(self):
 		with open('config/nouns.json', 'r') as f:
