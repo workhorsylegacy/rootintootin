@@ -19,187 +19,20 @@ from lib_rootintootin import *
 
 # Make sure the first arg is a path
 if len(sys.argv) < 3:
-	print "usage: ./rootintootin_run 'working directory' [server|application] [development|production]"
+	print "usage: ./rootintootin_run 'working directory' [server|application|all] [development|production]"
 	exit(1)
 elif not os.path.exists(sys.argv[1]):
 	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
 	exit(1)
 elif sys.argv[2] == "server":
-	if len(sys.argv) < 4 or not sys.argv[3] in ['production', 'development']:
+	if len(sys.argv) < 4 or not sys.argv[3] in ['development', 'production']:
 		print "./run [development|production]"
 		exit(1)
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
 
-def generate_app(version, routes, table_map, reference_map):
-	mode = globals()['mode']
-	generator = Generator()
-	generator.set_mode(mode)
-
-	# Get the names of all the views
-	view_names = []
-	for controller_name, route_maps in routes.items():
-		for entry in os.listdir('app/views/' + controller_name):
-			if entry.endswith('.html.ed'):
-				view_names.append('view_' + controller_name + '_' + entry.split('.html.ed')[0])
-
-	# Open the output file
-	out_file = open('application.d', 'w')
-
-	# Write the imports
-	out_file.write(
-		"\n" +
-		"private import tango.io.Stdout;\n" +
-		"private import tango.io.device.File;\n" +
-		"private import tango.text.json.Json;\n\n" +
-		"private import language_helper;\n" +
-		"private import helper;\n" +
-		"private import regex;\n" +
-		"private import rootintootin;\n" +
-		"private import rootintootin_server;\n" +
-		"private import rootintootin_process;\n\n"
-	)
-
-	for controller_name, route_maps in routes.items():
-		out_file.write("private import " + generator.singularize(controller_name) + "_controller;\n")
-	out_file.write("\n")
-
-	for view_name in view_names:
-		out_file.write("private import " + view_name + ";\n")
-	out_file.write("\n")
-
-	# Write the runner class
-	out_file.write(
-	"public class Runner : RunnerBase {\n")
-
-	# Write the render view function
-	for controller, route_maps in routes.items():
-		out_file.write(
-		"	private string generate_view(" + generator.singularize(controller).capitalize() + "Controller controller, string controller_name, string view_name) {\n")
-
-		out_file.write(
-		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
-
-		for action, route_map in route_maps.items():
-			for uri, method in route_map.items():
-				if method == "GET":
-					out_file.write(
-					"			if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
-					"				return " + controller.capitalize() + action.capitalize() + "View.render(controller);\n" +
-					"			}\n"
-					)
-
-		out_file.write("		}\n")
-		out_file.write("		return \"Unknown view '\" ~ view_name ~ \"'\";\n")
-		out_file.write("	}\n")
-
-
-	# Write the run action function
-	out_file.write(
-	"	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {\n")
-	for controller, route_maps in routes.items():
-		out_file.write(
-		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
-		"			" + generator.singularize(controller).capitalize() + "Controller controller = new " + generator.singularize(controller).capitalize() + "Controller();\n" + 
-		"			controller.action_name = action_name;\n" + 
-		"			controller.controller_name = controller_name;\n" + 
-		"			controller.request = request;\n" + 
-		"			try {\n" +
-		"				switch(action_name) {\n"
-		)
-
-		for action, route_map in route_maps.items():
-			real_action = action
-			if action == "new":
-				real_action = "New"
-			elif action == "delete":
-				real_action = "Delete"
-			out_file.write(
-				"					case \"" + action + "\": controller." + real_action + "(); break;\n")
-
-		out_file.write(
-			"					default: throw new RenderNoActionException();\n" + 
-			"				}\n")
-		out_file.write(
-			"			} catch(RenderViewException err) {\n" + 
-			"				return this.generate_view(controller, controller_name, err._name);\n" + 
-			"			} finally {\n" + 
-			"				events_to_trigger = controller._events_to_trigger;\n" + 
-			"			}\n")
-		out_file.write("		}\n")
-
-	links = []
-	for controller_name, route_maps in routes.items():
-		links.append("\"" + controller_name + "\"")
-
-	out_file.write(
-	"		throw new RenderNoControllerException([" + str.join(', ', links) + "]);\n"
-	)
-
-	out_file.write("	}\n")
-	out_file.write("}\n")
-
-	port = str(int(globals()['server']['port']))
-	max_waiting_clients = globals()['server']['max_waiting_clients']
-	header_max_size = globals()['server']['header_max_size']
-	db_host = globals()['database']['host']
-	db_user = globals()['database']['user']
-	db_password = globals()['database']['password']
-	db_name = globals()['database']['name']
-
-	# Write the main function header
-	out_file.write(
-	"\n\nint main() {\n")
-
-	# Write the routes
-	out_file.write(
-	"	// Create the routes\n" + 
-	"	string[Regex][string][string] routes;\n")
-	for controller_name, route_maps in routes.iteritems():
-		for action_name, route_map in route_maps.iteritems():
-			for uri, method in route_map.iteritems():
-				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
-
-	# Write the server start in main
-	out_file.write("""
-	// Read the config from the config file
-	auto file = new File("config/config.json", File.ReadExisting);
-	auto content = new char[cast(size_t)file.length];
-	file.read(content);
-	file.close();
-	auto values = (new Json!(char)).parse(content).toObject();
-
-	string[string][string][string] config;
-	foreach(n1, v1; values.attributes()) {
-		foreach(n2, v2; v1.toObject().attributes()) {
-			foreach(n3, v3; v2.toObject().attributes()) {
-				config[n1][n2][n3] = v3.toString();
-			}
-		}
-	}
-""")
-
-	out_file.write(" \
-	// Create and start the app \n\
-	string mode = \"" + mode + "\";")
-
-	out_file.write("""
-	RunnerBase runner = new Runner();
-	auto app = new RootinTootinAppProcess(
-				"Rootin_Tootin_0.6.0", 
-				runner, routes, 
-				config[mode]["database"]["host"], 
-				config[mode]["database"]["user"], 
-				config[mode]["database"]["password"], 
-				config[mode]["database"]["name"]);
-	app.start();
-
-	return 0;
-}
-""")
-
-def model_generated_properties_class(model_name, model_map, reference_map, model_names):
+def _model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
 	generator.set_mode(globals()['mode'])
 	# Add class opening
@@ -423,7 +256,7 @@ def model_generated_properties_class(model_name, model_map, reference_map, model
 	return properties
 
 
-def generate_models():
+def _generate_models():
 	# Connect to the database
 	generator = Generator()
 	#generator.set_mode(globals()['mode'])
@@ -501,7 +334,7 @@ def generate_models():
 
 		with open(model_name + '_base.d', 'w') as f:
 			f.write("\n\n")
-			f.write(model_generated_properties_class(model_name, model_map, reference_map, model_names))
+			f.write(_model_generated_properties_class(model_name, model_map, reference_map, model_names))
 			f.write("\n\n")
 
 		with open('app/models/' + model_name + '.d', 'r') as f_in:
@@ -510,7 +343,7 @@ def generate_models():
 
 	return table_map, reference_map
 
-def generate_controllers():
+def _generate_controllers():
 	for controller in os.listdir('app/controllers/'):
 		if not controller.endswith('.d'):
 			continue
@@ -519,7 +352,7 @@ def generate_controllers():
 			with open(controller, 'w') as f_out:
 				f_out.write(f_in.read())
 
-def generate_views(routes):
+def _generate_views(routes):
 	generator = Generator()
 	generator.set_mode(globals()['mode'])
 
@@ -559,7 +392,7 @@ def generate_views(routes):
 			"set_controller(controller);"
 			"AutoStringArray b = new AutoStringArray();")
 
-			process_template_body(body, output)
+			_process_template_body(body, output)
 
 			# Print the closing of the function
 			output.append(
@@ -578,7 +411,7 @@ def generate_views(routes):
 				out_file.write(fragment)
 			out_file.close()
 
-def generate_layouts():
+def _generate_layouts():
 	for layout in os.listdir('app/views/layouts/'):
 		if not layout.endswith('.html.ed'):
 			continue
@@ -598,7 +431,7 @@ def generate_layouts():
 		"public static string render(ControllerBase controller, string yield) { " +
 		"AutoStringArray b = new AutoStringArray();")
 
-		process_template_body(body, output)
+		_process_template_body(body, output)
 
 		# Print the closing of the function
 		output.append(
@@ -612,7 +445,174 @@ def generate_layouts():
 			out_file.write(fragment)
 		out_file.close()
 
-def get_link_files(routes):
+def _generate_application(version, routes, table_map, reference_map):
+	mode = globals()['mode']
+	generator = Generator()
+	generator.set_mode(mode)
+
+	# Get the names of all the views
+	view_names = []
+	for controller_name, route_maps in routes.items():
+		for entry in os.listdir('app/views/' + controller_name):
+			if entry.endswith('.html.ed'):
+				view_names.append('view_' + controller_name + '_' + entry.split('.html.ed')[0])
+
+	# Open the output file
+	out_file = open('application.d', 'w')
+
+	# Write the imports
+	out_file.write(
+		"\n" +
+		"private import tango.io.Stdout;\n" +
+		"private import tango.io.device.File;\n" +
+		"private import tango.text.json.Json;\n\n" +
+		"private import language_helper;\n" +
+		"private import helper;\n" +
+		"private import regex;\n" +
+		"private import rootintootin;\n" +
+		"private import rootintootin_server;\n" +
+		"private import rootintootin_process;\n\n"
+	)
+
+	for controller_name, route_maps in routes.items():
+		out_file.write("private import " + generator.singularize(controller_name) + "_controller;\n")
+	out_file.write("\n")
+
+	for view_name in view_names:
+		out_file.write("private import " + view_name + ";\n")
+	out_file.write("\n")
+
+	# Write the runner class
+	out_file.write(
+	"public class Runner : RunnerBase {\n")
+
+	# Write the render view function
+	for controller, route_maps in routes.items():
+		out_file.write(
+		"	private string generate_view(" + generator.singularize(controller).capitalize() + "Controller controller, string controller_name, string view_name) {\n")
+
+		out_file.write(
+		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n")
+
+		for action, route_map in route_maps.items():
+			for uri, method in route_map.items():
+				if method == "GET":
+					out_file.write(
+					"			if(view_name == \"" + action.capitalize() + "\" || view_name == \"" + action.lower() + "\") {\n" +
+					"				return " + controller.capitalize() + action.capitalize() + "View.render(controller);\n" +
+					"			}\n"
+					)
+
+		out_file.write("		}\n")
+		out_file.write("		return \"Unknown view '\" ~ view_name ~ \"'\";\n")
+		out_file.write("	}\n")
+
+
+	# Write the run action function
+	out_file.write(
+	"	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {\n")
+	for controller, route_maps in routes.items():
+		out_file.write(
+		"		if(controller_name == \"" + generator.pluralize(controller) + "\") {\n" +
+		"			" + generator.singularize(controller).capitalize() + "Controller controller = new " + generator.singularize(controller).capitalize() + "Controller();\n" + 
+		"			controller.action_name = action_name;\n" + 
+		"			controller.controller_name = controller_name;\n" + 
+		"			controller.request = request;\n" + 
+		"			try {\n" +
+		"				switch(action_name) {\n"
+		)
+
+		for action, route_map in route_maps.items():
+			real_action = action
+			if action == "new":
+				real_action = "New"
+			elif action == "delete":
+				real_action = "Delete"
+			out_file.write(
+				"					case \"" + action + "\": controller." + real_action + "(); break;\n")
+
+		out_file.write(
+			"					default: throw new RenderNoActionException();\n" + 
+			"				}\n")
+		out_file.write(
+			"			} catch(RenderViewException err) {\n" + 
+			"				return this.generate_view(controller, controller_name, err._name);\n" + 
+			"			} finally {\n" + 
+			"				events_to_trigger = controller._events_to_trigger;\n" + 
+			"			}\n")
+		out_file.write("		}\n")
+
+	links = []
+	for controller_name, route_maps in routes.items():
+		links.append("\"" + controller_name + "\"")
+
+	out_file.write(
+	"		throw new RenderNoControllerException([" + str.join(', ', links) + "]);\n"
+	)
+
+	out_file.write("	}\n")
+	out_file.write("}\n")
+
+	port = str(int(globals()['server']['port']))
+	max_waiting_clients = globals()['server']['max_waiting_clients']
+	header_max_size = globals()['server']['header_max_size']
+	db_host = globals()['database']['host']
+	db_user = globals()['database']['user']
+	db_password = globals()['database']['password']
+	db_name = globals()['database']['name']
+
+	# Write the main function header
+	out_file.write(
+	"\n\nint main() {\n")
+
+	# Write the routes
+	out_file.write(
+	"	// Create the routes\n" + 
+	"	string[Regex][string][string] routes;\n")
+	for controller_name, route_maps in routes.iteritems():
+		for action_name, route_map in route_maps.iteritems():
+			for uri, method in route_map.iteritems():
+				out_file.write("	routes[\"" + controller_name + "\"][\"" + action_name + "\"][new Regex(r\"" + uri + "\")] = \"" + method + "\";\n")
+
+	# Write the server start in main
+	out_file.write("""
+	// Read the config from the config file
+	auto file = new File("config/config.json", File.ReadExisting);
+	auto content = new char[cast(size_t)file.length];
+	file.read(content);
+	file.close();
+	auto values = (new Json!(char)).parse(content).toObject();
+
+	string[string][string][string] config;
+	foreach(n1, v1; values.attributes()) {
+		foreach(n2, v2; v1.toObject().attributes()) {
+			foreach(n3, v3; v2.toObject().attributes()) {
+				config[n1][n2][n3] = v3.toString();
+			}
+		}
+	}
+""")
+
+	out_file.write(" \
+	// Create and start the app \n\
+	string mode = \"" + mode + "\";")
+
+	out_file.write("""
+	RunnerBase runner = new Runner();
+	auto app = new RootinTootinAppProcess(
+				"Rootin_Tootin_0.6.0", 
+				runner, routes, 
+				config[mode]["database"]["host"], 
+				config[mode]["database"]["user"], 
+				config[mode]["database"]["password"], 
+				config[mode]["database"]["name"]);
+	app.start();
+
+	return 0;
+}
+""")
+
+def _get_link_files_from_application(routes):
 	generator = Generator()
 	generator.set_mode(globals()['mode'])
 	files = []
@@ -642,7 +642,7 @@ def get_link_files(routes):
 
 	return files
 
-def process_template_body(body, output):
+def _process_template_body(body, output):
 	while len(body) > 0:
 		# Get the location on the open and close brackets
 		open_index = body.find("<%")
@@ -677,7 +677,15 @@ def process_template_body(body, output):
 		# Set the remaining text as the body, so it can be processed next
 		body = after
 
-def setup_app(pwd, scratch, mode):
+def copy_files_to_scratch():
+	# Copy all the framework files into a scratch dir
+	if not os.path.exists(rootintootin_dir):
+		os.mkdir(rootintootin_dir)
+	if os.path.exists(scratch):
+		shutil.rmtree(scratch)
+	shutil.copytree(os.sys.path[0]+'/../src/', scratch)
+	shutil.copytree(os.sys.path[0]+'/../dornado/', scratch+'dornado')
+
 	# Remove all the old app files
 	if os.path.exists(scratch+'app/'):
 		shutil.rmtree(scratch+'app/')
@@ -702,6 +710,7 @@ def setup_app(pwd, scratch, mode):
 	os.mkdir(scratch+'uploads/')
 	os.chdir(scratch)
 
+def generate_files():
 	# Load the config files
 	with open('config/routes.json', 'r') as f:
 		globals()['routes'] = json.loads(f.read())["routes"]
@@ -718,129 +727,130 @@ def setup_app(pwd, scratch, mode):
 	f.close()
 
 	# Do code generation
-	table_map, reference_map = generate_models()
-	generate_controllers()
-	generate_layouts()
-	generate_views(routes)
-	generate_app(version, routes, table_map, reference_map)
+	table_map, reference_map = _generate_models()
+	_generate_controllers()
+	_generate_layouts()
+	_generate_views(routes)
+	_generate_application(version, routes, table_map, reference_map)
 
-# FIXME: This does not need to be a thread anymore, as this python
-# process is restarted when we rebuild the server.
-class BuilderThread(threading.Thread):
-	def __init__(self):
-		threading.Thread.__init__(self)
-		self._server_pid = None
-		self._is_running = False
-		self._project_dir = sys.argv[1] + '/app/'
-		self._compile_error = None
+def build_framework():
+	sys.stdout.write("Rebuilding framework ...".ljust(78, ' '))
+	sys.stdout.flush()
 
-	def set_is_running(self, value):
-		self._is_running = value
+	# Compile the framework into object files
+	result = ''
+	result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
+	result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
+	result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
+	result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
+	result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
+	result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o")
+	command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
+			"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
+			"rootintootin_process.d app_builder.d dornado/ioloop.d " + \
+			" db.d file_system.d regex.d shared_memory.d socket.d " + tango
+	result += commands.getoutput(command)
 
-	def get_is_running(self):
-		return self._is_running
+	# Combine the framework into a static library
+	command = "ar rcs rootintootin.a language_helper.o helper.o " + \
+			"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
+			"tcp_server.o rootintootin_process.o app_builder.o ioloop.o " + \
+			"db.o file_system.o regex.o shared_memory.o socket.o"
+	result += commands.getoutput(command)
 
-	def get_compile_error(self):
-		return self._compile_error
+	compile_error = None
+	if os.path.exists("rootintootin.a"):
+		compile_error = None
+		sys.stdout.write(":)\n")
+		sys.stdout.flush()
+	else:
+		compile_error = result
+		sys.stdout.write(":(\n")
+		print "Framework build failed!"
+		print compile_error
+		exit()
 
-	def run(self):
-		self._is_running = True
+def build_server():
+	sys.stdout.write("Rebuilding server ...".ljust(78, ' '))
+	sys.stdout.flush()
 
-		while self._is_running:
-			time.sleep(3)
+	# Compile the server and link it with the static library
+	result = ''
+	command = "ldc -g -w -of server server.d -L rootintootin.a " + \
+			"-L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + tango
+	result += commands.getoutput(command)
 
-		self._kill_server()
+	compile_error = None
+	if os.path.exists("server"):
+		compile_error = None
+		sys.stdout.write(":)\n")
+		sys.stdout.flush()
+	else:
+		compile_error = result
+		sys.stdout.write(":(\n")
+		print "Server build failed!"
+		print compile_error
+		exit()
 
-	def _kill_server(self):
-		# Kill the previous server
-		if self._server_pid:
-			os.kill(self._server_pid, signal.SIGHUP)
-			self._server_pid = None
+def build_application():
+	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
+	sys.stdout.flush()
 
-	def _build_server(self, mode):
-		print "Rebuilding server ..."
-		self._kill_server()
+	# Get the files from the application to link
+	additional_imports = _get_link_files_from_application(routes)
 
-		# Get all the locations
-		rootintootin_dir = os.path.expanduser('~/.rootintootin')
-		project_name = sys.argv[1].split('/')[-1]
-		pwd = sys.argv[1]
-		scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+	# Compile the application and link it with the static library
+	result = ''
+	command = "ldc -g -w -of application application.d -L rootintootin.a " + \
+			str.join(' ', additional_imports) + \
+			" -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + tango
+	result += commands.getoutput(command)
 
-		# Copy all the framework files into a scratch dir
-		if not os.path.exists(rootintootin_dir):
-			os.mkdir(rootintootin_dir)
-		if os.path.exists(scratch):
-			shutil.rmtree(scratch)
-		shutil.copytree(os.sys.path[0]+'/../src/', scratch)
-		shutil.copytree(os.sys.path[0]+'/../dornado/', scratch+'dornado')
+	compile_error = None
+	if os.path.exists("application"):
+		compile_error = None
+		sys.stdout.write(":)\n")
+		sys.stdout.flush()
+	else:
+		compile_error = result
+		sys.stdout.write(":(\n")
+		print "Application build failed!"
+		print compile_error
+		exit()
 
-		setup_app(pwd, scratch, mode)
-		self._port = int(globals()['server']['port'])
-
-		# Compile the application into an executable
-		additional_imports = get_link_files(routes)
-
-		tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
-
-		result = ''
-		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
-		result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
-		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
-		result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
-		result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
-		result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o")
-		command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
-				"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
-				"rootintootin_process.d app_builder.d dornado/ioloop.d " + \
-				" db.d file_system.d regex.d shared_memory.d socket.d " + tango
-		result += commands.getoutput(command)
-
-		command = "ar rcs rootintootin.a language_helper.o helper.o " + \
-				"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
-				"tcp_server.o rootintootin_process.o app_builder.o ioloop.o " + \
-				"db.o file_system.o regex.o shared_memory.o socket.o"
-		result += commands.getoutput(command)
-
-		command = "ldc -g -w -of server server.d -L rootintootin.a " + \
-				"-L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + tango
-		result += commands.getoutput(command)
-
-		if os.path.exists("server"):
-			self._compile_error = None
-			print "Server build successful!"
-		else:
-			self._compile_error = result
-			print "Server build failed!"
-			print self._compile_error
-			exit()
-
-		# Run the server in its own process
-		self._server_pid = subprocess.Popen([scratch + "server", pwd, mode]).pid
-
-# Build and start the server
-if sys.argv[2] == 'server':
-	mode = sys.argv[3]
-	builder_thread = BuilderThread()
-	builder_thread._build_server(mode)
+def run_server():
+	# Run the server in its own process
+	process = subprocess.Popen([scratch + "server", pwd, mode])
 	try:
-		builder_thread.start()
-		while True:
-			time.sleep(1)
+		process.wait()
 	except KeyboardInterrupt:
-		print "Exiting ..."
-		builder_thread.set_is_running(False)
-# Or build the application
-elif sys.argv[2] == 'application':
-	# Get all the locations
-	rootintootin_dir = os.path.expanduser('~/.rootintootin')
-	project_name = sys.argv[1].split('/')[-1]
-	pwd = sys.argv[1]
-	mode = sys.argv[3]
-	scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+		pass
 
-	setup_app(pwd, scratch, mode)
-else:
-	print "invalid option " + sys.argv[2]
+# Get all the variables needed for building
+pwd = sys.argv[1]
+build_type = sys.argv[2]
+mode = sys.argv[3]
+rootintootin_dir = os.path.expanduser('~/.rootintootin')
+project_name = pwd.split('/')[-1]
+scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+
+# Build the server
+if build_type == 'server':
+	copy_files_to_scratch()
+	generate_files()
+	build_framework()
+	build_server()
+	build_application()
+	run_server()
+# Or build the application
+elif build_type == 'application':
+	pass
+# Or build both
+elif build_type == "all":
+	pass
+
+# Run
+
 
 

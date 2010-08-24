@@ -86,18 +86,24 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 	protected override void on_started(bool is_event_triggered = true) {
 		string mode = _is_production ? "production" : "development";
+		Stdout.format("Rootin Tootin running in " ~ mode ~ " mode on http://localhost:{} ...", this._port).newline.flush;
+
+		// Just return if there are no events to trigger
+		if(!is_event_triggered) return;
 
 		// Have the builder build the app when it changes
-		if(is_event_triggered) {
+		if(!_is_production) {
 			auto builder = new AppBuilder(
 								_app_path, 
 								mode, 
 								&on_build_success, 
 								&on_build_failure);
 			builder.start();
+		// Or just run the app
+		} else {
+			this.start_application();
+			Stdout("Application running ...").newline.newline.flush;
 		}
-
-		Stdout.format("Rootin Tootin running in " ~ mode ~ " mode on http://localhost:{} ...", this._port).newline.flush;
 	}
 
 	protected void on_build_success(AppBuilder builder) {

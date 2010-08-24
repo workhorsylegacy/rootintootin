@@ -27,7 +27,7 @@ public class AppBuilder {
 	public ushort _port;
 	public int _max_waiting_clients;
 
-	public this(string app_path, string mode, void delegate(AppBuilder) on_build_success=null, void delegate(char[]) on_build_failure=null) {
+	public this(string app_path, string mode, void delegate(AppBuilder) on_build_success, void delegate(char[]) on_build_failure) {
 		_app_path = app_path;
 		_mode = mode;
 		_on_success_func = on_build_success;
