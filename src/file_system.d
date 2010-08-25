@@ -10,6 +10,7 @@
 module file_system;
 private import tango.stdc.stringz;
 private import tango.stdc.time;
+private import tango.io.Stdout;
 
 enum EntryType { 
 	unknown = 0, 
@@ -70,6 +71,17 @@ bool exist(char[] path, char[] name, EntryType type) {
 	return false;
 }
 
+char[] getcwd() {
+	char[] buffer = new char[255];
+	char* r = c_getcwd(buffer.ptr, 255);
+	Stdout.format("r: {}", fromStringz(r)).newline.flush;
+	return fromStringz(r).dup;
+}
+
+void print_cwd() {
+	c_print_cwd();
+}
+
 private:
 
 extern (C):
@@ -77,4 +89,6 @@ extern (C):
 time_t c_file_modify_time(char* file_name);
 char** c_dir_entries(char* dir_name, int* len, EntryType type);
 void c_free_dir_entries(char** entries, int len);
+char* c_getcwd(char* buffer, size_t size);
+void c_print_cwd();
 

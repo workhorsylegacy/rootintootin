@@ -14,6 +14,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <unistd.h>
+
 
 typedef enum { 
 	entry_type_unknown = 0, 
@@ -83,4 +85,17 @@ void c_free_dir_entries(char** entries, int len) {
 	free(entries);
 }
 
+char* c_getcwd(char* buffer, size_t size) {
+	if(getcwd(buffer, size) != NULL)
+		return buffer;
+	else
+		return NULL;
+}
+
+void c_print_cwd() {
+	char* buffer = (char*) calloc(255, sizeof(char));
+	char* r = getcwd(buffer, 255);
+	printf("cwd: %s\n", r);
+	fflush(stdout);
+}
 

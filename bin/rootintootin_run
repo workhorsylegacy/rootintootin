@@ -16,6 +16,7 @@ import commands
 import json
 from lib_rootintootin import *
 
+print str(sys.argv)
 
 # Make sure the first arg is a path
 if len(sys.argv) < 3:
@@ -34,7 +35,7 @@ os.chdir(os.sys.path[0])
 
 def _model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
-	generator.set_mode(globals()['mode'])
+	generator.set_mode(mode)
 	# Add class opening
 	properties = \
 			"private import rootintootin;\n" + \
@@ -259,13 +260,13 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 def _generate_models():
 	# Connect to the database
 	generator = Generator()
-	#generator.set_mode(globals()['mode'])
+	generator.set_mode(mode)
 	db = None
 	try:
-		db = MySQLdb.connect(host = globals()['database']['host'], 
-							user = globals()['database']['user'], 
-							passwd = globals()['database']['password'], 
-							db = globals()['database']['name'])
+		db = MySQLdb.connect(host = config[mode]['database']['host'], 
+							user = config[mode]['database']['user'], 
+							passwd = config[mode]['database']['password'], 
+							db = config[mode]['database']['name'])
 	except MySQLdb.OperationalError, err:
 		if err.args[0] == 2002:
 			print "Can't connect to the mysql server. Make sure it is running. Exiting ..."
@@ -308,7 +309,7 @@ def _generate_models():
 		cursor = db.cursor()
 		query = "select column_name, referenced_table_name, referenced_column_name from " + \
 				"information_schema.key_column_usage where " + \
-				"table_schema='" + globals()['database']['name'] + "' " + \
+				"table_schema='" + config[mode]['database']['name'] + "' " + \
 				"and table_name='" + table + "' and " + \
 				"referenced_table_name is not null and referenced_column_name is not null;"
 		cursor.execute(query)
@@ -354,7 +355,7 @@ def _generate_controllers():
 
 def _generate_views(routes):
 	generator = Generator()
-	generator.set_mode(globals()['mode'])
+	generator.set_mode(mode)
 
 	# Get the names of all the models
 	model_names = []
@@ -446,7 +447,6 @@ def _generate_layouts():
 		out_file.close()
 
 def _generate_application(version, routes, table_map, reference_map):
-	mode = globals()['mode']
 	generator = Generator()
 	generator.set_mode(mode)
 
@@ -553,13 +553,13 @@ def _generate_application(version, routes, table_map, reference_map):
 	out_file.write("	}\n")
 	out_file.write("}\n")
 
-	port = str(int(globals()['server']['port']))
-	max_waiting_clients = globals()['server']['max_waiting_clients']
-	header_max_size = globals()['server']['header_max_size']
-	db_host = globals()['database']['host']
-	db_user = globals()['database']['user']
-	db_password = globals()['database']['password']
-	db_name = globals()['database']['name']
+	port = str(int(config[mode]['server']['port']))
+	max_waiting_clients = config[mode]['server']['max_waiting_clients']
+	header_max_size = config[mode]['server']['header_max_size']
+	db_host = config[mode]['database']['host']
+	db_user = config[mode]['database']['user']
+	db_password = config[mode]['database']['password']
+	db_name = config[mode]['database']['name']
 
 	# Write the main function header
 	out_file.write(
@@ -612,9 +612,10 @@ def _generate_application(version, routes, table_map, reference_map):
 }
 """)
 
+'''
 def _get_link_files_from_application(routes):
 	generator = Generator()
-	generator.set_mode(globals()['mode'])
+	generator.set_mode(mode)
 	files = []
 
 	# Get the names of all the models
@@ -641,7 +642,7 @@ def _get_link_files_from_application(routes):
 	files.append('view_layouts_default.d')
 
 	return files
-
+'''
 def _process_template_body(body, output):
 	while len(body) > 0:
 		# Get the location on the open and close brackets
@@ -678,6 +679,7 @@ def _process_template_body(body, output):
 		body = after
 
 def copy_files_to_scratch():
+	print os.getcwd()
 	# Copy all the framework files into a scratch dir
 	if not os.path.exists(rootintootin_dir):
 		os.mkdir(rootintootin_dir)
@@ -708,19 +710,47 @@ def copy_files_to_scratch():
 	if os.path.exists(pwd+'/public/'):
 		shutil.copytree(pwd+'/public/', scratch+'public/')
 	os.mkdir(scratch+'uploads/')
+
+def copy_changed_files_to_scratch():
+	print os.getcwd()
+	# Remove all the old app files
+	if os.path.exists(scratch+'app/'):
+		shutil.rmtree(scratch+'app/')
+	if os.path.exists(scratch+'config/'):
+		shutil.rmtree(scratch+'config/')
+	if os.path.exists(scratch+'db/'):
+		shutil.rmtree(scratch+'db/')
+	if os.path.exists(scratch+'public/'):
+		shutil.rmtree(scratch+'public/')
+	if os.path.exists(scratch+'uploads/'):
+		shutil.rmtree(scratch+'uploads/')
+
+	# Copy all the app files into a scratch dir
+	if os.path.exists(pwd+'/app/'):
+		shutil.copytree(pwd+'/app/', scratch+'app/')
+	if os.path.exists(pwd+'/config/'):
+		shutil.copytree(pwd+'/config/', scratch+'config/')
+	if os.path.exists(pwd+'/db/'):
+		shutil.copytree(pwd+'/db/', scratch+'db/')
+	if os.path.exists(pwd+'/public/'):
+		shutil.copytree(pwd+'/public/', scratch+'public/')
+	os.mkdir(scratch+'uploads/')
+
+def move_to_scratch():
 	os.chdir(scratch)
 
-def generate_files():
+def load_configurations():
 	# Load the config files
 	with open('config/routes.json', 'r') as f:
-		globals()['routes'] = json.loads(f.read())["routes"]
+		globals()['routes'] = json.loads(f.read())['routes']
+
+	with open('config/nouns.json', 'r') as f:
+		globals()['nouns'] = json.loads(f.read())['nouns']
 
 	with open('config/config.json', 'r') as f:
-		config = json.loads(f.read())[mode]
-		globals()['mode'] = mode
-		globals()['database'] = config['database']
-		globals()['server'] = config['server']
+		globals()['config'] = json.loads(f.read())
 
+def generate_application_files():
 	# Get the Rootin Tootin version
 	f = open(scratch+'version')
 	version = f.read().strip()
@@ -792,31 +822,110 @@ def build_server():
 		print compile_error
 		exit()
 
-def build_application():
+def build_application(is_first_loop):
 	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
 	sys.stdout.flush()
 
-	# Get the files from the application to link
-	additional_imports = _get_link_files_from_application(routes)
+	generator = Generator()
+	generator.set_mode(mode)
 
-	# Compile the application and link it with the static library
-	result = ''
-	command = "ldc -g -w -of application application.d -L rootintootin.a " + \
-			str.join(' ', additional_imports) + \
-			" -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + tango
-	result += commands.getoutput(command)
+	# Get the names of all the models
+	model_names = []
+	for entry in os.listdir("app/models/"):
+		if entry.endswith('.d'):
+			model_names.append(entry.split('.d')[0])
 
-	compile_error = None
-	if os.path.exists("application"):
-		compile_error = None
-		sys.stdout.write(":)\n")
+	# Get the names of all the views
+	view_names = []
+	for controller_name, route_maps in routes.items():
+		name = "app/views/" + controller_name
+		for entry in os.listdir(name):
+			if entry.endswith(".html.ed"):
+				view_names.append(controller_name + "_" + entry.split(".html.ed")[0])
+
+	# Get all the app's files for a rebuild
+	files = [];
+	is_newer = False
+	if not is_first_loop:
+		for model_name in model_names:
+			if file_exist(".",  model_name + ".o"):
+				is_newer = is_file_newer("app/models/", model_name + ".d", ".", model_name + ".o")
+			else:
+				is_newer = True
+			files.append(model_name + ['.d', '.o'][is_newer])
+			files.append(model_name + "_base" + ['.d', '.o'][is_newer])
+
+		for controller_name, route_maps in routes.items():
+			controller = generator.singularize(controller_name)
+			if file_exist(".",  controller + "_controller.o"):
+				is_newer = is_file_newer("app/controllers/", controller + "_controller.d", ".", controller + "_controller.o");
+			else:
+				is_newer = True
+			files.append(controller + "_controller" + ['.d', '.o'][is_newer])
+
+		for view_name in view_names:
+			controller = view_name.split("_")[0]
+			action = view_name.split("_")[1]
+			if file_exist(".",  "view_" + controller + "_" + action + ".o"):
+				is_newer = is_file_newer("app/views/" + controller + "/",  action + ".html.ed", ".", "view_" + controller + "_" + action + ".o")
+			else:
+				is_newer = True;
+			files.append("view_" + controller + "_" + action + ['.d', '.o'][is_newer])
+
+		if file_exist(".",  "view_layouts_default.o"):
+			is_newer = is_file_newer("app/views/layouts/", "default.html.ed", ".", "view_layouts_default.o")
+		else:
+			is_newer = True
+		files.append("view_layouts_default" + ['.d', '.o'][is_newer])
+
+	# Get all the app's files for a first build
+	if is_first_loop:
+		for model_name in model_names:
+			files.append(model_name + ".d")
+			files.append(model_name + "_base.d")
+
+		for controller_name, route_maps in routes.items():
+			files.append(generator.singularize(controller_name) + "_controller.d")
+		for view_name in view_names:
+			files.append("view_" + view_name + ".d")
+		files.append("view_layouts_default.d")
+
+	# Save the configuration changes that will be needed by the running program
+	_port = int(config[mode]["server"]["port"])
+	_max_waiting_clients = int(config[mode]["server"]["max_waiting_clients"])
+
+	# Build the app
+	CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+
+	command = \
+		"ldc -g -w -of application_new application.d " + \
+		str.join(' ', files) + \
+		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + \
+		CORELIB
+
+	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
+	sys.stdout.flush()
+
+	compile_error = commands.getoutput(command)
+
+	# Make sure the application was built
+	if os.path.isfile("application_new"):
+		sys.stdout.write(":)")
 		sys.stdout.flush()
+		# Replace the old app with the new one
+		if os.path.isfile("application"):
+			os.remove("application")
+		os.rename("application_new", "application")
 	else:
-		compile_error = result
-		sys.stdout.write(":(\n")
-		print "Application build failed!"
-		print compile_error
-		exit()
+		sys.stdout.write(":(")
+		sys.stdout.flush()
+		#compile_error = c_stdout ~ c_stderr;
+		#Stdout(c_stdout).flush;
+		#Stdout(c_stderr).flush;
+
+	# FIXME: Run the app
+
+	return compile_error
 
 def run_server():
 	# Run the server in its own process
@@ -838,14 +947,23 @@ tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 # Build the server
 if build_type == 'server':
 	copy_files_to_scratch()
-	generate_files()
+	move_to_scratch()
+	load_configurations()
+	generate_application_files()
 	build_framework()
 	build_server()
-	build_application()
+	#build_application()
 	run_server()
 # Or build the application
 elif build_type == 'application':
-	pass
+	copy_changed_files_to_scratch()
+	move_to_scratch()
+	load_configurations()
+	generate_application_files()
+	#build_framework()
+	#build_server()
+	build_application(True)
+	#run_server()
 # Or build both
 elif build_type == "all":
 	pass
