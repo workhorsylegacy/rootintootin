@@ -19,10 +19,10 @@ private import app_builder;
 
 int main(string[] args) {
 	// Make sure the args are correct
-	if(args.length < 3)
-		throw new Exception("Usage: server 'application path' [development|production]");
-	string app_path = args[1];
-	string mode = args[2];
+	if(args.length < 2)
+		throw new Exception("Usage: server [development|production] 'application path'");
+	string mode = args[1];
+	string app_path = args.length==3 ? args[2] : "";
 	bool is_production = (mode == "production");
 
 	// Read the server config file

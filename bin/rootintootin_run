@@ -820,6 +820,9 @@ def build_server():
 		exit()
 
 def build_application(is_first_loop):
+	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
+	sys.stdout.flush()
+
 	generator = Generator()
 	generator.set_mode(mode)
 
@@ -915,7 +918,12 @@ def build_application(is_first_loop):
 
 def run_server():
 	# Run the server in its own process
-	process = subprocess.Popen([scratch + "server", pwd, mode])
+	process = None
+	if mode == "development":
+		process = subprocess.Popen([scratch + "server", mode, pwd])
+	elif mode == "production":
+		process = subprocess.Popen([scratch + "server", mode])
+
 	try:
 		process.wait()
 	except KeyboardInterrupt:
@@ -931,30 +939,31 @@ scratch = rootintootin_dir + '/' + project_name + '/scratch/'
 tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 
 # Build the server
-if build_type == 'server':
+if mode == "development" and build_type == 'server':
+	copy_files_to_scratch()
+	move_to_scratch()
+	load_configurations()
+	build_framework()
+	build_server()
+	run_server()
+# Or build the application
+elif mode == "development" and build_type == 'application':
+	copy_changed_files_to_scratch()
+	move_to_scratch()
+	load_configurations()
+	generate_application_files()
+	build_application(True)
+# Or build both
+elif mode == "production":
 	copy_files_to_scratch()
 	move_to_scratch()
 	load_configurations()
 	generate_application_files()
 	build_framework()
 	build_server()
-	#build_application()
-	run_server()
-# Or build the application
-elif build_type == 'application':
-	copy_changed_files_to_scratch()
-	move_to_scratch()
-	load_configurations()
-	generate_application_files()
-	#build_framework()
-	#build_server()
 	build_application(True)
-	#run_server()
-# Or build both
-elif build_type == "all":
-	pass
+	run_server()
 
-# Run
 
 
 

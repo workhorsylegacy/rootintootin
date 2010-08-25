@@ -100,18 +100,18 @@ class RootinTootinServerProcess : RootinTootinServer {
 		// Just return if there are no events to trigger
 		if(!is_event_triggered) return;
 
-		// Have the builder build the app when it changes
-		if(!_is_production) {
+		// In production mode just run the app
+		if(_is_production) {
+			this.start_application();
+			Stdout("Application running ...").newline.newline.flush;
+		// In development mode build the app when it changes
+		} else {
 			auto builder = new AppBuilder(
 								_app_path, 
 								mode, 
 								&on_build_success, 
 								&on_build_failure);
 			builder.start();
-		// Or just run the app
-		} else {
-			this.start_application();
-			Stdout("Application running ...").newline.newline.flush;
 		}
 	}
 
@@ -127,11 +127,8 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 		string[string][string][string] config;
 		foreach(n1, v1; values.attributes()) {
-//			Stdout.format("name: {}", n1).newline.flush;
 			foreach(n2, v2; v1.toObject().attributes()) {
-//				Stdout.format("	name: {}", n2).newline.flush;
 				foreach(n3, v3; v2.toObject().attributes()) {
-//					Stdout.format("			name: {} value: {}", n3, v3.toString()).newline.flush;
 					config[n1][n2][n3] = v3.toString();
 				}
 			}
