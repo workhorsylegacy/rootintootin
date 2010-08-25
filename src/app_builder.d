@@ -12,7 +12,6 @@ private import tango.core.Thread;
 private import tango.sys.Process;
 private import tango.io.device.File;
 private import tango.io.FilePath;
-private import tango.text.json.Json;
 
 private import language_helper;
 private import file_system;
@@ -24,8 +23,6 @@ public class AppBuilder {
 	private void delegate(char[]) _on_failure_func = null;
 	private string _app_path = null;
 	private string _mode = null;
-	public ushort _port;
-	public int _max_waiting_clients;
 
 	public this(string app_path, string mode, void delegate(AppBuilder) on_build_success, void delegate(char[]) on_build_failure) {
 		_app_path = app_path;
@@ -43,33 +40,6 @@ public class AppBuilder {
 		string command = "inotifywait -r -q -c -e modify -e create -e attrib -e move -e delete " ~ _app_path;
 		string c_stdout, c_stderr;
 		this.run_command(command, c_stdout, c_stderr);
-		//string dir = split(c_stdout, "/ ")[0];
-
-		//Stdout(c_stdout).flush;
-		//Stdout(c_stderr).flush;
-		//Stdout.format("length: {}\n", to_s(c_stdout.length)).flush;
-	}
-
-	private string singularize(string[string] nouns, string noun) {
-		foreach(string singular, string plural; nouns) {
-			if(noun == singular || noun == plural) {
-				return singular;
-			} else if(noun == capitalize(singular) || noun == capitalize(plural)) {
-				return capitalize(singular);
-			}
-		}
-		throw new Exception("Can't singularize unknown noun '" ~ noun ~ "'.");
-	}
-
-	private string pluralize(string[string] nouns, string noun) {
-		foreach(string singular, string plural; nouns) {
-			if(noun == singular || noun == plural) {
-				return plural;
-			} else if(noun == capitalize(singular) || noun == capitalize(plural)) {
-				return capitalize(plural);
-			}
-		}
-		throw new Exception("Can't pluralize unknown noun '" ~ noun ~ "'.");
 	}
 
 	private void build_loop() {
@@ -87,7 +57,7 @@ public class AppBuilder {
 			}
 
 			// Show success or failure
-			if(compile_error == null) {
+			if(compile_error == null || compile_error.length == 0) {
 				if(_on_success_func)
 					_on_success_func(this);
 			} else {
@@ -103,12 +73,18 @@ public class AppBuilder {
 	}
 
 	private char[] build_method(bool is_first_loop) {
-		char[] compile_error = null;
+		char[] c_stdout = "";
+		char[] c_stderr = "";
 
 		// Copy all the app files, and do code generation
-		this.run_command("python2.6 /usr/bin/rootintootin_run " ~ _app_path ~ " application " ~ _mode);
+		Stdout(ljust("Rebuilding application ...", 78, " ")).flush;
+		this.run_command("python2.6 /usr/bin/rootintootin_run " ~ _app_path ~ " application " ~ _mode, c_stdout, c_stderr);
 
-		return compile_error;
+		// Print anything from stdout
+		Stdout(c_stdout).newline.flush;
+
+		// Return any errors
+		return c_stderr;
 	}
 
 	private void run_command(string command) {

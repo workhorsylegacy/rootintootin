@@ -16,7 +16,6 @@ import commands
 import json
 from lib_rootintootin import *
 
-print str(sys.argv)
 
 # Make sure the first arg is a path
 if len(sys.argv) < 3:
@@ -679,7 +678,6 @@ def _process_template_body(body, output):
 		body = after
 
 def copy_files_to_scratch():
-	print os.getcwd()
 	# Copy all the framework files into a scratch dir
 	if not os.path.exists(rootintootin_dir):
 		os.mkdir(rootintootin_dir)
@@ -712,7 +710,6 @@ def copy_files_to_scratch():
 	os.mkdir(scratch+'uploads/')
 
 def copy_changed_files_to_scratch():
-	print os.getcwd()
 	# Remove all the old app files
 	if os.path.exists(scratch+'app/'):
 		shutil.rmtree(scratch+'app/')
@@ -823,9 +820,6 @@ def build_server():
 		exit()
 
 def build_application(is_first_loop):
-	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
-	sys.stdout.flush()
-
 	generator = Generator()
 	generator.set_mode(mode)
 
@@ -903,29 +897,21 @@ def build_application(is_first_loop):
 		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + \
 		CORELIB
 
-	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
-	sys.stdout.flush()
-
 	compile_error = commands.getoutput(command)
 
 	# Make sure the application was built
 	if os.path.isfile("application_new"):
-		sys.stdout.write(":)")
+		sys.stdout.write(":)\n")
 		sys.stdout.flush()
 		# Replace the old app with the new one
 		if os.path.isfile("application"):
 			os.remove("application")
 		os.rename("application_new", "application")
 	else:
-		sys.stdout.write(":(")
+		sys.stdout.write(":(\n")
 		sys.stdout.flush()
-		#compile_error = c_stdout ~ c_stderr;
-		#Stdout(c_stdout).flush;
-		#Stdout(c_stderr).flush;
-
-	# FIXME: Run the app
-
-	return compile_error
+		sys.stderr.write(compile_error + "\n")
+		sys.stderr.flush()
 
 def run_server():
 	# Run the server in its own process

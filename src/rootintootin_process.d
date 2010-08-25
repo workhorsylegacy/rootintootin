@@ -11,6 +11,7 @@ private import tango.io.Stdout;
 private import tango.core.Thread;
 private import tango.sys.Process;
 private import tango.io.device.File;
+private import tango.text.json.Json;
 
 private import file_system;
 private import regex;
@@ -81,12 +82,20 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected override void on_connection_ready(int fd) {
-		write_client_fd(_unix_socket_fd, fd);
+		// If there is an app get it to handle the connection
+		if(_app) {
+			write_client_fd(_unix_socket_fd, fd);
+		// If not, show the compile error
+		} else {
+			socket_write(fd, _compile_error.ptr);
+			socket_close(fd);
+		}
 	}
 
 	protected override void on_started(bool is_event_triggered = true) {
 		string mode = _is_production ? "production" : "development";
-		Stdout.format("Rootin Tootin running in " ~ mode ~ " mode on http://localhost:{} ...", this._port).newline.flush;
+		Stdout.format(ljust("Rootin Tootin running in " ~ mode ~ " mode on http://localhost:" ~ to_s(this._port) ~ " ...", 78, " ")).flush;
+		Stdout.format(":)\n").flush;
 
 		// Just return if there are no events to trigger
 		if(!is_event_triggered) return;
@@ -107,13 +116,35 @@ class RootinTootinServerProcess : RootinTootinServer {
 	}
 
 	protected void on_build_success(AppBuilder builder) {
-		// Restart the server if the config changed
-		if(builder._port != _port || builder._max_waiting_clients != _max_waiting_clients) {
-			Stdout("Server restarting ...").newline.flush;
+		string mode = _is_production ? "production" : "development";
 
+		// Read the config from the config file
+		auto file = new File("config/config.json", File.ReadExisting);
+		auto content = new char[cast(size_t)file.length];
+		file.read(content);
+		file.close();
+		auto values = (new Json!(char)).parse(content).toObject();
+
+		string[string][string][string] config;
+		foreach(n1, v1; values.attributes()) {
+//			Stdout.format("name: {}", n1).newline.flush;
+			foreach(n2, v2; v1.toObject().attributes()) {
+//				Stdout.format("	name: {}", n2).newline.flush;
+				foreach(n3, v3; v2.toObject().attributes()) {
+//					Stdout.format("			name: {} value: {}", n3, v3.toString()).newline.flush;
+					config[n1][n2][n3] = v3.toString();
+				}
+			}
+		}
+
+		ushort port = to_ushort(config[mode]["server"]["port"]);
+		int max_waiting_clients = to_ushort(config[mode]["server"]["max_waiting_clients"]);
+
+		// Restart the server if the config changed
+		if(port != _port || max_waiting_clients != _max_waiting_clients) {
 			// Tell the server to restart
-			_port = builder._port;
-			_max_waiting_clients = builder._max_waiting_clients;
+			_port = port;
+			_max_waiting_clients = max_waiting_clients;
 			_is_configuration_changed = true;
 
 			// Wait for the server to restart
@@ -121,8 +152,6 @@ class RootinTootinServerProcess : RootinTootinServer {
 			while(_is_configuration_changed == true) {
 				Thread.sleep(0.05);
 			}
-
-			Stdout("Server restart successful!").newline.flush;
 		}
 
 		// Start the application
@@ -133,6 +162,7 @@ class RootinTootinServerProcess : RootinTootinServer {
 
 	protected void on_build_failure(char[] compile_error) {
 		_compile_error = compile_error;
+		Stdout(_compile_error).newline.flush;
 		this.stop_application();
 	}
 
