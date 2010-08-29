@@ -892,13 +892,11 @@ def build_application(is_first_loop):
 	_max_waiting_clients = int(config[mode]["server"]["max_waiting_clients"])
 
 	# Build the app
-	CORELIB = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
-
 	command = \
 		"ldc -g -w -of application_new application.d " + \
 		str.join(' ', files) + \
 		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + \
-		CORELIB
+		tango
 
 	compile_error = commands.getoutput(command)
 
