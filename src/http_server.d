@@ -15,6 +15,7 @@ private import tango.time.Clock;
 private import tango.io.device.File;
 
 private import socket;
+private import fcgi;
 private import tcp_server;
 private import language_helper;
 private import helper;
@@ -73,11 +74,18 @@ class HttpApp {
 	protected string _buffer;
 	protected string _file_buffer;
 	private string[] _pair;
+	protected bool _is_fcgi = false;
+	private int _fd;
 
-	public this(string server_name) {
+	protected void set_fd(int value) {
+		_fd = value;
+	}
+
+	public this(bool is_fcgi, string server_name) {
 		if(server_name == null)
 			throw new Exception("The server name is invalid");
 		_server_name = server_name;
+		_is_fcgi = is_fcgi;
 		_pair = new string[2];
 
 		// Get a random salt for salting sessions
@@ -87,9 +95,9 @@ class HttpApp {
 		delete random;
 	}
 
-	protected string process_request(int fd) {
+	protected string process_request() {
 		try {
-			this.trigger_on_request(fd);
+			this.trigger_on_request();
 			return _response;
 		} catch(Exception err) {
 			return "Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
@@ -120,7 +128,7 @@ class HttpApp {
 		// Send a basic options header for access control
 		// See: https://developer.mozilla.org/En/HTTP_Access_Control
 		string response = 
-		"HTTP/1.1 200 OK\r\n" ~ 
+		(_is_fcgi ? "" : "HTTP/1.1 200 OK\r\n") ~ 
 		"Server: " ~ _server_name ~ "\r\n" ~ 
 		"Status: 200 OK\r\n" ~ 
 		"Access-Control-Allow-Origin: *\r\n" ~ 
@@ -138,13 +146,19 @@ class HttpApp {
 		Stdout(message).flush;
 	}
 
-	protected void trigger_on_request(int fd) {
+	protected void trigger_on_request() {
+		int len = socket_read(_fd, _buffer.ptr, _buffer.length);
+		char[] raw_request = _buffer[0 .. len];
+
+		trigger_on_request(raw_request);
+	}
+
+	protected void trigger_on_request(char[] raw_request) {
 		Request request = new Request();
 		_response = null;
+		int len = 0;
 
 		// Read the request header
-		int len = socket_read(fd, _buffer.ptr, _buffer.length);
-		char[] raw_request = _buffer[0 .. len];
 		size_t header_end = index(raw_request, "\r\n\r\n");
 
 		// If we have not found the end of the header return a 413 error
@@ -222,7 +236,7 @@ class HttpApp {
 			}
 		}
 
-		if(request.method == "POST" || request.method == "PUT") {
+		if(!_is_fcgi && (request.method == "POST" || request.method == "PUT")) {
 			// Make sure the Content-Length field exist
 			if(!("Content-Length" in request._fields)) {
 				return this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
@@ -242,7 +256,7 @@ class HttpApp {
 			remaining_length -= body_chunk.length;
 
 			while(remaining_length > 0) {
-				len = socket_read(fd, _file_buffer.ptr, _file_buffer.length);
+				len = socket_read(_fd, _file_buffer.ptr, _file_buffer.length);
 				body_chunk = _file_buffer[0 .. len];
 				file.write(body_chunk);
 				remaining_length -= body_chunk.length;
@@ -380,7 +394,8 @@ class HttpApp {
 
 		string status = Helper.get_verbose_status_code(301);
 
-		string header = "HTTP/1.1 " ~ status ~ "\r\n" ~
+		string header = 
+		(_is_fcgi ? "" : "HTTP/1.1 " ~ status ~ "\r\n") ~ 
 		"Location: " ~ url ~ "\r\n" ~
 		"Content-Type: text/html\r\n" ~
 		"Content-Length: 0" ~
@@ -422,13 +437,15 @@ class HttpApp {
 		auto time = now.time;
 		auto date = Gregorian.generic.toDate(now);
 		auto b = new AutoStringArray(_buffer);
-		b ~= "HTTP/1.1 " ;b~= status ;b~= "\r\n" ;b~= 
-		"Date: " ;b~= to_s(date.day) ;b~= to_s(date.month) ;b~= to_s(date.year) ;b~= "\r\n" ;b~= 
+		b ~= (_is_fcgi ? "" : "HTTP/1.1 " ~ status ~ "\r\n");
+		b~= "Date: " ;b~= to_s(date.day) ;b~= to_s(date.month) ;b~= to_s(date.year) ;b~= "\r\n" ;b~= 
 		"Server: " ;b~= _server_name ;b~= "\r\n" ;
 
 		// Get all the new cookie values to send
+		// FIXME: The % in cookies is breaking fastcgi
+		// So they are turned off for now.
 		foreach(string name, string value ; request._cookies) {
-			b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= Helper.escape(value) ;b~= "\r\n";
+			//b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= Helper.escape(value) ;b~= "\r\n";
 		}
 
 		b~= "Status: " ;b~= status ;b~= "\r\n" ;b~= 

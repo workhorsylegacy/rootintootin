@@ -14,6 +14,7 @@ private import tango.io.device.File;
 private import tango.text.json.Json;
 
 private import file_system;
+private import fcgi;
 private import regex;
 private import socket;
 private import app_builder;
@@ -25,37 +26,61 @@ class RootinTootinAppProcess : RootinTootinApp {
 	private File _output = null;
 	private int _unix_socket_fd;
 
-	public this(string server_name, 
+	public this(bool is_fcgi, string server_name, 
 				RunnerBase runner, string[Regex][string][string] routes, 
 				string db_host, string db_user, string db_password, string db_name) {
-		super(server_name, runner, routes, 
+		super(is_fcgi, server_name, runner, routes, 
 			db_host, db_user, db_password, db_name);
 	}
 
 	public void start() {
-		_output = new File("log", File.WriteCreate);
-		_unix_socket_fd = create_unix_socket_fd("socket");
+		// FIXME: Logging is turned off because fastcgi
+		// creates many processes. They each need their own
+		// file. Add a random number to the end of the file name.
+		//_output = new File("log", File.WriteCreate);
+		if(!_is_fcgi)
+			_unix_socket_fd = create_unix_socket_fd("socket");
 
-		string request;
-		string response = null;
 		_buffer = new char[1024 * 10];
 		_file_buffer = new char[1024 * 10];
 
+		if(_is_fcgi) {
+			this.start_fcgi_loop();
+		} else {
+			this.start_normal_loop();
+		}
+	}
+
+	protected void start_normal_loop() {
 		int fd;
+		string response = null;
 		while(true) {
 			fd = read_client_fd(_unix_socket_fd);
+			set_fd(fd);
 
 			// Read the request header into the buffer
-			response = process_request(fd);
+			response = process_request();
 
 			socket_write(fd, response.ptr);
 			socket_close(fd);
 		}
 	}
 
-	protected override void write_to_log(string message) {
-		_output.write(message);
+	protected void start_fcgi_loop() {
+		string request;
+		string response = null;
+		while(fcgi_accept(request)) {
+			// Read the request header into the buffer
+			trigger_on_request(request);
+			response = _response;
+
+			fcgi_printf(response);
+		}
 	}
+
+	//protected override void write_to_log(string message) {
+	//	_output.write(message);
+	//}
 }
 
 class RootinTootinServerProcess : RootinTootinServer {

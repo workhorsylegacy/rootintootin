@@ -468,6 +468,7 @@ def _generate_application(version, routes, table_map, reference_map):
 		"private import language_helper;\n" +
 		"private import helper;\n" +
 		"private import regex;\n" +
+		"private import file_system;\n" +
 		"private import rootintootin;\n" +
 		"private import rootintootin_server;\n" +
 		"private import rootintootin_process;\n\n"
@@ -562,7 +563,7 @@ def _generate_application(version, routes, table_map, reference_map):
 
 	# Write the main function header
 	out_file.write(
-	"\n\nint main() {\n")
+	"\n\nint main(string[] args) {\n")
 
 	# Write the routes
 	out_file.write(
@@ -590,15 +591,19 @@ def _generate_application(version, routes, table_map, reference_map):
 			}
 		}
 	}
+
 """)
 
 	out_file.write(" \
+	bool is_fcgi = contains(getcwd(), \"fastcgi\");\n \
+	\n\
 	// Create and start the app \n\
 	string mode = \"" + mode + "\";")
 
 	out_file.write("""
 	RunnerBase runner = new Runner();
 	auto app = new RootinTootinAppProcess(
+				is_fcgi, 
 				"Rootin_Tootin_0.6.0", 
 				runner, routes, 
 				config[mode]["database"]["host"], 
@@ -771,18 +776,19 @@ def build_framework():
 	result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
 	result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
 	result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
-	result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o")
+	result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
+	result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
 	command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
 			"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
 			"rootintootin_process.d app_builder.d dornado/ioloop.d " + \
-			" db.d file_system.d regex.d shared_memory.d socket.d " + tango
+			" db.d file_system.d regex.d shared_memory.d socket.d fcgi.d " + tango
 	result += commands.getoutput(command)
 
 	# Combine the framework into a static library
 	command = "ar rcs rootintootin.a language_helper.o helper.o " + \
 			"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
 			"tcp_server.o rootintootin_process.o app_builder.o ioloop.o " + \
-			"db.o file_system.o regex.o shared_memory.o socket.o"
+			"db.o file_system.o regex.o shared_memory.o socket.o fcgi.o"
 	result += commands.getoutput(command)
 
 	compile_error = None
@@ -804,7 +810,7 @@ def build_server():
 	# Compile the server and link it with the static library
 	result = ''
 	command = "ldc -g -w -of server server.d -L rootintootin.a " + \
-			"-L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + tango
+			"-L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
 
 	compile_error = None
@@ -895,7 +901,7 @@ def build_application(is_first_loop):
 	command = \
 		"ldc -g -w -of application_new application.d " + \
 		str.join(' ', files) + \
-		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" " + \
+		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" -L=\"-lfcgi\" " + \
 		tango
 
 	compile_error = commands.getoutput(command)

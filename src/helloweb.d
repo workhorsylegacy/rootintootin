@@ -11,7 +11,7 @@ sudo /etc/init.d/lighttpd force-reload
 server.port               = 90
 
 # change /etc/lighttpd/conf-available/10-fastcgi.conf :
-fastcgi.server = ( "/fastcgi/helloweb" => 
+fastcgi.server = ( "/" => 
 	((
 		"bin-path" => "/var/fastcgi/helloweb",
 		"socket" => "/tmp/helloweb.socket",
@@ -28,15 +28,11 @@ private import language_helper;
 
 
 int main(char[][] args) {
-	char[] agent, cookie, method, path;
+	char[] request;
 
-	while(fcgi_accept(agent, cookie, method, path)) {
-		printf("Content-Type: text/plain\r\n\r\n");
-		printf("Hello World Wide Web\n");
-		printf("agent: " ~ agent ~ "\n");
-		printf("cookie: " ~ cookie ~ "\n");
-		printf("method: " ~ method ~ "\n");
-		printf("path: " ~ path ~ "\n");
+	while(fcgi_accept(request)) {
+		fcgi_printf("Content-Type: text/html\r\n\r\n");
+		fcgi_printf("<html><h1>Boooo!</h1></html>\n");
 	}
 
 	return 0;
