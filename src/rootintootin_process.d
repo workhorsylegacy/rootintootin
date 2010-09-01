@@ -34,12 +34,10 @@ class RootinTootinAppProcess : RootinTootinApp {
 	}
 
 	public void start() {
-		// FIXME: Logging is turned off because fastcgi
-		// creates many processes. They each need their own
-		// file. Add a random number to the end of the file name.
-		//_output = new File("log", File.WriteCreate);
-		if(!_is_fcgi)
+		if(!_is_fcgi) {
 			_unix_socket_fd = create_unix_socket_fd("socket");
+			_output = new File("log", File.WriteCreate);
+		}
 
 		_buffer = new char[1024 * 10];
 		_file_buffer = new char[1024 * 10];
@@ -78,9 +76,13 @@ class RootinTootinAppProcess : RootinTootinApp {
 		}
 	}
 
-	//protected override void write_to_log(string message) {
-	//	_output.write(message);
-	//}
+	protected override void write_to_log(string message) {
+		if(!_is_fcgi) {
+			_output.write(message);
+		} else {
+			Stdout(message).flush;
+		}
+	}
 }
 
 class RootinTootinServerProcess : RootinTootinServer {

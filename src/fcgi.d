@@ -36,12 +36,16 @@ bool fcgi_accept(out char[] request) {
 	if(HTTP_COOKIE) request ~= "Cookie: " ~ HTTP_COOKIE ~ "\r\n";
 	if(REMOTE_ADDR) request ~= "Remove-Addr: " ~ REMOTE_ADDR ~ "\r\n";
 	if(HTTP_REFERER) request ~= "Referer: " ~ HTTP_REFERER ~ "\r\n";
-	if(CONTENT_TYPE) request ~= "Content-type: " ~ CONTENT_TYPE ~ "\r\n";
+	if(CONTENT_TYPE) request ~= "Content-Type: " ~ CONTENT_TYPE ~ "\r\n";
 	if(CONTENT_LENGTH) request ~= "Content-Length: " ~ CONTENT_LENGTH ~ "\r\n";
 
 	request ~= "\r\n";
 
 	return true;
+}
+
+void fcgi_get_stdin(char[] buffer) {
+	c_fcgi_get_stdin(buffer.ptr, buffer.length);
 }
 
 private:
@@ -50,6 +54,7 @@ extern (C):
 
 int c_fcgi_accept();
 void c_fcgi_printf(char* message);
+void c_fcgi_get_stdin(char* buffer, size_t len);
 
 
 

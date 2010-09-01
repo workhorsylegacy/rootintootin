@@ -76,6 +76,7 @@ class HttpApp {
 	private string[] _pair;
 	protected bool _is_fcgi = false;
 	private int _fd;
+	private string _fcgi_raw_body;
 
 	protected void set_fd(int value) {
 		_fd = value;
@@ -156,6 +157,7 @@ class HttpApp {
 	protected void trigger_on_request(char[] raw_request) {
 		Request request = new Request();
 		_response = null;
+		_fcgi_raw_body = null;
 		int len = 0;
 
 		// Read the request header
@@ -236,33 +238,43 @@ class HttpApp {
 			}
 		}
 
-		if(!_is_fcgi && (request.method == "POST" || request.method == "PUT")) {
+		// FIXME: File uploads don't work in fcgi mode.
+		if(request.method == "POST" || request.method == "PUT") {
 			// Make sure the Content-Length field exist
 			if(!("Content-Length" in request._fields)) {
-				return this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
+				_response = this.render_text(request, "411 Length Required: Content-Length is required for HTTP POST and PUT.", 411);
+				return;
 			}
 			request.content_length = to_uint(request._fields["Content-Length"]);
 
 			// Make sure the Content-Type field exist
 			if(!("Content-Type" in request._fields)) {
-				return this.render_text(request, "415 Unsupported Media Type: A valid Content-Type is required for HTTP POST and PUT.", 415);
+				_response = this.render_text(request, "415 Unsupported Media Type: A valid Content-Type is required for HTTP POST and PUT.", 415);
+				return;
 			}
 
-			// Read the body into a file
-			int remaining_length = request.content_length;
-			File file = new File("raw_body", File.WriteCreate);
-			string body_chunk = raw_request[header_end+4 .. length];
-			file.write(body_chunk);
-			remaining_length -= body_chunk.length;
-
-			while(remaining_length > 0) {
-				len = socket_read(_fd, _file_buffer.ptr, _file_buffer.length);
-				body_chunk = _file_buffer[0 .. len];
+			// For cgi read the body into memory
+			// FIXME: Puting the whole body into memory is bad.
+			if(_is_fcgi) {
+				_fcgi_raw_body = new char[request.content_length];
+				fcgi_get_stdin(_fcgi_raw_body);
+			// Or normally read the body into a file
+			} else {
+				int remaining_length = request.content_length;
+				File file = new File("raw_body", File.WriteCreate);
+				string body_chunk = raw_request[header_end+4 .. length];
 				file.write(body_chunk);
 				remaining_length -= body_chunk.length;
-			}
 
-			file.close();
+				while(remaining_length > 0) {
+					len = socket_read(_fd, _file_buffer.ptr, _file_buffer.length);
+					body_chunk = _file_buffer[0 .. len];
+					file.write(body_chunk);
+					remaining_length -= body_chunk.length;
+				}
+
+				file.close();
+			}
 		}
 
 		// Determine if we have a session id in the cookies
@@ -352,10 +364,15 @@ class HttpApp {
 		// Get the params from the body
 		string content_type = request._fields["Content-Type"];
 
-		File file = new File("raw_body", File.ReadExisting);
-		string file_body = new char[cast(size_t)file.length];
-		file.read(file_body);
-		file.close();
+		string file_body = null;
+		if(_is_fcgi) {
+			file_body = _fcgi_raw_body;
+		} else {
+			File file = new File("raw_body", File.ReadExisting);
+			file_body = new char[cast(size_t)file.length];
+			file.read(file_body);
+			file.close();
+		}
 
 		switch(before(content_type, ";")) {
 			case "application/x-www-form-urlencoded":
@@ -398,7 +415,7 @@ class HttpApp {
 		(_is_fcgi ? "" : "HTTP/1.1 " ~ status ~ "\r\n") ~ 
 		"Location: " ~ url ~ "\r\n" ~
 		"Content-Type: text/html\r\n" ~
-		"Content-Length: 0" ~
+		"Content-Length: 0\r\n" ~
 		"\r\n";
 
 		return header;
