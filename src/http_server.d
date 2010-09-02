@@ -238,7 +238,6 @@ class HttpApp {
 			}
 		}
 
-		// FIXME: File uploads don't work in fcgi mode.
 		if(request.method == "POST" || request.method == "PUT") {
 			// Make sure the Content-Length field exist
 			if(!("Content-Length" in request._fields)) {
@@ -459,10 +458,8 @@ class HttpApp {
 		"Server: " ;b~= _server_name ;b~= "\r\n" ;
 
 		// Get all the new cookie values to send
-		// FIXME: The % in cookies is breaking fastcgi
-		// So they are turned off for now.
 		foreach(string name, string value ; request._cookies) {
-			//b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= Helper.escape(value) ;b~= "\r\n";
+			b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= Helper.escape(value) ;b~= "\r\n";
 		}
 
 		b~= "Status: " ;b~= status ;b~= "\r\n" ;b~= 
@@ -505,10 +502,13 @@ class HttpApp {
 		dict["file_path"].value = "uploads/" ~ file_name;
 		dict["file_content_type"].value = content_type;
 
-		// Write the file to disk
-		File file = new File(dict["file_path"].value, File.WriteCreate);
-		file.write(file_data);
-		file.close();
+		// FIXME: File uploads don't work in fcgi mode.
+		if(!_is_fcgi) {
+			// Write the file to disk
+			File file = new File(dict["file_path"].value, File.WriteCreate);
+			file.write(file_data);
+			file.close();
+		}
 	}
 }
 

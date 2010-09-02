@@ -1,4 +1,24 @@
 
+/*
+#setup fcgi on ubuntu:
+
+sudo apt-get install lighttpd php5-cgi
+sudo lighty-enable-mod fastcgi 
+sudo /etc/init.d/lighttpd force-reload
+
+# change the port in /etc/lighttpd/lighttpd.conf :
+server.port               = 90
+
+# change /etc/lighttpd/conf-available/10-fastcgi.conf :
+fastcgi.server = ( "/" => 
+	((
+		"bin-path" => "/var/fastcgi/application",
+		"socket" => "/tmp/application.socket",
+		"check-local" => "disable"
+	))
+)
+
+*/
 
 private import tango.sys.Environment;
 private import tango.io.device.File;

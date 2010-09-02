@@ -66,13 +66,13 @@ class RootinTootinAppProcess : RootinTootinApp {
 
 	protected void start_fcgi_loop() {
 		string request;
-		string response = null;
 		while(fcgi_accept(request)) {
 			// Read the request header into the buffer
 			trigger_on_request(request);
-			response = _response;
 
-			fcgi_printf(response);
+			// Send the response and convert % to %% 
+			// because printf uses % as an escape character.
+			fcgi_printf(substitute(_response, "%", "%%"));
 		}
 	}
 
