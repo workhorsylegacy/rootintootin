@@ -1,3 +1,10 @@
+/*------------------------------------------------------------------------------
+#
+#    This file is part of the Rootin Tootin web framework and licensed under the
+#    GPL version 3 or greater. See the COPYRIGHT file for copyright information.
+#    This project is hosted at http://rootin.toot.in .
+#
+#-----------------------------------------------------------------------------*/
 
 /*
 #setup fcgi on ubuntu:
@@ -12,7 +19,7 @@ server.port               = 90
 # change /etc/lighttpd/conf-available/10-fastcgi.conf :
 fastcgi.server = ( "/" => 
 	((
-		"bin-path" => "/var/fastcgi/application",
+		"bin-path" => "/home/matt/fastcgi/application",
 		"socket" => "/tmp/application.socket",
 		"check-local" => "disable"
 	))

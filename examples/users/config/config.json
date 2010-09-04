@@ -23,7 +23,13 @@
 		"server" : {
 			"header_max_size" : "8192", 
 			"port" : "4000", 
-			"max_waiting_clients" : "100"
+			"max_waiting_clients" : "100", 
+			"ip" : "127.0.0.1", 
+			"directory" : "/home/matt/fastcgi/", 
+			"os" : "ubuntu", 
+			"httpd" : "lighttpd", 
+			"user" : "matt", 
+			"password" : "letmein"
 		}
 	}
 }
