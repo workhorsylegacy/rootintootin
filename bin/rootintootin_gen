@@ -21,7 +21,7 @@ def print_usage():
 	print "    more: float, integer, string, text, time, timestamp'"
 	print "./gen migrate [production|development]"
 	print "./gen configure [production|development] database [user:root] [password:password] [host:location] [name:db_name]"
-	print "./gen configure [production|development] server [port:number] [max_waiting_clients:number] [header_max_size:number]"
+	print "./gen configure [production|development] server [port:number] [max_waiting_clients:number] [header_max_size:number] [ip:127.0.0.1] [directory:/home/user/fastcgi/] [os:ubuntu] [httpd:lighttpd] [user:user name]"
 	print "./gen create [production|development] database"
 	print "./gen drop [production|development] database"
 	print "./gen recreate [production|development] database"
@@ -103,8 +103,10 @@ elif re.match("^configure (production|development) database$", str.join(' ', sys
 	generator.set_mode(mode)
 	generator.configure_database(sys.argv[5:])
 
-# configure [production|development] server [port:number] [max_waiting_clients:number] \
-#					[header_max_size:number]
+# configure [production|development] server [port:number] \
+#			[max_waiting_clients:number] [header_max_size:number] \
+#			[ip:127.0.0.1] [directory:/home/user/fastcgi/] [os:ubuntu] \
+#			[httpd:lighttpd] [user:user name]
 elif re.match("^configure (production|development) server$", str.join(' ', sys.argv[2:5])):
 	mode = sys.argv[3]
 	generator.set_mode(mode)

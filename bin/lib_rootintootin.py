@@ -508,6 +508,16 @@ class Generator(object):
 				self._config[self._mode]['server']['max_waiting_clients'] = value
 			elif key == 'header_max_size':
 				self._config[self._mode]['server']['header_max_size'] = value
+			elif key == 'directory':
+				self._config[self._mode]['server']['directory'] = value
+			elif key == 'httpd':
+				self._config[self._mode]['server']['httpd'] = value
+			elif key == 'ip':
+				self._config[self._mode]['server']['ip'] = value
+			elif key == 'os':
+				self._config[self._mode]['server']['os'] = value
+			elif key == 'user':
+				self._config[self._mode]['server']['user'] = value
 
 		self.save_configuration()
 

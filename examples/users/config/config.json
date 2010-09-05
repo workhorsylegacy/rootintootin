@@ -28,8 +28,7 @@
 			"directory" : "/home/matt/fastcgi/", 
 			"os" : "ubuntu", 
 			"httpd" : "lighttpd", 
-			"user" : "matt", 
-			"password" : "letmein"
+			"user" : "matt"
 		}
 	}
 }

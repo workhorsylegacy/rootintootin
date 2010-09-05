@@ -11,119 +11,12 @@
 import os, sys
 import json
 import pexpect
+import getpass
 from lib_rootintootin import *
 
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
-
-
-def deploy_files_to_server(name, new_name=''):
-	sys.stdout.write(("Deploying " + name + " ...").ljust(78, ' '))
-	sys.stdout.flush()
-
-	command = "scp -r " + user + "@" + ip + ":" + scratch + name + "/ " + directory + new_name
-	expected_from_list = [user + "@" + ip + "'s password:", 
-							"Permission denied, please try again.\r\n" +
-							user + "@" + ip + "'s password:", 
-							"Permission denied \(publickey\,password\)\.", 
-							pexpect.EOF]
-	child = pexpect.spawn(command)
-
-	while True:
-		result = child.expect(expected_from_list)
-
-		if result == 0:
-			#print "Sending password"
-			child.sendline(password)
-		elif result == 1:
-			#print "Permission denied. Try again"
-			child.sendline(password)
-		elif result == 2:
-			pass
-			#print "Permission denied. Exiting ..."
-		elif result == len(expected_from_list)-1:
-			sys.stdout.write(":)\n")
-			sys.stdout.flush()
-			break
-
-def restart_remote_server():
-	sys.stdout.write("Restarting remote server ...".ljust(78, ' '))
-	sys.stdout.flush()
-
-	command = 'bash -c "sudo /etc/init.d/lighttpd force-reload"'
-	child = pexpect.spawn(command, timeout=5)
-
-	expected_from_list = ["\[sudo\] password for [\w|\s]*: ",
-					"Syntax OK", 
-					"Reloading web server configuration lighttpd", 
-					"\[ OK \]", 
-					pexpect.EOF]
-
-	still_reading = True
-	had_error = True
-	while still_reading:
-		result = child.expect(expected_from_list)
-
-		if result == 0:
-			#print "sending password"
-			#print child.after
-			child.sendline(password)
-		elif result == 1:
-			pass
-			#print "syntax ok"
-			#print child.after
-		elif result == 2:
-			pass
-			#print "restarting"
-			#print child.after
-		elif result == 3:
-			had_error = False
-			#print "restarted ok"
-			#print child.after
-		elif result == len(expected_from_list)-1:
-			#print child.after
-			still_reading = False
-
-	child.close()
-	if had_error:
-		sys.stdout.write(":(\n")
-		sys.stdout.flush()
-	else:
-		sys.stdout.write(":)\n")
-		sys.stdout.flush()
-
-def rename_remote_file(name, new_name):
-	sys.stdout.write(("Renaming remote file " + name + " to " + new_name + " ...").ljust(78, ' '))
-	sys.stdout.flush()
-
-	command = "ssh " + user + "@" + ip + " mv " + directory + name + " " + directory + new_name
-	child = pexpect.spawn(command, timeout=5)
-
-	expected_from_list = [user + "@" + ip + "'s password:", 
-							"Permission denied, please try again.\r\n" +
-							user + "@" + ip + "'s password:", 
-							"Permission denied \(publickey\,password\)\.", 
-							pexpect.EOF]
-
-	while True:
-		result = child.expect(expected_from_list)
-
-		if result == 0:
-			#print "Sending password"
-			child.sendline(password)
-		elif result == 1:
-			#print "Permission denied. Try again"
-			child.sendline(password)
-		elif result == 2:
-			pass
-			#print "Permission denied. Exiting ..."
-		elif result == len(expected_from_list)-1:
-			sys.stdout.write(":)\n")
-			sys.stdout.flush()
-			break
-
-
 
 
 # Get the args
@@ -136,22 +29,31 @@ scratch = rootintootin_dir + '/' + project_name + '/scratch/'
 tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
-# Build everything
+# Copy the files
 copy_files_to_scratch()
 move_to_scratch()
 load_configurations()
-generate_application_files()
-build_framework()
-build_server()
-build_application(True)
 
 # Get the configuration
 ip = config['production']['server']['ip']
 directory = config['production']['server']['directory']
-os = config['production']['server']['os']
 httpd = config['production']['server']['httpd']
 user = config['production']['server']['user']
-password = config['production']['server']['password']
+operating_system = config['production']['server']['os']
+httpd = config['production']['server']['httpd']
+
+if httpd != "lighttpd":
+	print "Can only deploy to lighttpd for now. Exiting ..."
+	exit()
+
+# Read the password from stdin
+password = getpass.getpass(user + "@" + ip + "'s password: ")
+
+# Build everything
+generate_application_files()
+build_framework()
+build_server()
+build_application(True)
 
 # Copy the files to the server
 deploy_files_to_server('public')
