@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import sys, os
-import shutil
+import shutil, getpass
 import commands
 from lib_rootintootin import *
 
@@ -65,6 +65,7 @@ if mode == "new":
 		generator.configure_database(['user:'+db_user, 'password:'+db_password, 'name:'+name+'_'+mode])
 	generator.set_mode('development')
 	generator.configure_server(['port:'+port])
+	generator.configure_server(['user:'+getpass.getuser()])
 
 
 

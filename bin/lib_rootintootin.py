@@ -514,8 +514,6 @@ class Generator(object):
 				self._config[self._mode]['server']['httpd'] = value
 			elif key == 'ip':
 				self._config[self._mode]['server']['ip'] = value
-			elif key == 'os':
-				self._config[self._mode]['server']['os'] = value
 			elif key == 'user':
 				self._config[self._mode]['server']['user'] = value
 

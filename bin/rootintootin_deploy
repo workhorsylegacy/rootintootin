@@ -42,6 +42,9 @@ user = config['production']['server']['user']
 operating_system = config['production']['server']['os']
 httpd = config['production']['server']['httpd']
 
+if directory.startswith("~/"):
+	directory = os.path.expanduser(directory)
+
 if httpd != "lighttpd":
 	print "Can only deploy to lighttpd for now. Exiting ..."
 	exit()
