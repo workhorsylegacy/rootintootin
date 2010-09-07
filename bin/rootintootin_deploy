@@ -39,7 +39,6 @@ ip = config['production']['server']['ip']
 directory = config['production']['server']['directory']
 httpd = config['production']['server']['httpd']
 user = config['production']['server']['user']
-operating_system = config['production']['server']['os']
 httpd = config['production']['server']['httpd']
 
 if directory.startswith("~/"):

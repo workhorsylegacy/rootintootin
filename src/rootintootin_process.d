@@ -70,17 +70,16 @@ class RootinTootinAppProcess : RootinTootinApp {
 			// Read the request header into the buffer
 			trigger_on_request(request);
 
-			// Send the response and convert % to %% 
-			// because printf uses % as an escape character.
-			fcgi_printf(substitute(_response, "%", "%%"));
+			// Send the response
+			fcgi_puts(_response);
 		}
 	}
 
 	protected override void write_to_log(string message) {
-		if(!_is_fcgi) {
-			_output.write(message);
-		} else {
+		if(_is_fcgi) {
 			Stdout(message).flush;
+		} else {
+			_output.write(message);
 		}
 	}
 }

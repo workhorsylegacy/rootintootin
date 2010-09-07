@@ -9,6 +9,9 @@
 
 #include <fcgi_stdio.h>
 
+void c_fcgi_write_stderr(char* message, size_t length) {
+	FCGI_fwrite(message, length, 1, FCGI_stderr);
+}
 
 int c_fcgi_accept() {
 	return FCGI_Accept();
@@ -16,6 +19,10 @@ int c_fcgi_accept() {
 
 void c_fcgi_printf(char* message) {
 	FCGI_printf(message);
+}
+
+void c_fcgi_puts(char* message) {
+	FCGI_puts(message);
 }
 
 void c_fcgi_get_stdin(char* buffer, size_t len) {

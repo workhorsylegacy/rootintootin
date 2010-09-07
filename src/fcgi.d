@@ -19,9 +19,14 @@ server.port               = 90
 # change /etc/lighttpd/conf-available/10-fastcgi.conf :
 fastcgi.server = ( "/" => 
 	((
+		"max-procs" => 1,
 		"bin-path" => "/home/matt/fastcgi/application",
 		"socket" => "/tmp/application.socket",
-		"check-local" => "disable"
+		"errorlog" => "/home/matt/fastcgi/errorlog",
+		"check-local" => "disable",
+		"max-request-size" => 10000,
+		"upload-dirs" => ( "/tmp" ),
+		"network-backend" => "write"
 	))
 )
 
@@ -30,12 +35,20 @@ fastcgi.server = ( "/" =>
 private import tango.sys.Environment;
 private import tango.io.device.File;
 
+void fcgi_write_stderr(char[] message) {
+	c_fcgi_write_stderr(message.ptr, message.length);
+}
+
 int fcgi_accept() {
 	return c_fcgi_accept();
 }
 
 void fcgi_printf(char[] message) {
 	c_fcgi_printf(message.ptr);
+}
+
+void fcgi_puts(char[] message) {
+	c_fcgi_puts(message.ptr);
 }
 
 bool fcgi_accept(out char[] request) {
@@ -79,8 +92,10 @@ private:
 
 extern (C):
 
+void c_fcgi_write_stderr(char* message, size_t length);
 int c_fcgi_accept();
 void c_fcgi_printf(char* message);
+void c_fcgi_puts(char* message);
 void c_fcgi_get_stdin(char* buffer, size_t len);
 
 
