@@ -1,3 +1,4 @@
 usr/share/rootintootin/bin/rootintootin usr/bin/rootintootin
 usr/share/rootintootin/bin/rootintootin_run usr/bin/rootintootin_run
 usr/share/rootintootin/bin/rootintootin_gen usr/bin/rootintootin_gen
+usr/share/rootintootin/bin/rootintootin_deploy usr/bin/rootintootin_deploy
