@@ -11,7 +11,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, 
 	mysql-client, mysql-server, libmysqlclient16-dev, 
 	python-mysqldb, python-pexpect, python-mako, build-essential, 
-	ldc, libtango-ldc-dev, libpcre3, libpcre3-dev, inotify-tools
+	ldc, libtango-ldc-dev, libpcre3-dev, libfcgi-dev, inotify-tools
 Description: A web framework and server that is written in D
  Rootin Tootin is a fast RESTful MVC web framework that is written in D. It is 
  designed to scale well by default, while still providing a developer experience 
