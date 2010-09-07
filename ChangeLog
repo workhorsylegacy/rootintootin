@@ -1,4 +1,5 @@
 * Release 0.6.0
+	* Fixed Bug #600490: 'Make a fast cgi deploy script'.
 	* Fixed Bug #598628: 'make it so we can have development and production configs'.
 	* Fixed Bug #585977: 'The configuration is hard coded'.
 	* Fixed Bug #603021: 'If startup app build fails, rebuilding will always fail'.

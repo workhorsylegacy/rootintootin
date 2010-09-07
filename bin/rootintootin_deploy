@@ -44,9 +44,9 @@ httpd = config['production']['server']['httpd']
 if directory.startswith("~/"):
 	directory = os.path.expanduser(directory)
 
-if httpd != "lighttpd":
-	print "Can only deploy to lighttpd for now. Exiting ..."
-	exit()
+#if httpd != "lighttpd":
+#	print "Can only deploy to lighttpd for now. Exiting ..."
+#	exit()
 
 # Read the password from stdin
 password = getpass.getpass(user + "@" + ip + "'s password: ")
