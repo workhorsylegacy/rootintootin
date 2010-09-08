@@ -76,7 +76,7 @@ public class Helper {
 
 		// Get the length of the escaped and unescaped strings
 		size_t len = escaped.length;
-		size_t hexcount = count(escaped, "%")-1;
+		size_t hexcount = count(escaped, "%");
 		size_t newlen = len - (hexcount * 2);
 		char[] unescaped = new char[newlen];
 
