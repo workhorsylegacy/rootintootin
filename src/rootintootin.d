@@ -12,13 +12,38 @@ public import db;
 private import helper;
 private import http_server;
 
+/** @defgroup rootin_core_group The Rootin Tootin Core
+ *  This file contains the core functionality that is used by
+ *  the server and applications.
+ *  @{
+ */
 
+// FIXME: Rename this to ResourceRunnerBase
+// FIXME: Remove the id argument because it is duplicating the id in the params.
+// FIXME: Remove the events_to_trigger argument.
+/**
+*  A base class for the generated application class.
+*/
 public class RunnerBase {
+	/**
+	* A constructor.
+	* @deprecated id will be removed because it is duplicating the id in the 
+		request.params, and not even used.
+	* @deprecated events_to_trigger will be removed soon.
+	* @param request is the request that was routed to this runner.
+	* @param controller_name is the name of the controller to route to.
+	* @param action_name is the name of the action to route to.
+	* @param id was the id of the resource to route to. Use null for no id.
+	* @param events_to_trigger was a list of events to trigger for long poll.
+	*/
 	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {
 		return null;
 	}
 }
 
+/**
+ *  This exception is thrown when an action wants to render text directly.
+ */
 public class RenderTextException : Exception { 
 	public string _text;
 	public ushort _status;
@@ -30,6 +55,9 @@ public class RenderTextException : Exception {
 	}
 }
 
+/**
+ *  This exception is thrown when an action wants to render a view.
+ */
 public class RenderViewException : Exception { 
 	public string _name;
 	public ushort _status;
@@ -41,6 +69,9 @@ public class RenderViewException : Exception {
 	}
 }
 
+/**
+ *  This exception is thrown when an action wants redirect to another url.
+ */
 public class RenderRedirectException : Exception { 
 	public string _url;
 
@@ -50,12 +81,18 @@ public class RenderRedirectException : Exception {
 	}
 }
 
+/**
+ *  This exception is thrown when there is no action to route to.
+ */
 public class RenderNoActionException : Exception { 
 	public this() {
 		super("");
 	}
 }
 
+/**
+ *  This exception is thrown when there is no controller to route to.
+ */
 public class RenderNoControllerException : Exception { 
 	public string[] _controllers;
 
@@ -65,6 +102,9 @@ public class RenderNoControllerException : Exception {
 	}
 }
 
+/**
+ *  This exception is thrown when there is an error relating to models.
+ */
 public class ModelException : Exception {
 	public this(string message) {
 		super(message);
@@ -429,7 +469,6 @@ public class ControllerBase {
 	}
 }
 
-
 public static string base_get_real_url(ControllerBase controller, string url) {
 	// Get the format from the controller
 	string format = "";
@@ -443,4 +482,6 @@ public static string base_get_real_url(ControllerBase controller, string url) {
 		url_after = "?" ~ url_after;
 	return url_before ~ format ~ url_after;
 }
+
+/** @} */ // end of rootin_core_group
 

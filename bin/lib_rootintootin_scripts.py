@@ -643,7 +643,6 @@ def copy_files_to_scratch():
 	if os.path.exists(scratch):
 		shutil.rmtree(scratch)
 	shutil.copytree(os.sys.path[0]+'/../src/', scratch)
-	shutil.copytree(os.sys.path[0]+'/../dornado/', scratch+'dornado')
 
 	# Remove all the old app files
 	if os.path.exists(scratch+'app/'):
@@ -734,14 +733,14 @@ def build_framework():
 	result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
 	command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
 			"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
-			"rootintootin_process.d app_builder.d dornado/ioloop.d " + \
+			"rootintootin_process.d app_builder.d " + \
 			" db.d file_system.d regex.d shared_memory.d socket.d fcgi.d " + tango
 	result += commands.getoutput(command)
 
 	# Combine the framework into a static library
 	command = "ar rcs rootintootin.a language_helper.o helper.o " + \
 			"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
-			"tcp_server.o rootintootin_process.o app_builder.o ioloop.o " + \
+			"tcp_server.o rootintootin_process.o app_builder.o " + \
 			"db.o file_system.o regex.o shared_memory.o socket.o fcgi.o"
 	result += commands.getoutput(command)
 

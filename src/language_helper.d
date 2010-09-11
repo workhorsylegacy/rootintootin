@@ -18,31 +18,85 @@ private import tango.text.json.Json;
 private import tango.text.xml.Document;
 
 
+/** @defgroup language_helper_group The Language Helpers
+ *  This file contains many high-level functions that should be useful in 
+ *  most D programs. It uses the Tango library. In many cases it can be imported
+ *  instead of having to import many of the common files from Tango.
+ *  @{
+ */
+
+
+/**
+* An alias to the D type char[]
+*/
 public alias char[] string;
 
+/**
+* A wrapper for math pow.
+* @param x is the number.
+* @param n is the exponent.
+* @return x^n
+*/
 public double pow(double x, int n) {
 	return tango.math.Math.pow(cast(real) x, n);
 }
 
+/**
+* A wrapper for math pow.
+* @param x is the number.
+* @param n is the exponent.
+* @return x^n
+*/
 public int pow(int x, int n) {
 	return cast(int) tango.math.Math.pow(cast(real) x, n);
 }
 
+/**
+* A wrapper for math pow.
+* @param x is the number.
+* @param n is the exponent.
+* @return x^n
+*/
 public int pow(int x, uint n) {
 	return cast(int) tango.math.Math.pow(cast(real) x, n);
 }
 
+/**
+*  A class for using fixed point numbers.
+*/
 public class FixedPoint {
 	private long _precision;
 	private ulong _scale;
 	private uint _max_precision_width;
 	private uint _max_scale_width;
 
+	/**
+	* The precision is the number before the decimal.
+	*/
 	public long precision() { return _precision; }
+
+	/**
+	* The scale is the number after the decimal.
+	*/
 	public ulong scale() { return _scale; }
+
+	/**
+	* The max precision width is the number of digits before the decimal.
+	*/
 	public uint max_precision_width() { return _max_precision_width; }
+
+	/**
+	* The max scale width is the number of digits after the decimal.
+	*/
 	public uint max_scale_width() { return _max_scale_width; }
 
+	/**
+	* A constructor.
+	* @param precision is the number before the decimal.
+	* @param scale is the number after the decimal.
+	* @param max_precision_width is the width of digits before the decimal.
+	* @param max_scale_width is the width of digits after the decimal.
+	*/
 	public this(long precision, ulong scale, uint max_precision_width, uint max_scale_width) {
 		uint max_precision = to_s(long.max).length-1;
 		// Make sure the max_precision_width is not too big
@@ -87,14 +141,23 @@ public class FixedPoint {
 		_max_scale_width = max_scale_width;
 	}
 
+	/**
+	* The max scale is the largest number that fits in the max scale width.
+	*/
 	public ulong max_scale() {
 		return pow(10, _max_scale_width) - 1;
 	}
 
+	/**
+	* The number conveted to a string.
+	*/
 	public string toString() {
 		return to_s(_precision) ~ "." ~ rjust(to_s(_scale), _max_scale_width, "0");
 	}
 
+	/**
+	* The number converted to a double.
+	*/
 	public double toDouble() {
 		double new_precision = _precision;
 		double new_scale = (cast(double)_scale) / (this.max_scale+1);
@@ -105,16 +168,27 @@ public class FixedPoint {
 		}
 	}
 
+	/**
+	* The number converted to a long.
+	*/
 	public long toLong() {
 		return cast(long) this.toDouble();
 	}
 
+	/**
+	* This fixed point -= another fixed point.
+	* @param a is the FixedPoint to subtract.
+	*/
 	public void opSubAssign(FixedPoint a){
 		// Negative the number so we can add it
 		auto other = new FixedPoint(-a.precision, a.scale, a.max_precision_width, a.max_scale_width);
 		this += other;
 	}
 
+	/**
+	* This fixed point += another fixed point.
+	* @param a is the FixedPoint to add.
+	*/
 	public void opAddAssign(FixedPoint a) {
 		// Get the new precision and scale
 		ulong max = this.max_scale();
@@ -160,6 +234,10 @@ public class FixedPoint {
 		_scale = new_scale;
 	}
 
+	/**
+	* This fixed point += a double.
+	* @param a is the double to add.
+	*/
 	public void opAddAssign(double a) {
 		string[] pair = split(to_s(a), ".");
 		long new_precision = to_long(pair[0]);
@@ -168,14 +246,26 @@ public class FixedPoint {
 		this += other;
 	}
 
+	/**
+	* This fixed point += an int.
+	* @param a is the int to add.
+	*/
 	public void opAddAssign(int a) {
 		_precision += a;
 	}
 
+	/**
+	* This fixed point == an int.
+	* @param a is the long to compare.
+	*/
 	public bool opEquals(long a) {
 		return this.toLong() == a;
 	}
 
+	/**
+	* This fixed point == an double.
+	* @param a is the double to compare.
+	*/
 	public bool opEquals(double a) {
 		return this.toDouble() == a;
 	}
@@ -317,6 +407,13 @@ public class FixedPoint {
 	}
 }
 
+
+/**
+* Substitute a part of a string.
+* @param value is the string to look in.
+* @param before is the part of the string to replace.
+* @param after is the string that will replace the matches.
+*/
 public static string substitute(string value, string before, string after) {
 	return tango.text.Util.substitute(value, before, after);
 }
@@ -602,8 +699,10 @@ public static string to_string(char value) { return to_s(value); }
 public static string to_string(FixedPoint value) { return to_s(value); }
 
 
-// Collects strings by auto converting any type you try to add
-// For performance, it stores them in a buffer as they are added.
+/**
+*  Collects strings by auto converting any type you try to add
+*  For performance, it stores them in a buffer as they are added.
+*/
 public class AutoStringArray {
 	private string[] _buffers;
 	private size_t _i;
@@ -620,6 +719,11 @@ public class AutoStringArray {
 	public void opCatAssign(char value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(FixedPoint value) { opCatAssign(to_s(value)); }
 
+	/**
+	* A constructor.
+	* @param buffer is an existing string buffer. Or null if you want 
+	* it to create its own buffer.
+	*/
 	public this(string buffer = null) { 
 		if(buffer)
 			_buffers ~= buffer;
@@ -858,4 +962,5 @@ template Array(T) {
 	}
 }
 
+/** @} */ // end of language_helper_group
 //void main(){}
