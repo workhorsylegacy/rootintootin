@@ -9,16 +9,16 @@
 
 // FIXME: Rename to web_helper
 
+/** @defgroup web_helper_group The Web Helpers
+ *  Helper functions for the web.
+ *  @{
+ */
+
 private import language_helper;
 
 private import tango.util.digest.Digest;
 private import tango.util.digest.Sha256;
 private import tango.util.encode.Base64;
-
-/** @defgroup web_helper_group The Web Helpers
- *  Helper functions for the web.
- *  @{
- */
 
 // Helper functions for the server
 public class Helper {

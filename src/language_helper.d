@@ -7,6 +7,13 @@
 #-----------------------------------------------------------------------------*/
 
 
+/** @defgroup language_helper_group The Language Helpers
+ *  This file contains many high-level functions that should be useful in 
+ *  most D programs. It uses the Tango library. In many cases it can be imported
+ *  instead of having to import many of the common files from Tango.
+ *  @{
+ */
+
 private import tango.text.Util;
 private import tango.text.Ascii;
 private import tango.text.convert.Integer;
@@ -16,15 +23,6 @@ private import tango.math.Math;
 private import tango.io.Stdout;
 private import tango.text.json.Json;
 private import tango.text.xml.Document;
-
-
-/** @defgroup language_helper_group The Language Helpers
- *  This file contains many high-level functions that should be useful in 
- *  most D programs. It uses the Tango library. In many cases it can be imported
- *  instead of having to import many of the common files from Tango.
- *  @{
- */
-
 
 /**
 * An alias to the D type char[]

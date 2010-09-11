@@ -7,16 +7,16 @@
 #-----------------------------------------------------------------------------*/
 
 
-public import language_helper;
-public import db;
-private import helper;
-private import http_server;
-
 /** @defgroup rootin_core_group The Rootin Tootin Core
  *  This file contains the core functionality that is used by
  *  the server and applications.
  *  @{
  */
+
+public import language_helper;
+public import db;
+private import helper;
+private import http_server;
 
 // FIXME: Rename this to ResourceRunnerBase
 // FIXME: Remove the id argument because it is duplicating the id in the params.
