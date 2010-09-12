@@ -22,11 +22,8 @@ fastcgi.server = ( "/" =>
 		"max-procs" => 1,
 		"bin-path" => "/home/matt/fastcgi/application",
 		"socket" => "/tmp/application.socket",
-		"errorlog" => "/home/matt/fastcgi/errorlog",
 		"check-local" => "disable",
-		"max-request-size" => 10000,
-		"upload-dirs" => ( "/tmp" ),
-		"network-backend" => "write"
+		"max-request-size" => 100000
 	))
 )
 
