@@ -7,11 +7,14 @@
 #-----------------------------------------------------------------------------*/
 
 
-/** @defgroup language_helper_group The Language Helpers
- *  This file contains many high-level functions that should be useful in 
- *  most D programs. It uses the Tango library. In many cases it can be imported
- *  instead of having to import many of the common files from Tango.
- *  @{
+/****h* language_helper/language_helper.d
+ *  NAME
+ *    language_helper.d
+ *  FUNCTION
+ *    This file contains many high-level functions that should be useful in 
+ *    most D programs. It uses the Tango library. In many cases it can be imported
+ *    instead of having to import many of the common files from Tango.
+ ******
  */
 
 private import tango.text.Util;
@@ -24,77 +27,125 @@ private import tango.io.Stdout;
 private import tango.text.json.Json;
 private import tango.text.xml.Document;
 
-/**
-* An alias to the D type char[]
-*/
-public alias char[] string;
 
-/**
-* A wrapper for math pow.
-* @param x is the number.
-* @param n is the exponent.
-* @return x^n
-*/
+/****c* language_helper/string
+ *  FUNCTION
+ *    An alias to the D type char[]
+ *  EXAMPLE
+ *    string name = "bobrick";
+ * SOURCE
+ */
+public alias char[] string;
+/*******/
+
+/****f* language_helper/pow
+ *  FUNCTION
+ *    Returns x to the power of n.
+ *  INPUTS
+ *    x     - the number.
+ *    n     - the exponent.
+ *  RESULT
+ *    n^x
+ *  EXAMPLE
+ *    double result = pow(1.5d, 7);
+ * SOURCE
+ */
 public double pow(double x, int n) {
 	return tango.math.Math.pow(cast(real) x, n);
 }
+/*******/
 
-/**
-* A wrapper for math pow.
-* @param x is the number.
-* @param n is the exponent.
-* @return x^n
-*/
+/****f* language_helper/pow 2
+ *  FUNCTION
+ *    Returns x to the power of n.
+ *  INPUTS
+ *    x     - the number.
+ *    n     - the exponent.
+ *  RESULT
+ *    n^x
+ *  EXAMPLE
+ *    int result = pow(2, 32);
+ * SOURCE
+ */
 public int pow(int x, int n) {
 	return cast(int) tango.math.Math.pow(cast(real) x, n);
 }
+/*******/
 
-/**
-* A wrapper for math pow.
-* @param x is the number.
-* @param n is the exponent.
-* @return x^n
-*/
+/****f* language_helper/pow 3
+ *  FUNCTION
+ *    Returns x to the power of n.
+ *  INPUTS
+ *    x     - the number.
+ *    n     - the exponent.
+ *  RESULT
+ *    n^x
+ *  EXAMPLE
+ *    int result = pow(2, 32);
+ * SOURCE
+ */
 public int pow(int x, uint n) {
 	return cast(int) tango.math.Math.pow(cast(real) x, n);
 }
+/*******/
 
-/**
-*  A class for using fixed point numbers.
-*/
+/****c* language_helper/FixedPoint
+ *  NAME
+ *    FixedPoint
+ *  FUNCTION
+ *    A class for using fixed point numbers.
+ ******
+ */
 public class FixedPoint {
 	private long _precision;
 	private ulong _scale;
 	private uint _max_precision_width;
 	private uint _max_scale_width;
 
-	/**
-	* The precision is the number before the decimal.
-	*/
+	/****m* language_helper/FixedPoint.precision
+	 *  FUNCTION
+	 *    The precision is the number before the decimal.
+	 * SOURCE
+	 */
 	public long precision() { return _precision; }
+	/*******/
 
-	/**
-	* The scale is the number after the decimal.
-	*/
+	/****m* language_helper/FixedPoint.scale
+	 *  FUNCTION
+	 *    The scale is the number after the decimal.
+	 * SOURCE
+	 */
 	public ulong scale() { return _scale; }
+	/*******/
 
-	/**
-	* The max precision width is the number of digits before the decimal.
-	*/
+	/****m* language_helper/FixedPoint.max_precision_width
+	 *  FUNCTION
+	 *    The max precision width is the number of digits before the decimal.
+	 * SOURCE
+	 */
 	public uint max_precision_width() { return _max_precision_width; }
+	/*******/
 
-	/**
-	* The max scale width is the number of digits after the decimal.
-	*/
+	/****m* language_helper/FixedPoint.max_scale_width
+	 *  FUNCTION
+	 *    The max scale width is the number of digits after the decimal.
+	 * SOURCE
+	 */
 	public uint max_scale_width() { return _max_scale_width; }
+	/*******/
 
-	/**
-	* A constructor.
-	* @param precision is the number before the decimal.
-	* @param scale is the number after the decimal.
-	* @param max_precision_width is the width of digits before the decimal.
-	* @param max_scale_width is the width of digits after the decimal.
-	*/
+	/****m* language_helper/FixedPoint.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    precision           - the number before the decimal.
+	 *    scale               - the number after the decimal.
+	 *    max_precision_width - the width of digits before the decimal.
+	 *    max_scale_width     - the width of digits after the decimal.
+	 *  EXAMPLE
+	 *    FixedPoint f = new FixedPoint(11, 3, 10, 2);
+	 * SOURCE
+	 */
 	public this(long precision, ulong scale, uint max_precision_width, uint max_scale_width) {
 		uint max_precision = to_s(long.max).length-1;
 		// Make sure the max_precision_width is not too big
@@ -138,24 +189,33 @@ public class FixedPoint {
 		_max_precision_width = max_precision_width;
 		_max_scale_width = max_scale_width;
 	}
+	/*******/
 
-	/**
-	* The max scale is the largest number that fits in the max scale width.
-	*/
+	/****m* language_helper/FixedPoint.max_scale
+	 *  FUNCTION
+	 *    The max scale is the largest number that fits in the max scale width.
+	 * SOURCE
+	 */
 	public ulong max_scale() {
 		return pow(10, _max_scale_width) - 1;
 	}
+	/*******/
 
-	/**
-	* The number conveted to a string.
-	*/
+	/****m* language_helper/FixedPoint.toString
+	 *  FUNCTION
+	 *    The number converted to a string.
+	 * SOURCE
+	 */
 	public string toString() {
 		return to_s(_precision) ~ "." ~ rjust(to_s(_scale), _max_scale_width, "0");
 	}
+	/*******/
 
-	/**
-	* The number converted to a double.
-	*/
+	/****m* language_helper/FixedPoint.toDouble
+	 *  FUNCTION
+	 *    The number converted to a double.
+	 * SOURCE
+	 */
 	public double toDouble() {
 		double new_precision = _precision;
 		double new_scale = (cast(double)_scale) / (this.max_scale+1);
@@ -165,28 +225,39 @@ public class FixedPoint {
 			return new_precision + (-new_scale);
 		}
 	}
+	/*******/
 
-	/**
-	* The number converted to a long.
-	*/
+	/****m* language_helper/FixedPoint.toLong
+	 *  FUNCTION
+	 *    The number converted to a long.
+	 * SOURCE
+	 */
 	public long toLong() {
 		return cast(long) this.toDouble();
 	}
+	/*******/
 
-	/**
-	* This fixed point -= another fixed point.
-	* @param a is the FixedPoint to subtract.
-	*/
+	/****m* language_helper/FixedPoint.opSubAssign
+	 *  FUNCTION
+	 *    This fixed point -= another fixed point.
+	 *  INPUTS
+	 *    a       - the FixedPoint to subtract.
+	 * SOURCE
+	 */
 	public void opSubAssign(FixedPoint a){
 		// Negative the number so we can add it
 		auto other = new FixedPoint(-a.precision, a.scale, a.max_precision_width, a.max_scale_width);
 		this += other;
 	}
+	/*******/
 
-	/**
-	* This fixed point += another fixed point.
-	* @param a is the FixedPoint to add.
-	*/
+	/****m* language_helper/FixedPoint.opAddAssign
+	 *  FUNCTION
+	 *    This fixed point += another fixed point.
+	 *  INPUTS
+	 *    a       - the FixedPoint to add.
+	 * SOURCE
+	 */
 	public void opAddAssign(FixedPoint a) {
 		// Get the new precision and scale
 		ulong max = this.max_scale();
@@ -231,11 +302,15 @@ public class FixedPoint {
 		_precision = new_precision;
 		_scale = new_scale;
 	}
+	/*******/
 
-	/**
-	* This fixed point += a double.
-	* @param a is the double to add.
-	*/
+	/****m* language_helper/FixedPoint.opAddAssign 2
+	 *  FUNCTION
+	 *    This fixed point += a double.
+	 *  INPUTS
+	 *    a       - the double to add.
+	 * SOURCE
+	 */
 	public void opAddAssign(double a) {
 		string[] pair = split(to_s(a), ".");
 		long new_precision = to_long(pair[0]);
@@ -243,30 +318,43 @@ public class FixedPoint {
 		auto other = new FixedPoint(new_precision, new_scale, this.max_precision_width, this.max_scale_width);
 		this += other;
 	}
+	/*******/
 
-	/**
-	* This fixed point += an int.
-	* @param a is the int to add.
-	*/
+	/****m* language_helper/FixedPoint.opAddAssign 3
+	 *  FUNCTION
+	 *    This fixed point += an int.
+	 *  INPUTS
+	 *    a       - the int to add.
+	 * SOURCE
+	 */
 	public void opAddAssign(int a) {
 		_precision += a;
 	}
+	/*******/
 
-	/**
-	* This fixed point == an int.
-	* @param a is the long to compare.
-	*/
+	/****m* language_helper/FixedPoint.opEquals
+	 *  FUNCTION
+	 *    This fixed point == an int.
+	 *  INPUTS
+	 *    a       - the long to compare.
+	 * SOURCE
+	 */
 	public bool opEquals(long a) {
 		return this.toLong() == a;
 	}
+	/*******/
 
-	/**
-	* This fixed point == an double.
-	* @param a is the double to compare.
-	*/
+	/****m* language_helper/FixedPoint.opEquals 2
+	 *  FUNCTION
+	 *    This fixed point == an double.
+	 *  INPUTS
+	 *    a       - the double to compare.
+	 * SOURCE
+	 */
 	public bool opEquals(double a) {
 		return this.toDouble() == a;
 	}
+	/*******/
 
 	unittest {
 		bool has_thrown = false;
@@ -406,15 +494,19 @@ public class FixedPoint {
 }
 
 
-/**
-* Substitute a part of a string.
-* @param value is the string to look in.
-* @param before is the part of the string to replace.
-* @param after is the string that will replace the matches.
-*/
+/****f* language_helper/substitute
+ *  FUNCTION
+ *    Substitute a part of a string.
+ *  INPUTS
+ *    value   - the string to look in.
+ *    before  - the part of the string to replace.
+ *    after   - the string that will replace the matches.
+ * SOURCE
+ */
 public static string substitute(string value, string before, string after) {
 	return tango.text.Util.substitute(value, before, after);
 }
+/*******/
 
 public static size_t index(string value, string match, size_t start=0) {
 	return tango.text.Util.index!(char)(value, match, start);
@@ -697,10 +789,14 @@ public static string to_string(char value) { return to_s(value); }
 public static string to_string(FixedPoint value) { return to_s(value); }
 
 
-/**
-*  Collects strings by auto converting any type you try to add
-*  For performance, it stores them in a buffer as they are added.
-*/
+/****c* language_helper/AutoStringArray
+ *  NAME
+ *    AutoStringArray
+ *  FUNCTION
+ *    Collects strings by auto converting any type you try to add.
+ *    For performance, it stores them in a buffer as they are added.
+ ******
+ */
 public class AutoStringArray {
 	private string[] _buffers;
 	private size_t _i;
@@ -717,17 +813,21 @@ public class AutoStringArray {
 	public void opCatAssign(char value) { opCatAssign(to_s(value)); }
 	public void opCatAssign(FixedPoint value) { opCatAssign(to_s(value)); }
 
-	/**
-	* A constructor.
-	* @param buffer is an existing string buffer. Or null if you want 
-	* it to create its own buffer.
-	*/
+	/****m* language_helper/AutoStringArray.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    buffer    - an existing string buffer. Or null if you want 
+	 *                it to create its own buffer.
+	 * SOURCE
+	 */
 	public this(string buffer = null) { 
 		if(buffer)
 			_buffers ~= buffer;
 		else
 			_buffers ~= new char[BUFFER_SIZE];
 	}
+	/*******/
 
 	public void opCatAssign(string value) {
 		size_t value_length = value.length;
@@ -960,5 +1060,3 @@ template Array(T) {
 	}
 }
 
-/** @} */ // end of language_helper_group
-//void main(){}

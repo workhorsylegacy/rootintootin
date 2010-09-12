@@ -3,6 +3,9 @@ Rootin Tootin is a fast RESTful MVC web framework that is written in D. It is
 designed to scale well by default, while still providing a developer experience 
 similar to Ruby on Rails.
 
+Documentation is generated with RoboDoc:
+robodoc --src src/ --doc doc/ --multidoc --index --html --tabsize 4
+
 See http://rootin.toot.in for details.
 
 
@@ -45,8 +48,5 @@ cd ~/Desktop/examples/users
 6. Navigate your web browser to http://localhost:3000/users and you should 
 see a basic CRUD example.
 
-
-7. Now look at the code and start hacking. I will add more formal documentation 
-when things are a little more fleshed out.
 
 

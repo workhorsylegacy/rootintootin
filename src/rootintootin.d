@@ -7,10 +7,13 @@
 #-----------------------------------------------------------------------------*/
 
 
-/** @defgroup rootin_core_group The Rootin Tootin Core
- *  This file contains the core functionality that is used by
- *  the server and applications.
- *  @{
+/****h* rootintootin/rootintootin.d
+ *  NAME
+ *    rootintootin.d
+ *  FUNCTION
+ *    This file contains the core functionality that is used by
+ *    the server and applications.
+ ******
  */
 
 public import language_helper;
@@ -21,42 +24,68 @@ private import http_server;
 // FIXME: Rename this to ResourceRunnerBase
 // FIXME: Remove the id argument because it is duplicating the id in the params.
 // FIXME: Remove the events_to_trigger argument.
-/**
-*  A base class for the generated application class.
-*/
+/****c* rootintootin/RunnerBase
+ *  NAME
+ *    RunnerBase
+ *  FUNCTION
+ *    A base class for the generated application class.
+ ******
+ */
 public class RunnerBase {
-	/**
-	* A constructor.
-	* @deprecated id will be removed because it is duplicating the id in the 
-		request.params, and not even used.
-	* @deprecated events_to_trigger will be removed soon.
-	* @param request is the request that was routed to this runner.
-	* @param controller_name is the name of the controller to route to.
-	* @param action_name is the name of the action to route to.
-	* @param id was the id of the resource to route to. Use null for no id.
-	* @param events_to_trigger was a list of events to trigger for long poll.
-	*/
+	/****m* rootintootin/RunnerBase.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    request             - the request that was routed to this runner.
+	 *    controller_name     - the name of the controller to route to.
+	 *    action_name         - the name of the action to route to.
+	 *    id                  - the id of the resource to route to. Use null for no id.
+	 *    events_to_trigger   - a list of events to trigger for long poll.
+	 *  NOTES
+	 *    id will be removed because it is duplicating the id in the 
+	 *    request.params, and not even used.
+	 *    events_to_trigger will be removed soon.
+	 * SOURCE
+	 */
 	public string run_action(Request request, string controller_name, string action_name, string id, out string[] events_to_trigger) {
 		return null;
 	}
+	/*******/
 }
 
-/**
- *  This exception is thrown when an action wants to render text directly.
+/****c* rootintootin/RenderTextException
+ *  NAME
+ *    RenderTextException
+ *  FUNCTION
+ *    This exception is thrown when an action wants to render text directly.
+ ******
  */
 public class RenderTextException : Exception { 
 	public string _text;
 	public ushort _status;
 
+	/****m* rootintootin/RenderTextException.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    text                - the text to render.
+	 *    status              - the http status.
+	 * SOURCE
+	 */
 	public this(string text, ushort status) {
 		super("");
 		_text = text;
 		_status = status;
 	}
+	/*******/
 }
 
-/**
- *  This exception is thrown when an action wants to render a view.
+/****c* rootintootin/RenderViewException
+ *  NAME
+ *    RenderViewException
+ *  FUNCTION
+ *    This exception is thrown when an action wants to render a view.
+ ******
  */
 public class RenderViewException : Exception { 
 	public string _name;
@@ -69,8 +98,12 @@ public class RenderViewException : Exception {
 	}
 }
 
-/**
- *  This exception is thrown when an action wants redirect to another url.
+/****c* rootintootin/RenderRedirectException
+ *  NAME
+ *    RenderRedirectException
+ *  FUNCTION
+ *    This exception is thrown when an action wants redirect to another url.
+ ******
  */
 public class RenderRedirectException : Exception { 
 	public string _url;
@@ -81,8 +114,12 @@ public class RenderRedirectException : Exception {
 	}
 }
 
-/**
- *  This exception is thrown when there is no action to route to.
+/****c* rootintootin/RenderNoActionException
+ *  NAME
+ *    RenderNoActionException
+ *  FUNCTION
+ *    This exception is thrown when there is no action to route to.
+ ******
  */
 public class RenderNoActionException : Exception { 
 	public this() {
@@ -90,8 +127,12 @@ public class RenderNoActionException : Exception {
 	}
 }
 
-/**
- *  This exception is thrown when there is no controller to route to.
+/****c* rootintootin/RenderNoControllerException
+ *  NAME
+ *    RenderNoControllerException
+ *  FUNCTION
+ *    This exception is thrown when there is no controller to route to.
+ ******
  */
 public class RenderNoControllerException : Exception { 
 	public string[] _controllers;
@@ -102,14 +143,19 @@ public class RenderNoControllerException : Exception {
 	}
 }
 
-/**
- *  This exception is thrown when there is an error relating to models.
+/****c* rootintootin/ModelException
+ *  NAME
+ *    ModelException
+ *  FUNCTION
+ *    This exception is thrown when there is an error relating to models.
+ ******
  */
 public class ModelException : Exception {
 	public this(string message) {
 		super(message);
 	}
 }
+
 
 public template ModelArrayMixin(ParentClass, ModelClass) {
 	ParentClass _parent = null;
@@ -129,6 +175,14 @@ public template ModelArrayMixin(ParentClass, ModelClass) {
 	}
 }
 
+
+/****c* rootintootin/ModelBase
+ *  NAME
+ *    ModelBase
+ *  FUNCTION
+ *    This class is the base of all the model classes.
+ ******
+ */
 public class ModelBase {
 	protected ulong _id;
 	protected string[] _errors;
@@ -483,5 +537,4 @@ public static string base_get_real_url(ControllerBase controller, string url) {
 	return url_before ~ format ~ url_after;
 }
 
-/** @} */ // end of rootin_core_group
 
