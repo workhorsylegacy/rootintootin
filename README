@@ -4,7 +4,7 @@ designed to scale well by default, while still providing a developer experience
 similar to Ruby on Rails.
 
 Documentation is generated with RoboDoc:
-robodoc --src src/ --doc doc/ --multidoc --index --html --tabsize 4
+robodoc --src src/ --doc doc/ --multidoc --index --html --tabsize 4 --documenttitle "Rootin Tootin 0.7 API"
 
 See http://rootin.toot.in for details.
 

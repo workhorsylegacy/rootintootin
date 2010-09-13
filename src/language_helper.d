@@ -508,26 +508,72 @@ public static string substitute(string value, string before, string after) {
 }
 /*******/
 
+/****f* language_helper/index
+ *  FUNCTION
+ *    Returns the index of the first match in the value.
+ *    Scans from left to right.
+ *    Returns the length of the value when no match is found.
+ *  INPUTS
+ *    value   - the string to look in.
+ *    match   - the part of the string to find.
+ *    start   - the index to start at. The default is zero.
+ * SOURCE
+ */
 public static size_t index(string value, string match, size_t start=0) {
 	return tango.text.Util.index!(char)(value, match, start);
 }
+/*******/
 
+/****f* language_helper/rindex
+ *  FUNCTION
+ *    Returns the index of the first match in the value. 
+ *    Scans from right to left.
+ *    Returns the length of the value when no match is found.
+ *  INPUTS
+ *    value   - the string to look in.
+ *    match   - the part of the string to find.
+ * SOURCE
+ */
 public static size_t rindex(string value, string match) {
 	return tango.text.Util.rindex!(char)(value, match);
 }
+/*******/
 
+/****f* language_helper/count
+ *  FUNCTION
+ *    Returns the number of instances of match in the value.
+ *  INPUTS
+ *    value   - the string to look in.
+ *    match   - the part of the string to find.
+ * SOURCE
+ */
 public static size_t count(string value, string match) {
 	return tango.text.Util.count!(char)(value, match);
 }
+/*******/
 
+/****f* language_helper/contains
+ *  FUNCTION
+ *    Returns true if the match is in the value.
+ *  INPUTS
+ *    value   - the string to look in.
+ *    match   - the part of the string to find.
+ * SOURCE
+ */
 public static bool contains(string value, string match) {
 	return tango.text.Util.containsPattern!(char)(value, match);
 }
+/*******/
 
-public static string[] split_lines(string value) {
-	return split(value, "\r\n");
-}
-
+/****f* language_helper/pair
+ *  FUNCTION
+ *    Splits the string in half, and returns the two strings in an array.
+ *    Returns true if the separator was found, or false if not.
+ *  INPUTS
+ *    value       - the string to split.
+ *    separator   - the string that is between the two returned strings.
+ * SOURCE
+ */
 public static bool pair(string value, string separator, ref string[] pair) {
 	size_t i = index(value, separator);
 	if(i == value.length)
@@ -538,7 +584,28 @@ public static bool pair(string value, string separator, ref string[] pair) {
 
 	return true;
 }
+/*******/
 
+/****f* language_helper/split_lines
+ *  FUNCTION
+ *    Returns the value split with "\r\n"
+ *  INPUTS
+ *    value   - the string to split.
+ * SOURCE
+ */
+public static string[] split_lines(string value) {
+	return split(value, "\r\n");
+}
+/*******/
+
+/****f* language_helper/split
+ *  FUNCTION
+ *    Returns the value split with the separator
+ *  INPUTS
+ *    value       - the string to split.
+ *    separator   - the string that splits the value.
+ * SOURCE
+ */
 public static string[] split(string value, string separator) {
 	string[] retval = new string[count(value, separator)];
 	size_t start = 0;
@@ -564,22 +631,57 @@ public static string[] split(string value, string separator) {
 
 	return retval;
 }
+/*******/
 
+/****f* language_helper/trim
+ *  FUNCTION
+ *    Returns the value with white space removed from the ends.
+ *  INPUTS
+ *    value       - the string to trim.
+ * SOURCE
+ */
 public static string trim(string value) {
 	return tango.text.Util.trim(value);
 }
+/*******/
 
+/****f* language_helper/strip
+ *  FUNCTION
+ *    Returns the value with the match removed from the ends.
+ *  INPUTS
+ *    value   - the string to split.
+ *    match   - the part of the string to remove.
+ * SOURCE
+ */
 public static string strip(char[] value, char[] match) {
 	string retval = value;
 	retval = tango.text.Util.chopl!(char)(retval, match);
 	retval = tango.text.Util.chopr!(char)(retval, match);
 	return retval;
 }
+/*******/
 
+/****f* language_helper/join
+ *  FUNCTION
+ *    Returns the values joined together with the separator between them.
+ *  INPUTS
+ *    values      - the strings to join.
+ *    separator   - the part of the string to remove.
+ * SOURCE
+ */
 public static string join(string[] values, string separator) {
 	return tango.text.Util.join(values, separator);
 }
+/*******/
 
+/****f* language_helper/starts_with
+ *  FUNCTION
+ *    Returns true if the value starts with the match.
+ *  INPUTS
+ *    value      - the string to examine.
+ *    match      - the string to look for at the start.
+ * SOURCE
+ */
 public static bool starts_with(string value, string match) {
 	if(value is null || match is null)
 		return false;
@@ -589,7 +691,16 @@ public static bool starts_with(string value, string match) {
 
 	return value[0 .. match.length] == match;
 }
+/*******/
 
+/****f* language_helper/ends_with
+ *  FUNCTION
+ *    Returns true if the value ends with the match.
+ *  INPUTS
+ *    value      - the string to examine.
+ *    match      - the string to look for at the end.
+ * SOURCE
+ */
 public static bool ends_with(string value, string match) {
 	if(value is null || match is null)
 		return false;
@@ -599,10 +710,21 @@ public static bool ends_with(string value, string match) {
 
 	return value[length-match.length .. length] == match;
 }
+/*******/
 
+/****f* language_helper/between
+ *  FUNCTION
+ *    Returns the part of a string between the before and after.
+ *  INPUTS
+ *    value      - the string to examine.
+ *    before     - the string at the front.
+ *    after      - the string at the back.
+ * SOURCE
+ */
 public static string between(string value, string before, string after) {
 	return split(split(value, before)[1], after)[0];
 }
+/*******/
 
 // Returns a substring before the separator. 
 // Returns the value if there are no separators.
