@@ -38,7 +38,7 @@ private import tango.text.xml.Document;
 public alias char[] string;
 /*******/
 
-/****f* language_helper/pow
+/****f* language_helper/pow 1
  *  FUNCTION
  *    Returns x to the power of n.
  *  INPUTS
@@ -251,7 +251,7 @@ public class FixedPoint {
 	}
 	/*******/
 
-	/****m* language_helper/FixedPoint.opAddAssign
+	/****m* language_helper/FixedPoint.opAddAssign( FixedPoint )
 	 *  FUNCTION
 	 *    This fixed point += another fixed point.
 	 *  INPUTS
@@ -304,7 +304,7 @@ public class FixedPoint {
 	}
 	/*******/
 
-	/****m* language_helper/FixedPoint.opAddAssign 2
+	/****m* language_helper/FixedPoint.opAddAssign( double )
 	 *  FUNCTION
 	 *    This fixed point += a double.
 	 *  INPUTS
@@ -320,7 +320,7 @@ public class FixedPoint {
 	}
 	/*******/
 
-	/****m* language_helper/FixedPoint.opAddAssign 3
+	/****m* language_helper/FixedPoint.opAddAssign( int )
 	 *  FUNCTION
 	 *    This fixed point += an int.
 	 *  INPUTS
@@ -332,7 +332,7 @@ public class FixedPoint {
 	}
 	/*******/
 
-	/****m* language_helper/FixedPoint.opEquals
+	/****m* language_helper/FixedPoint.opEquals( long )
 	 *  FUNCTION
 	 *    This fixed point == an int.
 	 *  INPUTS
@@ -344,7 +344,7 @@ public class FixedPoint {
 	}
 	/*******/
 
-	/****m* language_helper/FixedPoint.opEquals 2
+	/****m* language_helper/FixedPoint.opEquals( double )
 	 *  FUNCTION
 	 *    This fixed point == an double.
 	 *  INPUTS
@@ -714,7 +714,7 @@ public static bool ends_with(string value, string match) {
 
 /****f* language_helper/between
  *  FUNCTION
- *    Returns the part of a string between the before and after.
+ *    Returns the substring between the before and after.
  *  INPUTS
  *    value      - the string to examine.
  *    before     - the string at the front.
@@ -726,8 +726,15 @@ public static string between(string value, string before, string after) {
 }
 /*******/
 
-// Returns a substring before the separator. 
-// Returns the value if there are no separators.
+/****f* language_helper/before
+ *  FUNCTION
+ *    Returns a substring before the separator.
+ *    Returns the value if there are no separators.
+ *  INPUTS
+ *    value         - the string to examine.
+ *    separator     - the string at the front.
+ * SOURCE
+ */
 public static string before(string value, string separator) {
 	size_t i = index(value, separator);
 
@@ -736,9 +743,17 @@ public static string before(string value, string separator) {
 
 	return value[0 .. i];
 }
+/*******/
 
-// Returns a substring after the separator. 
-// Returns "" if there are no separators.
+/****f* language_helper/after
+ *  FUNCTION
+ *    Returns a substring after the separator.
+ *    Returns "" if there are no separators.
+ *  INPUTS
+ *    value         - the string to examine.
+ *    separator     - the string at the back.
+ * SOURCE
+ */
 public static string after(string value, string separator) {
 	size_t i = index(value, separator);
 
@@ -749,9 +764,17 @@ public static string after(string value, string separator) {
 
 	return value[start .. length];
 }
+/*******/
 
-// Returns a substring after the last separator. 
-// Returns "" if there are no separators.
+/****f* language_helper/after_last
+ *  FUNCTION
+ *    Returns a substring after the last separator.
+ *    Returns "" if there are no separators.
+ *  INPUTS
+ *    value         - the string to examine.
+ *    separator     - the string at the back.
+ * SOURCE
+ */
 public static string after_last(string value, string separator) {
 	size_t i = rindex(value, separator);
 
@@ -762,7 +785,17 @@ public static string after_last(string value, string separator) {
 
 	return value[start .. length];
 }
+/*******/
 
+/****f* language_helper/rjust
+ *  FUNCTION
+ *    Returns the value justified to the right.
+ *  INPUTS
+ *    value         - the value to pad.
+ *    width         - the width on the returned string.
+ *    pad_char      - the character to pad the string with. The default is "".
+ * SOURCE
+ */
 public string rjust(string value, uint width, string pad_char=" ") {
 	int len = width - value.length;
 	char[] retval = new char[width];
@@ -770,7 +803,17 @@ public string rjust(string value, uint width, string pad_char=" ") {
 	retval[len .. length] = value;
 	return retval;
 }
+/*******/
 
+/****f* language_helper/ljust
+ *  FUNCTION
+ *    Returns the value justified to the left.
+ *  INPUTS
+ *    value         - the value to pad.
+ *    width         - the width on the returned string.
+ *    pad_char      - the character to pad the string with. The default is "".
+ * SOURCE
+ */
 public string ljust(string value, uint width, string pad_char=" ") {
 	int len = value.length;
 	char[] retval = new char[width];
@@ -778,108 +821,264 @@ public string ljust(string value, uint width, string pad_char=" ") {
 	retval[0 .. len] = value;
 	return retval;
 }
+/*******/
 
-// Add a to_s function for basic types
+/****f* language_helper/capitalize
+ *  FUNCTION
+ *    Returns a capitalized string.
+ * SOURCE
+ */
+public string capitalize(string value) {
+	if(value.length == 0) return value;
+
+	string first = value[0 .. 1].dup;
+	toUpper(first);
+	return first ~ value[1 .. length];
+}
+/*******/
+
+/****f* language_helper/to_s( short )
+ *  FUNCTION
+ *    Returns a short converted to a string.
+ * SOURCE
+ */
 public static string to_s(short value) {
 	return tango.text.convert.Integer.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( ushort )
+ *  FUNCTION
+ *    Returns an ushort converted to a string.
+ * SOURCE
+ */
 public static string to_s(ushort value) {
 	return tango.text.convert.Integer.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( int )
+ *  FUNCTION
+ *    Returns an int converted to a string.
+ * SOURCE
+ */
 public static string to_s(int value) {
 	return tango.text.convert.Integer.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( uint )
+ *  FUNCTION
+ *    Returns an uint converted to a string.
+ * SOURCE
+ */
 public static string to_s(uint value) {
 	return tango.text.convert.Integer.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( long )
+ *  FUNCTION
+ *    Returns a long converted to a string.
+ * SOURCE
+ */
 public static string to_s(long value) {
 	return tango.text.convert.Integer.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( ulong )
+ *  FUNCTION
+ *    Returns an ulong converted to a string.
+ * SOURCE
+ */
 public static string to_s(ulong value) {
 	char[66] tmp = void;
 	return tango.text.convert.Integer.format(tmp, cast(long)value, "u").dup;
 }
+/*******/
 
+/****f* language_helper/to_s( float )
+ *  FUNCTION
+ *    Returns a float converted to a string.
+ * SOURCE
+ */
 public static string to_s(float value) {
 	return tango.text.convert.Float.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( double )
+ *  FUNCTION
+ *    Returns a double converted to a string.
+ * SOURCE
+ */
 public static string to_s(double value) {
 	return tango.text.convert.Float.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( real )
+ *  FUNCTION
+ *    Returns a real converted to a string.
+ * SOURCE
+ */
 public static string to_s(real value) {
 	return tango.text.convert.Float.toString(value);
 }
+/*******/
 
+/****f* language_helper/to_s( bool )
+ *  FUNCTION
+ *    Returns a bool converted to a string.
+ * SOURCE
+ */
 public static string to_s(bool value) {
 	return value ? "true" : "false";
 }
+/*******/
 
+/****f* language_helper/to_s( string )
+ *  FUNCTION
+ *    Returns a string converted to a string.
+ * SOURCE
+ */
 public static string to_s(string value) {
 	return value.dup;
 }
+/*******/
 
+/****f* language_helper/to_s( char )
+ *  FUNCTION
+ *    Returns a char converted to a string.
+ * SOURCE
+ */
 public static string to_s(char value) {
 	string new_value;
 	new_value ~= value;
 	return new_value;
 }
+/*******/
 
+/****f* language_helper/to_s( FixedPoint )
+ *  FUNCTION
+ *    Returns a FixedPoint converted to a string.
+ * SOURCE
+ */
 public static string to_s(FixedPoint value) {
 	if(value)
 		return value.toString();
 	else
 		return "0.0";
 }
+/*******/
 
-// Add a to_# function for strings
+/****f* language_helper/to_int( string )
+ *  FUNCTION
+ *    Returns an int converted to a string.
+ * SOURCE
+ */
 public static int to_int(string value) {
 	return tango.text.convert.Integer.toInt(value);
 }
+/*******/
 
+/****f* language_helper/to_uint( string )
+ *  FUNCTION
+ *    Returns an uint converted to a string.
+ * SOURCE
+ */
 public static uint to_uint(string value) {
 	return cast(uint) tango.text.convert.Integer.convert(value);
 }
+/*******/
 
+/****f* language_helper/to_short( string )
+ *  FUNCTION
+ *    Returns a short converted to a string.
+ * SOURCE
+ */
 public static short to_short(string value) {
 	return cast(short) tango.text.convert.Integer.convert(value);
 }
+/*******/
 
+/****f* language_helper/to_ushort( string )
+ *  FUNCTION
+ *    Returns an ushort converted to a string.
+ * SOURCE
+ */
 public static ushort to_ushort(string value) {
 	return cast(ushort) tango.text.convert.Integer.convert(value);
 }
+/*******/
 
+/****f* language_helper/to_long( string )
+ *  FUNCTION
+ *    Returns a long converted to a string.
+ * SOURCE
+ */
 public static long to_long(string value) {
 	return tango.text.convert.Integer.toLong(value);
 }
+/*******/
 
+/****f* language_helper/to_ulong( string )
+ *  FUNCTION
+ *    Returns an ulong converted to a string.
+ * SOURCE
+ */
 public static ulong to_ulong(string value) {
 	return tango.text.convert.Integer.convert(value);
 }
+/*******/
 
+/****f* language_helper/to_float( string )
+ *  FUNCTION
+ *    Returns a float converted to a string.
+ * SOURCE
+ */
 public static float to_float(string value) {
 	return tango.text.convert.Float.toFloat(value);
 }
+/*******/
 
+/****f* language_helper/to_double( string )
+ *  FUNCTION
+ *    Returns a double converted to a string.
+ * SOURCE
+ */
 public static double to_double(string value) {
 	return tango.text.convert.Float.parse(value);
 }
+/*******/
 
+/****f* language_helper/to_real( string )
+ *  FUNCTION
+ *    Returns a real converted to a string.
+ * SOURCE
+ */
 public static real to_real(string value) {
 	return tango.text.convert.Float.parse(value);
 }
+/*******/
 
+/****f* language_helper/to_bool( string )
+ *  FUNCTION
+ *    Returns a bool converted to a string.
+ * SOURCE
+ */
 public static bool to_bool(string value) {
 	return value=="true" || value=="1";
 }
+/*******/
 
 // FIXME: This has 18, 2 hard coded
+/****f* language_helper/to_FixedPoint( string )
+ *  FUNCTION
+ *    Returns a string converted to a FixedPoint.
+ * SOURCE
+ */
 public static FixedPoint to_FixedPoint(string value) {
 	try {
 		string[] pair = split(value, ".");
@@ -892,6 +1091,7 @@ public static FixedPoint to_FixedPoint(string value) {
 	}
 	return new FixedPoint(0, 0, 18, 2);
 }
+/*******/
 
 // Add alternate named methods
 public static int to_integer(string value) { return to_int(value); }
@@ -924,16 +1124,6 @@ public class AutoStringArray {
 	private size_t _i;
 	private size_t _j;
 	public static const size_t BUFFER_SIZE = 1024 * 10;
-	public void opCatAssign(int value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(uint value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(long value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(ulong value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(float value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(double value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(real value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(bool value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(char value) { opCatAssign(to_s(value)); }
-	public void opCatAssign(FixedPoint value) { opCatAssign(to_s(value)); }
 
 	/****m* language_helper/AutoStringArray.this
 	 *  FUNCTION
@@ -951,6 +1141,91 @@ public class AutoStringArray {
 	}
 	/*******/
 
+	/****m* language_helper/AutoStringArray.opCatAssign( int )
+	 *  INPUTS
+	 *    value       - the int to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(int value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( uint )
+	 *  INPUTS
+	 *    value       - the uint to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(uint value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( long )
+	 *  INPUTS
+	 *    value       - the long to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(long value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( ulong )
+	 *  INPUTS
+	 *    value       - the ulong to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(ulong value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( float )
+	 *  INPUTS
+	 *    value       - the float to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(float value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( double )
+	 *  INPUTS
+	 *    value       - the double to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(double value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( real )
+	 *  INPUTS
+	 *    value       - the real to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(real value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( bool )
+	 *  INPUTS
+	 *    value       - the bool to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(bool value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( char )
+	 *  INPUTS
+	 *    value       - the char to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(char value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( FixedPoint )
+	 *  INPUTS
+	 *    value       - the FixedPoint to concatenate to the buffer.
+	 * SOURCE
+	 */
+	public void opCatAssign(FixedPoint value) { opCatAssign(to_s(value)); }
+	/*******/
+
+	/****m* language_helper/AutoStringArray.opCatAssign( string )
+	 *  INPUTS
+	 *    value       - the string to concatenate to the buffer.
+	 * SOURCE
+	 */
 	public void opCatAssign(string value) {
 		size_t value_length = value.length;
 
@@ -976,7 +1251,13 @@ public class AutoStringArray {
 		_buffers[_j][_i .. _i+value_length] = value[0 .. value_length];
 		_i+= value_length;
 	}
+	/*******/
 
+	/****m* language_helper/AutoStringArray.toString
+	 *  FUNCTION
+	 *    Returns everything added to the AutoStringArray as a string.
+	 * SOURCE
+	 */
 	public string toString() {
 		string retval;
 		if(_buffers.length > 1) {
@@ -986,48 +1267,86 @@ public class AutoStringArray {
 
 		return retval;
 	}
+	/*******/
 }
 
+/****c* language_helper/Dictionary
+ *  NAME
+ *    Dictionary
+ *  FUNCTION
+ *    A dictionary that has key value pairs. It is designed to have keys
+ *    that are strings or ints, with a value of Dictionary.
+ *  EXAMPLE
+ *    auto d = new Dictionary();
+ *    d["company"].value = "Can Opener Inc.";
+ *    d["employees"]["bob"].value = "So Awesome";
+ *    d["employees"]["tim"].value = "Just Okay";
+ ******
+ */
 public class Dictionary {
 	public string value = null;
 	public Dictionary[string] named_items = null;
 	public Dictionary[size_t] array_items = null;
 
+	/****m* language_helper/Dictionary.opIndex( string )
+	 *  FUNCTION
+	 *    Returns the value associated with a string key.
+	 *  INPUTS
+	 *    key       - the associative array key as a string.
+	 * SOURCE
+	 */
 	public Dictionary opIndex(string key) {
+		// Initialize the value if it does not exist.
 		if((key in this.named_items) == null)
 			this.named_items[key] = new Dictionary();
 		return this.named_items[key];
 	}
+	/*******/
 
+	/****m* language_helper/Dictionary.opIndex( size_t )
+	 *  FUNCTION
+	 *    Returns the value associated with a number key.
+	 *  INPUTS
+	 *    key       - the associative array key as a size_t.
+	 * SOURCE
+	 */
 	public Dictionary opIndex(size_t i) {
 		if((i in this.array_items) == null)
 			this.array_items[i] = new Dictionary();
 		return this.array_items[i];
 	}
+	/*******/
 
+	/****m* language_helper/Dictionary.has_key( string )
+	 *  FUNCTION
+	 *    Returns true if the associative array uses the string key.
+	 *  INPUTS
+	 *    key       - the associative array key as a string.
+	 * SOURCE
+	 */
 	public bool has_key(string key) {
 		return(this.named_items != null && (key in this.named_items) != null);
 	}
-
-	public bool has_key(string[] keys) {
-		Dictionary[string] curr_items = this.named_items;
-		foreach(string key ; keys) {
-			if((key in curr_items) == null) {
-				return false;
-			} else {
-				curr_items = curr_items[key].named_items;
-			}
-		}
-		return true;
-	}
+	/*******/
 }
 
+/****f* language_helper/json_to_dict( string )
+ *  FUNCTION
+ *    Converts a json string into a Dictionary.
+ * SOURCE
+ */
 public static void json_to_dict(ref Dictionary dict, string json_in_a_string) {
 	auto json = new Json!(char);
 	json.parse(json_in_a_string);
 	json_to_dict(dict, json.value());
 }
+/*******/
 
+/****f* language_helper/json_to_dict( value )
+ *  FUNCTION
+ *    Converts a json value into a Dictionary.
+ * SOURCE
+ */
 public static void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
 	switch(value.type) {
 		case Json!(char).Type.Null:
@@ -1065,13 +1384,25 @@ public static void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
 			throw new Exception("Unknown json type.");
 	}
 }
+/*******/
 
+/****f* language_helper/xml_to_dict( string )
+ *  FUNCTION
+ *    Converts an xml string into a Dictionary.
+ * SOURCE
+ */
 public static void xml_to_dict(ref Dictionary dict, string xml_in_a_string) {
 	auto doc = new Document!(char);
 	doc.parse(xml_in_a_string);
 	xml_to_dict(dict, doc.tree);
 }
+/*******/
 
+/****f* language_helper/xml_to_dict( node )
+ *  FUNCTION
+ *    Converts an xml node into a Dictionary.
+ * SOURCE
+ */
 public static void xml_to_dict(ref Dictionary dict, Document!(char).Node node) {
 	switch(node.type) {
 		case XmlNodeType.Data:
@@ -1113,19 +1444,22 @@ public static void xml_to_dict(ref Dictionary dict, Document!(char).Node node) {
 			throw new Exception("Unknown xml type.");
 	}
 }
+/*******/
 
-// Add string helpers
-public string capitalize(string value) {
-	if(value.length == 0) return value;
-
-	string first = value[0 .. 1].dup;
-	toUpper(first);
-	return first ~ value[1 .. length];
-}
-
-// Add array helpers
+/****c* language_helper/Array
+ *  FUNCTION
+ *    Template functions that are useful for arrays.
+ ******
+ */
 template Array(T) {
-	// Remove an item at the index
+	/****m* language_helper/Array.remove
+	 *  FUNCTION
+	 *    Remove the item at the index.
+	 *  INPUTS
+	 *    array   - the array.
+	 *    i       - the index to remove.
+	 * SOURCE
+	 */
 	void remove(ref T[] array, size_t i) {
 		// Get the length
 		size_t len = array.length;
@@ -1138,8 +1472,16 @@ template Array(T) {
 		// Decrease the length by one
 		array = array[0 .. len - 1];
 	}
+	/*******/
 
-	// Remove an item
+	/****m* language_helper/Array.remove_item
+	 *  FUNCTION
+	 *    Remove the item.
+	 *  INPUTS
+	 *    array   - the array.
+	 *    item    - the item to remove.
+	 * SOURCE
+	 */
 	void remove_item(ref T[] array, T item) {
 		// Find the index of the item
 		for(size_t i=0; i<array.length; i++) {
@@ -1149,8 +1491,16 @@ template Array(T) {
 			}
 		}
 	}
+	/*******/
 
-	// Return true if the item is in the array
+	/****m* language_helper/Array.contains
+	 *  FUNCTION
+	 *    Return true if the item is in the array.
+	 *  INPUTS
+	 *    array   - the array.
+	 *    item    - the item to look for.
+	 * SOURCE
+	 */
 	bool contains(ref T[] array, ref T item) {
 		// Return true if the item is in it
 		foreach(T entry; array)
@@ -1160,8 +1510,16 @@ template Array(T) {
 		// Return false if not found
 		return false;
 	}
+	/*******/
 
-	// Remove the item at the index and return it
+	/****m* language_helper/Array.pop
+	 *  FUNCTION
+	 *    Remove the item at the index and return it.
+	 *  INPUTS
+	 *    array   - the array.
+	 *    i       - the index of the item to pop.
+	 * SOURCE
+	 */
 	T pop(ref T[] array, size_t i) {
 		// Get the item
 		T item = array[i];
@@ -1171,8 +1529,16 @@ template Array(T) {
 
 		return item;
 	}
+	/*******/
 
-	// Remove the item and return it
+	/****m* language_helper/Array.pop_item
+	 *  FUNCTION
+	 *    Remove the item and return it.
+	 *  INPUTS
+	 *    array   - the array.
+	 *    item    - the item to pop.
+	 * SOURCE
+	 */
 	T pop_item(ref T[] array, ref T item) {
 		for(size_t i=0; i<array.length; i++)
 			if(array[i] == item)
@@ -1180,5 +1546,6 @@ template Array(T) {
 
 		throw new Exception("No item to pop.");
 	}
+	/*******/
 }
 
