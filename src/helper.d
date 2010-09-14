@@ -23,16 +23,39 @@ private import tango.util.digest.Sha256;
 private import tango.util.encode.Base64;
 
 
-// Helper functions for the server
+/****c* helper/Helper
+ *  NAME
+ *    Helper
+ *  FUNCTION
+ *    Helper functions for the web.
+ ******
+ */
 public class Helper {
 	private static string[ushort] status_code;
 	private static string[string] mimetype_map;
 	private static Sha256 _sha_encoder;
 
+
+	/****m* helper/Helper.this
+	 *  FUNCTION
+	 *    A static constructor.
+	 * SOURCE
+	 */
 	public static this() {
 		_sha_encoder = new Sha256();
 	}
+	/*******/
 
+	/****m* helper/Helper.escape
+	 *  FUNCTION
+	 *    Converts a string to an escaped format.
+	 *    The 0-9 and A-Z characters are not changed.
+	 *    The ' ' is changed to '+'.
+	 *    Everything else is converted to EBCDIC.
+	 *  INPUTS
+	 *    unescaped   - the string to escape.
+	 * SOURCE
+	 */
 	public static char[] escape(char[] unescaped) {
 		size_t len = unescaped.length;
 		size_t i, j;
@@ -77,6 +100,7 @@ public class Helper {
 
 		return escaped;
 	}
+	/*******/
 
 	public static char[] unescape(char[] escaped) {
 		size_t i, j;

@@ -91,11 +91,20 @@ public class RenderViewException : Exception {
 	public string _name;
 	public ushort _status;
 
+	/****m* rootintootin/RenderViewException.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    name                - the name of the view to render.
+	 *    status              - the http status.
+	 * SOURCE
+	 */
 	public this(string name, ushort status) {
 		super("");
 		_name = name;
 		_status = status;
 	}
+	/*******/
 }
 
 /****c* rootintootin/RenderRedirectException
@@ -108,10 +117,18 @@ public class RenderViewException : Exception {
 public class RenderRedirectException : Exception { 
 	public string _url;
 
+	/****m* rootintootin/RenderRedirectException.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    url                - the url to redirect to.
+	 * SOURCE
+	 */
 	public this(string url) {
 		super("");
 		_url = url;
 	}
+	/*******/
 }
 
 /****c* rootintootin/RenderNoActionException
@@ -122,9 +139,15 @@ public class RenderRedirectException : Exception {
  ******
  */
 public class RenderNoActionException : Exception { 
+	/****m* rootintootin/RenderNoActionException.this
+	 *  FUNCTION
+	 *    A constructor.
+	 * SOURCE
+	 */
 	public this() {
 		super("");
 	}
+	/*******/
 }
 
 /****c* rootintootin/RenderNoControllerException
@@ -137,10 +160,18 @@ public class RenderNoActionException : Exception {
 public class RenderNoControllerException : Exception { 
 	public string[] _controllers;
 
+	/****m* rootintootin/RenderNoControllerException.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    controllers    - An array that holds the names of all the known controllers.
+	 * SOURCE
+	 */
 	public this(string[] controllers) {
 		super("");
 		_controllers = controllers;
 	}
+	/*******/
 }
 
 /****c* rootintootin/ModelException
@@ -156,23 +187,113 @@ public class ModelException : Exception {
 	}
 }
 
-
+/****c* rootintootin/ModelArrayMixin
+ *  NAME
+ *    ModelArrayMixin
+ *  FUNCTION
+ *    This template mixin is used to create classes that hold arrays of models
+ *     of a specific type. Because we can't know the type before hand, and we 
+ *    don't want to use the generic ModelBase type, we create a template. 
+ *    Typically this is all generated for you.
+ *  EXAMPLE
+ *  // The strongly typed Pets class is used instead of Pet[].
+ *  public class Pets {
+ *      mixin ModelArrayMixin!(PersonBase, PetBase);
+ *  }
+ *  
+ *  // The pet model class in your application
+ *  public class Pet : PetBase {
+ *  }
+ *
+ *  // The person model class in your application
+ *  public class Person : PersonBase {
+ *      public Pets pets;
+ *
+ *      public this() {
+ *          this.pets = new Pets([]);
+ *      }
+ *  }
+ *
+ *  // The generated base model that was created from the database schema.
+ *  public class PetBase : ModelBase {
+ *      mixin ModelBaseMixin!(Pet, "pet", "pets");
+ *      protected static string[] _field_names;
+ *      protected static string[] _unique_field_names;
+ *
+ *      public string name;
+ *      public string email;
+ *      protected PersonBase _person = null;
+ *
+ *      public void parent(PersonBase value) {
+ *          _person = value;
+ *      }
+ *      public PersonBase parent() {
+ *          return _person;
+ *      }
+ *
+ *      public void set_field_by_name(string field_name, string value, bool must_check_database_first = true) {
+ *      }
+ *      public string get_field_by_name(string field_name) {
+ *          return null;
+ *      }
+ *  }
+ *
+ *  // The generated base model that was created from the database schema.
+ *  public class PersonBase : ModelBase {
+ *      mixin ModelBaseMixin!(Person, "person", "people");
+ *      protected static string[] _field_names;
+ *      protected static string[] _unique_field_names;
+ *
+ *      public void set_field_by_name(string field_name, string value, bool must_check_database_first = true) {
+ *      }
+ *      public string get_field_by_name(string field_name) {
+ *          return null;
+ *      }
+ *  }
+ *
+ *  // Now we can create pets and add them to persons.
+ *  auto person = new Person();
+ *  person.pets ~= new Pet();
+ ******
+ */
 public template ModelArrayMixin(ParentClass, ModelClass) {
 	ParentClass _parent = null;
 	ModelClass[] _models;
 
+	/****m* rootintootin/ModelArrayMixin.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    models    - An array of models to initialize the object.
+	 * SOURCE
+	 */
 	public this(ModelClass[] models) {
 		_models = models;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelArrayMixin.opCatAssign
+	 *  FUNCTION
+	 *    Adds a model to the list of models.
+	 *  INPUTS
+	 *    model    - A model object to add.
+	 * SOURCE
+	 */
 	public void opCatAssign(ModelClass model) {
 		model.parent = _parent;
 		_models ~= model;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelArrayMixin.length
+	 *  FUNCTION
+	 *    Returns the length of the list of models.
+	 * SOURCE
+	 */
 	public size_t length() {
 		return _models.length;
 	}
+	/*******/
 }
 
 

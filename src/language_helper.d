@@ -94,6 +94,8 @@ public int pow(int x, uint n) {
  *    FixedPoint
  *  FUNCTION
  *    A class for using fixed point numbers.
+ *  EXAMPLE
+ *    FixedPoint f = new FixedPoint(11, 3, 10, 2);
  ******
  */
 public class FixedPoint {
@@ -142,8 +144,6 @@ public class FixedPoint {
 	 *    scale               - the number after the decimal.
 	 *    max_precision_width - the width of digits before the decimal.
 	 *    max_scale_width     - the width of digits after the decimal.
-	 *  EXAMPLE
-	 *    FixedPoint f = new FixedPoint(11, 3, 10, 2);
 	 * SOURCE
 	 */
 	public this(long precision, ulong scale, uint max_precision_width, uint max_scale_width) {
@@ -1117,6 +1117,18 @@ public static string to_string(FixedPoint value) { return to_s(value); }
  *  FUNCTION
  *    Collects strings by auto converting any type you try to add.
  *    For performance, it stores them in a buffer as they are added.
+ *  EXAMPLE
+ *    auto a = new AutoStringArray();
+ *    a ~= "An int: ";
+ *    a ~= 600;
+ *    a ~= "\n";
+ *    a ~= "A bool: ";
+ *    a ~= true;
+ *    a ~= "\n";
+ *    a ~= "A float: ";
+ *    a ~= 5.5f;
+ *    a ~= "\n";
+ *    Stdout(a.toString());
  ******
  */
 public class AutoStringArray {
