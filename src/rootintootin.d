@@ -182,9 +182,17 @@ public class RenderNoControllerException : Exception {
  ******
  */
 public class ModelException : Exception {
+	/****m* rootintootin/ModelException.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    message    - The message to throw.
+	 * SOURCE
+	 */
 	public this(string message) {
 		super(message);
 	}
+	/*******/
 }
 
 /****c* rootintootin/ModelArrayMixin
@@ -308,30 +316,100 @@ public class ModelBase {
 	protected ulong _id;
 	protected string[] _errors;
 
+	/****m* rootintootin/ModelBase.id
+	 *  FUNCTION
+	 *    Returns the model's database id. Will be zero if it has not
+	 *    been saved. See ModelBaseMixin.is_saved.
+	 * SOURCE
+	 */
 	public ulong id() {
 		return _id;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.validate
+	 *  FUNCTION
+	 *    This method is called in ModelBase.is_valid. By default
+	 *    it does nothing. But you can override it in your models to
+	 *    do validation. 
+	 *
+	 *    To set an error here, add a string to the _errors instance variable.
+	 *  EXAMPLE
+	 *    // Use one of the validate functions to do validation.
+	 *    public class User : UserBase {
+	 *        public void validate() {
+	 *            _errors = [];
+	 *            validates_presence_of(["name", "email"]);
+	 *        }
+	 *    }
+	 * 
+	 *    // Or do the validation your own way.
+	 *    public class User : UserBase {
+	 *        public void validate() {
+	 *            string field = this.get_field_by_name("name");
+	 *            if(field == "Tim")
+	 *                _errors = ["I don't think so Tim."];
+	 *        }
+	 *    }
+	 * SOURCE
+	 */
 	public void validate() {
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.is_valid
+	 *  FUNCTION
+	 *    This methhod is called in ModelBase.is_valid. By default
+	 *    it does nothing. But you can override it i your models to
+	 *    do custom validation.
+	 * SOURCE
+	 */
 	public bool is_valid() {
 		this.validate();
 		return this._errors.length == 0;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.errors
+	 *  FUNCTION
+	 *    Returns the list of errors that were set in the 
+	 *    ModelBase.validate method.
+	 * SOURCE
+	 */
 	public string[] errors() {
 		return this._errors;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.to_json
+	 *  FUNCTION
+	 *    Returns the model converted to json.
+	 *    This method should be overridden by the inheriting class.
+	 * SOURCE
+	 */
 	public string to_json() {
 		return null;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.to_xml
+	 *  FUNCTION
+	 *    Returns the model converted to xml.
+	 *    This method should be overridden by the inheriting class.
+	 * SOURCE
+	 */
 	public string to_xml() {
 		return null;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.to_json 2
+	 *  FUNCTION
+	 *    Returns an array of models converted to json.
+	 *  INPUTS
+	 *    models    - An array of models.
+	 * SOURCE
+	 */
 	public static string to_json(ModelBase[] models) {
 		string[] retval;
 		foreach(ModelBase model ; models) {
@@ -339,7 +417,15 @@ public class ModelBase {
 		}
 		return "[" ~ join(retval, ", ") ~ "]";
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBase.to_xml 2
+	 *  FUNCTION
+	 *    Returns an array of models converted to xml.
+	 *  INPUTS
+	 *    models    - An array of models.
+	 * SOURCE
+	 */
 	public static string to_xml(ModelBase[] models, string table_name) {
 		string[] retval;
 		foreach(ModelBase model ; models) {
@@ -353,8 +439,16 @@ public class ModelBase {
 				join(retval, "") ~ 
 				"</" ~ name ~ ">";
 	}
+	/*******/
 }
 
+/****c* rootintootin/ModelBaseMixin
+ *  NAME
+ *    ModelBase
+ *  FUNCTION
+ *    A template mixin that adds common functionality to models.
+ ******
+ */
 public template ModelBaseMixin(T, string model_name, string table_name) {
 	static string _table_name = table_name;
 	static string _model_name = model_name;
@@ -471,9 +565,15 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		return null;
 	}
 
+	/****m* rootintootin/ModelBaseMixin.is_saved
+	 *  FUNCTION
+	 *    Returns true if the id is greater than zero.
+	 * SOURCE
+	 */
 	bool is_saved() {
 		return _id > 0;
 	}
+	/*******/
 
 	bool save() {
 		// Return false if the validation failed

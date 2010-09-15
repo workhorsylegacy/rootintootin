@@ -102,6 +102,16 @@ public class Helper {
 	}
 	/*******/
 
+	/****m* helper/Helper.unescape
+	 *  FUNCTION
+	 *    Converts an escaped string to a normal string.
+	 *    The 0-9 and A-Z characters are not changed.
+	 *    The '+' is changed to ' '.
+	 *    The EBCDIC is converted to normal characters.
+	 *  INPUTS
+	 *    unescaped   - the string to unescape.
+	 * SOURCE
+	 */
 	public static char[] unescape(char[] escaped) {
 		size_t i, j;
 
@@ -132,7 +142,19 @@ public class Helper {
 
 		return unescaped;
 	}
+	/*******/
 
+	/****m* helper/Helper.html_escape
+	 *  FUNCTION
+	 *    Escapes any HTML characters.
+	 *    & becomes &amp;
+	 *    \" becomes &quot;
+	 *    > becomes &gt;
+	 *    < becomes &lt;
+	 *  INPUTS
+	 *    value   - the string to escape.
+	 * SOURCE
+	 */
 	public static string html_escape(string value) {
 		value = substitute(value, "&", "&amp;");
 		value = substitute(value, "\"", "&quot;");
@@ -141,7 +163,19 @@ public class Helper {
 
 		return value;
 	}
+	/*******/
 
+	/****m* helper/Helper.html_unescape
+	 *  FUNCTION
+	 *    Unescapes any HTML characters.
+	 *    &amp; becomes &
+	 *    &quot; becomes \"
+	 *    &gt; becomes >
+	 *    &lt; becomes <
+	 *  INPUTS
+	 *    value   - the string to unescape.
+	 * SOURCE
+	 */
 	public static string html_unescape(string value) {
 		value = substitute(value, "&amp;", "&");
 		value = substitute(value, "&quot;", "\"");
@@ -150,18 +184,51 @@ public class Helper {
 
 		return value;
 	}
+	/*******/
 
+	/****m* helper/Helper.get_verbose_status_code
+	 *  FUNCTION
+	 *    Returns the HTTP status message from the status code.
+	 *  INPUTS
+	 *    code   - the HTTP status code.
+	 *  EXAMPLE
+	 *    Stdout(get_verbose_status_code(200));
+	 *    // 200 OK
+	 * SOURCE
+	 */
 	public static string get_verbose_status_code(ushort code) {
 		return tango.text.convert.Integer.toString(code) ~ " " ~ status_code[code];
 	}
+	/*******/
 
+	/****m* helper/Helper.hash_and_base64
+	 *  FUNCTION
+	 *    This function is ideal for creating secure sequential hashes. The
+	 *    idea is that you want to use sequential numbers for the value, but
+	 *    have it so the hashes can't be enumerated by an adversary.
+	 *
+	 *    The pipeline is:
+	 *    string + salt >> hash >> base64
+	 *  INPUTS
+	 *    value   - the string to encode.
+	 *    salt    - the salt.
+	 *  EXAMPLE
+	 *    string session_id;
+	 *    session_id = Helper.hash_and_base64("1", "secret");
+	 *    session_id = Helper.hash_and_base64("2", "secret");
+	 *    session_id = Helper.hash_and_base64("3", "secret");
+	 * SOURCE
+	 */
 	public static string hash_and_base64(string value, string salt) {
+		// Salt and hash the string
 		_sha_encoder.update(value ~ salt);
 		ubyte[] encoded = _sha_encoder.binaryDigest();
 
+		// Base64 the string and return it
 		string encodebuf = new char[tango.util.encode.Base64.allocateEncodeSize(encoded)];
 		return tango.util.encode.Base64.encode(encoded, encodebuf);
 	}
+	/*******/
 
 	public static this() {
 		status_code[100] = "Continue";
@@ -225,6 +292,13 @@ public class Helper {
 		mimetype_map["txt"] = "text/plain";
 	}
 
+	/****m* helper/Helper.hex_to_char
+	 *  FUNCTION
+	 *    Converts a hexadecimal to a char.
+	 *  INPUTS
+	 *    c   - the hexadecimal to convert to char.
+	 * SOURCE
+	 */
 	private static char hex_to_char(char c) {
 		if(c >= '0' && c <= '9')
 			return c - '0';
@@ -233,7 +307,15 @@ public class Helper {
 		else
 			return c - 'a' + 10;
 	}
+	/*******/
 
+	/****m* helper/Helper.char_to_hex
+	 *  FUNCTION
+	 *    Converts a char to hexadecimal.
+	 *  INPUTS
+	 *    c   - the char to convert to hex.
+	 * SOURCE
+	 */
 	private static char char_to_hex(char c) {
 		char retval;
 		if(c >= 0 && c <= 9)
@@ -245,6 +327,7 @@ public class Helper {
 
 		return retval;
 	}
+	/*******/
 }
 
 
