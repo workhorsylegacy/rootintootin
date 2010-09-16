@@ -28,6 +28,14 @@ private import tango.text.json.Json;
 private import tango.text.xml.Document;
 
 
+/****d* rootintootin/BUFFER_SIZE
+ *  FUNCTION
+ *    The default size of of any string buffer.
+ * SOURCE
+ */
+public static const size_t BUFFER_SIZE = 1024 * 10;
+/*******/
+
 /****c* language_helper/string
  *  FUNCTION
  *    An alias to the D type char[]
@@ -1093,6 +1101,7 @@ public static FixedPoint to_FixedPoint(string value) {
 }
 /*******/
 
+// FIXME: Should this be changed to aliases?
 // Add alternate named methods
 public static int to_integer(string value) { return to_int(value); }
 public static int to_boolean(string value) { return to_bool(value); }
@@ -1135,7 +1144,6 @@ public class AutoStringArray {
 	private string[] _buffers;
 	private size_t _i;
 	private size_t _j;
-	public static const size_t BUFFER_SIZE = 1024 * 10;
 
 	/****m* language_helper/AutoStringArray.this
 	 *  FUNCTION

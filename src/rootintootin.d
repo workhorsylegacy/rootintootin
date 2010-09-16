@@ -459,14 +459,20 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	public void after_this() {
 	}
 
-	// FIXME: This should be private
-	public void ensure_was_pulled_from_database() {
+	/****m* rootintootin/ModelBaseMixin.ensure_was_pulled_from_database
+	 *  FUNCTION
+	 *    This method should be called in the start of each field property 
+	 *    method. It ensures that the object has gotten its initial values 
+	 *    from the database if it should have. Or it throws a ModelException.
+	 * SOURCE
+	 */
+	private void ensure_was_pulled_from_database() {
 		// Just return if is was already pulled
-		if(_was_pulled_from_database == true) 
+		if(_was_pulled_from_database == true)
 			return;
 
 		if(_id < 1)
-			throw new Exception(_model_name ~ "The id has not been set.");
+			throw new ModelException(_model_name ~ "The id has not been set.");
 
 		// Get the model from the database and copy all its fields to this model
 		T model = T.find(_id);
@@ -476,15 +482,35 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		}
 		_was_pulled_from_database = true;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBaseMixin.field_names_as_comma_string
+	 *  FUNCTION
+	 *    Returns all the model's field names in a comma separated string.
+	 * SOURCE
+	 */
 	static string field_names_as_comma_string() {
 		return join(_field_names, ", ");
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBaseMixin.unique_field_names_as_comma_string
+	 *  FUNCTION
+	 *    Returns all the model's unique field names in a comma separated 
+	 *    string.
+	 * SOURCE
+	 */
 	static string unique_field_names_as_comma_string() {
 		return join(_unique_field_names, ", ");
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBaseMixin.unique_fields_as_comma_string
+	 *  FUNCTION
+	 *    Returns all the model's unique fields in a comma separated 
+	 *    string.
+	 * SOURCE
+	 */
 	string unique_fields_as_comma_string() {
 		string[] fields;
 		foreach(string field_name; _unique_field_names) {
@@ -493,8 +519,15 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		return join(fields, ", ");
 	}
+	/*******/
 
-	// Returns a single model that matches the id, or null.
+	/****m* rootintootin/ModelBaseMixin.find_by_id
+	 *  FUNCTION
+	 *    Returns a single model that matches the id, or null if not found.
+	 *  INPUTS
+	 *    id    - The database id of the object to find.
+	 * SOURCE
+	 */
 	static T find_by_id(ulong id) {
 		// Create the query and run it
 		string query = "select " ~ field_names_as_comma_string ~ " from " ~ T._table_name;
@@ -521,8 +554,15 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		return model;
 	}
+	/*******/
 
-	// Returns a single model that matches the id, or throws if not found.
+	/****m* rootintootin/ModelBaseMixin.find
+	 *  FUNCTION
+	 *    Returns a single model that matches the id, or throws if not found.
+	 *  INPUTS
+	 *    id    - The database id of the object to find.
+	 * SOURCE
+	 */
 	static T find(ulong id) {
 		T model = find_by_id(id);
 		if(model is null) {
@@ -531,8 +571,17 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			return model;
 		}
 	}
+	/*******/
 
-	// Returns all the models of this type.
+	/****m* rootintootin/ModelBaseMixin.find_all
+	 *  FUNCTION
+	 *    Returns all the models.
+	 *  INPUTS
+	 *    conditions   - The 'where' part of the sql query. Is null by default.
+	 *    order        - The 'order by' part of the sql query. Is null by 
+	 *                   default.
+	 * SOURCE
+	 */
 	static T[] find_all(string conditions = null, string order = null) {
 		// Create the query and run it
 		T[] all = [];
@@ -560,10 +609,17 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		return all;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBaseMixin.find_first
+	 *  FUNCTION
+	 *    Returns the first model found.
+	 * SOURCE
+	 */
 	static T find_first() {
-		return null;
+		throw new Exception("ModelBaseMixin.find_first is not implemented yet.");
 	}
+	/*******/
 
 	/****m* rootintootin/ModelBaseMixin.is_saved
 	 *  FUNCTION
