@@ -444,7 +444,7 @@ public class ModelBase {
 
 /****c* rootintootin/ModelBaseMixin
  *  NAME
- *    ModelBase
+ *    ModelBaseMixin
  *  FUNCTION
  *    A template mixin that adds common functionality to models.
  ******
@@ -631,6 +631,16 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	}
 	/*******/
 
+	/****m* rootintootin/ModelBaseMixin.save
+	 *  FUNCTION
+	 *    Saves the model to the database. It will automatically determine if 
+	 *    it needs to use an insert or update query. It checks the model to see
+	 *    if it is valid. It also will add a unique field error if a uniqueness
+	 *    constraint is broken.
+	 *
+	 *    Returns true on success, or false on failure.
+	 * SOURCE
+	 */
 	bool save() {
 		// Return false if the validation failed
 		if(this.is_valid() == false)
@@ -676,7 +686,16 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		return false;
 	}
+	/*******/
 
+	/****m* rootintootin/ModelBaseMixin.destroy
+	 *  FUNCTION
+	 *    Deletes the model in the database. It also will add a 
+	 *    foreign key error if a constraint is broken.
+	 *
+	 *    Returns true on success, or false on failure.
+	 * SOURCE
+	 */
 	bool destroy() {
 		// Create the delete query
 		string query = "";
@@ -696,13 +715,17 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 		return false;
 	}
+	/*******/
 
-	void validates_presence_of(string[] field_names) {
-		foreach(string field_name; field_names) {
-			validates_presence_of(field_name);
-		}
-	}
-
+	/****m* rootintootin/ModelBaseMixin.validates_presence_of
+	 *  FUNCTION
+	 *    If the field is null or white space, a message is added to 
+	 *    the _errors array.
+	 *    EG: "The name cannot be blank."
+	 *  INPUTS
+	 *    field_name   - The name of the field to validates.
+	 * SOURCE
+	 */
 	void validates_presence_of(string field_name) {
 		char[] field = this.get_field_by_name(field_name);
 
@@ -710,8 +733,30 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 			_errors ~= "The " ~ field_name ~ " cannot be blank.";
 		}
 	}
+	/*******/
+
+	/****m* rootintootin/ModelBaseMixin.validates_presence_of 2
+	 *  FUNCTION
+	 *    Does validates_presence_of for an array of fields.
+	 *  INPUTS
+	 *    field_names   - The names of the fields to validates.
+	 * SOURCE
+	 */
+	void validates_presence_of(string[] field_names) {
+		foreach(string field_name; field_names) {
+			validates_presence_of(field_name);
+		}
+	}
+	/*******/
 }
 
+/****c* rootintootin/ControllerBase
+ *  NAME
+ *    ControllerBase
+ *  FUNCTION
+ *    The base class for controllers.
+ ******
+ */
 public class ControllerBase {
 	protected Request _request = null;
 	protected bool _use_layout = true;
@@ -720,19 +765,81 @@ public class ControllerBase {
 	public string controller_name;
 
 	public string[] events_to_trigger() { return this._events_to_trigger; }
-	public bool use_layout() { return _use_layout; }
-	public void request(Request value) { this._request = value; }
-	public Request request() { return this._request; }
-	public void flash_error(string value) { this.set_flash(value, "flash_error"); }
-	public string flash_error() { return this.get_flash("flash_error"); }
-	public void flash_notice(string value) { this.set_flash(value, "flash_notice"); }
-	public string flash_notice() { return this.get_flash("flash_notice"); }
 
+	/****m* rootintootin/ControllerBase.use_layout
+	 *  FUNCTION
+	 *    Returns true if it will use the default layout when rendering.
+	 * SOURCE
+	 */
+	public bool use_layout() { return _use_layout; }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.request( Request )
+	 *  FUNCTION
+	 *    Sets the current request.
+	 * SOURCE
+	 */
+	public void request(Request value) { this._request = value; }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.request
+	 *  FUNCTION
+	 *    Gets the current request.
+	 * SOURCE
+	 */
+	public Request request() { return this._request; }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.flash_error( string )
+	 *  FUNCTION
+	 *    Sets the current flash error message.
+	 * SOURCE
+	 */
+	public void flash_error(string value) { this.set_flash(value, "flash_error"); }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.flash_error
+	 *  FUNCTION
+	 *    Gets the current flash error message.
+	 * SOURCE
+	 */
+	public string flash_error() { return this.get_flash("flash_error"); }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.flash_notice(string)
+	 *  FUNCTION
+	 *    Sets the current flash notice message.
+	 * SOURCE
+	 */
+	public void flash_notice(string value) { this.set_flash(value, "flash_notice"); }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.flash_notice
+	 *  FUNCTION
+	 *    Gets the current flash notice message.
+	 * SOURCE
+	 */
+	public string flash_notice() { return this.get_flash("flash_notice"); }
+	/*******/
+
+	/****m* rootintootin/ControllerBase.set_flash
+	 *  FUNCTION
+	 *    Sets the flash into the session.
+	 *    Just returns if the request is null.
+	 * SOURCE
+	 */
 	private void set_flash(string value, string name) {
 		if(!_request) return;
 		_request._sessions[name] = value;
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.get_flash
+	 *  FUNCTION
+	 *    Gets the flash from the session.
+	 *    Just returns "" if the request is null.
+	 * SOURCE
+	 */
 	private string get_flash(string name) {
 		if(_request && name in _request._sessions) {
 			string value = _request._sessions[name];
@@ -742,7 +849,22 @@ public class ControllerBase {
 			return "";
 		}
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.respond_with
+	 *  FUNCTION
+	 *    Sends the response to the client based on the state of the model.
+	 *    This method is for one model.
+	 *    Will automatically use the same format as the request.
+	 *  INPUTS
+	 *    model       - The model to generate the response from.
+	 *    view_name   - The name of the view to render.
+	 *    status      - The response HTTP status code.
+	 *    formats     - An array of formats to render in.
+	 * EXAMPLE
+	 *    respond_with(_user, "edit", 200, ["html", "json", "xml"]);
+	 * SOURCE
+	 */
 	public void respond_with(ModelBase model, string view_name, ushort status, string[] formats) {
 		switch(_request.format) {
 			case("html"): render_view(view_name, status); break;
@@ -751,9 +873,25 @@ public class ControllerBase {
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
 		}
 	}
+	/*******/
 
 	// FIXME: table_name is needed here to know how to pluralize the model name: <blahs type="array"><blah /></blah>
 	// This should be gotten from ModelBase somehow.
+	/****m* rootintootin/ControllerBase.respond_with 2
+	 *  FUNCTION
+	 *    Sends the response to the client based on the state of the models.
+	 *    This method is for a group of models.
+	 *    Will automatically use the same format as the request.
+	 *  INPUTS
+	 *    table_name  - The database table name.
+	 *    models      - The models to generate the response from.
+	 *    view_name   - The name of the view to render.
+	 *    status      - The response HTTP status code.
+	 *    formats     - An array of formats to render in.
+	 * EXAMPLE
+	 *    respond_with("users", _users, "index", 200, ["html", "json", "xml"]);
+	 * SOURCE
+	 */
 	public void respond_with(string table_name, ModelBase[] models, string view_name, ushort status, string[] formats) {
 		switch(_request.format) {
 			case("html"): render_view(view_name, status); break;
@@ -762,7 +900,21 @@ public class ControllerBase {
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
 		}
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.respond_with_redirect
+	 *  FUNCTION
+	 *    Sends a redirect response to the client for the model.
+	 *    Will automatically use the same format as the request.
+	 *  INPUTS
+	 *    models      - The models to generate the response from.
+	 *    url         - The name of the view to render.
+	 *    status      - The response HTTP status code.
+	 *    formats     - An array of formats to render in.
+	 * EXAMPLE
+	 *    respond_with_redirect(_user, "/users/" ~ to_s(_user.id), 200, ["html"]);
+	 * SOURCE
+	 */
 	public void respond_with_redirect(ModelBase model, string url, ushort status, string[] formats) {
 		string real_url = base_get_real_url(this, url);
 		switch(_request.format) {
@@ -772,7 +924,20 @@ public class ControllerBase {
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
 		}
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.respond_with_redirect 2
+	 *  FUNCTION
+	 *    Sends a redirect response to the client.
+	 *    Will automatically use the same format as the request.
+	 *  INPUTS
+	 *    url         - The name of the view to render.
+	 *    status      - The response HTTP status code.
+	 *    formats     - An array of formats to render in.
+	 * EXAMPLE
+	 *    respond_with_redirect("/users", 200, ["html", "json", "xml"]);
+	 * SOURCE
+	 */
 	public void respond_with_redirect(string url, ushort status, string[] formats) {
 		string real_url = base_get_real_url(this, url);
 		switch(_request.format) {
@@ -782,24 +947,68 @@ public class ControllerBase {
 			default: render_text("Unknown format. Try html, json, xml, et cetera.", 404); break;
 		}
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.render_view
+	 *  FUNCTION
+	 *    Sends a view response to the client.
+	 *  INPUTS
+	 *    name        - The name of the view to render.
+	 *    status      - The response HTTP status code.
+	 * EXAMPLE
+	 *    render_view("show", 200);
+	 * SOURCE
+	 */
 	public void render_view(string name, ushort status) {
 		throw new RenderViewException(name, status);
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.render_text
+	 *  FUNCTION
+	 *    Sends a text response to the client.
+	 *  INPUTS
+	 *    text        - The text to render.
+	 *    status      - The response HTTP status code.
+	 * EXAMPLE
+	 *    render_text("blah", 200);
+	 * SOURCE
+	 */
 	public void render_text(string text, ushort status) {
 		throw new RenderTextException(text, status);
 	}
+	/*******/
 
+	/****m* rootintootin/ControllerBase.redirect_to
+	 *  FUNCTION
+	 *    Sends a redirect response to the client.
+	 *  INPUTS
+	 *    url        - The url to redirect to.
+	 * EXAMPLE
+	 *    redirect_to("users.html");
+	 * SOURCE
+	 */
 	public void redirect_to(string url) {
 		throw new RenderRedirectException(url);
 	}
+	/*******/
 
 	public void trigger_event(string event_name) {
 		this._events_to_trigger ~= event_name;
 	}
 }
 
+/****f* rootintootin/base_get_real_url
+ *  FUNCTION
+ *    Returns the url
+ *  INPUTS
+ *    controller - The controller processing the request.
+ *    url        - The url to redirect to.
+ * EXAMPLE
+ *    ControllerBase controller = new UserController();
+ *    string real_url = base_get_real_url(controller, "/users");
+ * SOURCE
+ */
 public static string base_get_real_url(ControllerBase controller, string url) {
 	// Get the format from the controller
 	string format = "";
@@ -813,5 +1022,6 @@ public static string base_get_real_url(ControllerBase controller, string url) {
 		url_after = "?" ~ url_after;
 	return url_before ~ format ~ url_after;
 }
+/*******/
 
 
