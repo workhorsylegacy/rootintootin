@@ -7,7 +7,7 @@ Standards-Version: 3.8.1
 Homepage: http://rootin.toot.in
 
 Package: rootintootin
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, 
 	mysql-client, mysql-server, libmysqlclient16-dev, 
 	python-mysqldb, python-pexpect, python-mako, build-essential, 
