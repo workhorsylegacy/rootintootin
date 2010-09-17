@@ -16,3 +16,16 @@ Description: A web framework and server that is written in D
  Rootin Tootin is a fast RESTful MVC web framework that is written in D. It is 
  designed to scale well by default, while still providing a developer experience 
  similar to Ruby on Rails.
+
+Package: rootintootin-doc
+Priority: optional
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}
+Enhances: rootintootin
+Description: A web framework and server that is written in D
+ Rootin Tootin is a fast RESTful MVC web framework that is written in D. It is 
+ designed to scale well by default, while still providing a developer experience 
+ similar to Ruby on Rails.
+ .
+ This package contains the API documentation of rootintootin.

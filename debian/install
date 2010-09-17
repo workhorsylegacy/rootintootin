@@ -1,7 +1,6 @@
 bin/* usr/share/rootintootin/bin
-examples/* usr/share/rootintootin/examples
 src/* usr/share/rootintootin/src
-COPYRIGHT usr/share/rootintootin
-LICENSE usr/share/rootintootin
-README usr/share/rootintootin
-ChangeLog usr/share/rootintootin
+COPYRIGHT usr/share/doc/rootintootin
+LICENSE usr/share/doc/rootintootin
+README usr/share/doc/rootintootin
+ChangeLog usr/share/doc/rootintootin
