@@ -580,10 +580,10 @@ def _generate_application(version, routes, table_map, reference_map):
 """)
 
 	out_file.write(" \
-	bool is_fcgi = contains(getcwd(), \"fastcgi\");\n \
-	\n\
 	// Create and start the app \n\
-	string mode = \"" + mode + "\";")
+	string mode = \"" + mode + "\";\n\
+	bool is_fcgi = contains(getcwd(), \"fastcgi\");\n\
+	bool is_production = mode == \"production\";\n")
 
 	out_file.write("""
 	RunnerBase runner = new Runner();
@@ -594,7 +594,8 @@ def _generate_application(version, routes, table_map, reference_map):
 				config[mode]["database"]["host"], 
 				config[mode]["database"]["user"], 
 				config[mode]["database"]["password"], 
-				config[mode]["database"]["name"]);
+				config[mode]["database"]["name"], 
+				is_production);
 	app.start();
 
 	return 0;

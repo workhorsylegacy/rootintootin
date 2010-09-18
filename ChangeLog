@@ -1,5 +1,6 @@
 * Release 0.7.0
 	* Fixed Bug #636098: 'The ubuntu package does not work on amd64'.
+	* Fixed Bug #598629: 'Make backtraces not show in release'.
 
 2010-09-06 Release 0.6.0
 	* Fixed Bug #600490: 'Make a fast cgi deploy script'.

@@ -97,12 +97,8 @@ class HttpApp {
 	}
 
 	protected string process_request() {
-		try {
-			this.trigger_on_request();
-			return _response;
-		} catch(Exception err) {
-			return "Error" ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
-		}
+		this.trigger_on_request();
+		return _response;
 	}
 
 	protected string on_request_get(Request request) {

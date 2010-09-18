@@ -25,12 +25,16 @@ private import rootintootin_server;
 class RootinTootinAppProcess : RootinTootinApp {
 	private File _output = null;
 	private int _unix_socket_fd;
+	private bool _is_production = false;
 
 	public this(bool is_fcgi, string server_name, 
 				RunnerBase runner, string[Regex][string][string] routes, 
-				string db_host, string db_user, string db_password, string db_name) {
+				string db_host, string db_user, string db_password, string db_name, 
+				bool is_production) {
 		super(is_fcgi, server_name, runner, routes, 
 			db_host, db_user, db_password, db_name);
+
+		_is_production = is_production;
 	}
 
 	public void start() {
@@ -56,8 +60,15 @@ class RootinTootinAppProcess : RootinTootinApp {
 			fd = read_client_fd(_unix_socket_fd);
 			set_fd(fd);
 
-			// Read the request header into the buffer
-			response = process_request();
+			try {
+				// Read the request header into the buffer
+				response = process_request();
+			} catch(Exception err) {
+				if(!_is_production)
+					response = "Error " ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
+				else
+					response = "There was an error";
+			}
 
 			socket_write(fd, response.ptr);
 			socket_close(fd);
@@ -67,8 +78,16 @@ class RootinTootinAppProcess : RootinTootinApp {
 	protected void start_fcgi_loop() {
 		string request;
 		while(fcgi_accept(request)) {
-			// Read the request header into the buffer
-			trigger_on_request(request);
+			try {
+				// Read the request header into the buffer
+				trigger_on_request(request);
+			} catch(Exception err) {
+				_response = "Content-Type: text/plain\r\n\r\n";
+				if(!_is_production)
+					_response ~= "Error " ~ err.msg ~ " " ~ to_s(err.line) ~ " " ~ err.file;
+				else
+					_response ~= "There was an error";
+			}
 
 			// Send the response
 			fcgi_puts(_response);
