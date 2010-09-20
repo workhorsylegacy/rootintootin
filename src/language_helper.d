@@ -33,7 +33,7 @@ private import tango.text.xml.Document;
  *    The default size of of any string buffer.
  * SOURCE
  */
-public static const size_t BUFFER_SIZE = 1024 * 10;
+public const size_t BUFFER_SIZE = 1024 * 10;
 /*******/
 
 /****c* language_helper/string
@@ -106,7 +106,7 @@ public int pow(int x, uint n) {
  *    after   - the string that will replace the matches.
  * SOURCE
  */
-public static string substitute(string value, string before, string after) {
+public string substitute(string value, string before, string after) {
 	return tango.text.Util.substitute(value, before, after);
 }
 /*******/
@@ -122,7 +122,7 @@ public static string substitute(string value, string before, string after) {
  *    start   - the index to start at. The default is zero.
  * SOURCE
  */
-public static size_t index(string value, string match, size_t start=0) {
+public size_t index(string value, string match, size_t start=0) {
 	return tango.text.Util.index!(char)(value, match, start);
 }
 /*******/
@@ -137,7 +137,7 @@ public static size_t index(string value, string match, size_t start=0) {
  *    match   - the part of the string to find.
  * SOURCE
  */
-public static size_t rindex(string value, string match) {
+public size_t rindex(string value, string match) {
 	return tango.text.Util.rindex!(char)(value, match);
 }
 /*******/
@@ -154,7 +154,7 @@ public static size_t rindex(string value, string match) {
  *    returns 1 instead of 0. So we create our own.
  * SOURCE
  */
-public static size_t count(string value, string match) {
+public size_t count(string value, string match) {
 	// Just return 0 if the length is 0
 	if(match.length == 0)
 		return 0;
@@ -189,7 +189,7 @@ unittest {
  *    match   - the part of the string to find.
  * SOURCE
  */
-public static bool contains(string value, string match) {
+public bool contains(string value, string match) {
 	return tango.text.Util.containsPattern!(char)(value, match);
 }
 
@@ -211,7 +211,7 @@ unittest {
  *    separator   - the string that is between the two returned strings.
  * SOURCE
  */
-public static bool pair(string value, string separator, ref string[] pair) {
+public bool pair(string value, string separator, ref string[] pair) {
 	size_t i = index(value, separator);
 	if(i == value.length)
 		return false;
@@ -239,7 +239,7 @@ unittest {
  *    value   - the string to split.
  * SOURCE
  */
-public static string[] split_lines(string value) {
+public string[] split_lines(string value) {
 	return split(value, "\r\n");
 }
 /*******/
@@ -252,7 +252,7 @@ public static string[] split_lines(string value) {
  *    separator   - the string that splits the value.
  * SOURCE
  */
-public static string[] split(string value, string separator) {
+public string[] split(string value, string separator) {
 	string[] retval = new string[count(value, separator)+1];
 	size_t start = 0;
 	size_t value_length = value.length;
@@ -294,7 +294,7 @@ unittest {
  *    value       - the string to trim.
  * SOURCE
  */
-public static string trim(string value) {
+public string trim(string value) {
 	return tango.text.Util.trim(value);
 }
 /*******/
@@ -307,7 +307,7 @@ public static string trim(string value) {
  *    match   - the part of the string to remove.
  * SOURCE
  */
-public static string strip(char[] value, char[] match) {
+public string strip(string value, string match) {
 	string retval = value;
 	retval = tango.text.Util.chopl!(char)(retval, match);
 	retval = tango.text.Util.chopr!(char)(retval, match);
@@ -330,7 +330,7 @@ unittest {
  *    separator   - the part of the string to remove.
  * SOURCE
  */
-public static string join(string[] values, string separator) {
+public string join(string[] values, string separator) {
 	return tango.text.Util.join(values, separator);
 }
 /*******/
@@ -343,7 +343,7 @@ public static string join(string[] values, string separator) {
  *    match      - the string to look for at the start.
  * SOURCE
  */
-public static bool starts_with(string value, string match) {
+public bool starts_with(string value, string match) {
 	if(value is null || match is null)
 		return false;
 
@@ -369,7 +369,7 @@ unittest {
  *    match      - the string to look for at the end.
  * SOURCE
  */
-public static bool ends_with(string value, string match) {
+public bool ends_with(string value, string match) {
 	if(value is null || match is null)
 		return false;
 
@@ -396,7 +396,7 @@ unittest {
  *    after      - the string at the back.
  * SOURCE
  */
-public static string between(string value, string before, string after) {
+public string between(string value, string before, string after) {
 	return split(split(value, before)[1], after)[0];
 }
 /*******/
@@ -410,7 +410,7 @@ public static string between(string value, string before, string after) {
  *    separator     - the string at the front.
  * SOURCE
  */
-public static string before(string value, string separator) {
+public string before(string value, string separator) {
 	size_t i = index(value, separator);
 
 	if(i == value.length)
@@ -429,7 +429,7 @@ public static string before(string value, string separator) {
  *    separator     - the string at the back.
  * SOURCE
  */
-public static string after(string value, string separator) {
+public string after(string value, string separator) {
 	size_t i = index(value, separator);
 
 	if(i == value.length)
@@ -450,7 +450,7 @@ public static string after(string value, string separator) {
  *    separator     - the string at the back.
  * SOURCE
  */
-public static string after_last(string value, string separator) {
+public string after_last(string value, string separator) {
 	size_t i = rindex(value, separator);
 
 	if(i == value.length)
@@ -473,7 +473,7 @@ public static string after_last(string value, string separator) {
  */
 public string rjust(string value, uint width, string pad_char=" ") {
 	int len = width - value.length;
-	char[] retval = new char[width];
+	string retval = new char[width];
 	tango.text.Util.repeat(pad_char, width, retval);
 	retval[len .. length] = value;
 	return retval;
@@ -491,7 +491,7 @@ public string rjust(string value, uint width, string pad_char=" ") {
  */
 public string ljust(string value, uint width, string pad_char=" ") {
 	int len = value.length;
-	char[] retval = new char[width];
+	string retval = new char[width];
 	tango.text.Util.repeat(pad_char, width, retval);
 	retval[0 .. len] = value;
 	return retval;
@@ -517,7 +517,7 @@ public string capitalize(string value) {
  *    Returns a short converted to a string.
  * SOURCE
  */
-public static string to_s(short value) {
+public string to_s(short value) {
 	return tango.text.convert.Integer.toString(value);
 }
 /*******/
@@ -527,7 +527,7 @@ public static string to_s(short value) {
  *    Returns an ushort converted to a string.
  * SOURCE
  */
-public static string to_s(ushort value) {
+public string to_s(ushort value) {
 	return tango.text.convert.Integer.toString(value);
 }
 /*******/
@@ -537,7 +537,7 @@ public static string to_s(ushort value) {
  *    Returns an int converted to a string.
  * SOURCE
  */
-public static string to_s(int value) {
+public string to_s(int value) {
 	return tango.text.convert.Integer.toString(value);
 }
 /*******/
@@ -547,7 +547,7 @@ public static string to_s(int value) {
  *    Returns an uint converted to a string.
  * SOURCE
  */
-public static string to_s(uint value) {
+public string to_s(uint value) {
 	return tango.text.convert.Integer.toString(value);
 }
 /*******/
@@ -557,7 +557,7 @@ public static string to_s(uint value) {
  *    Returns a long converted to a string.
  * SOURCE
  */
-public static string to_s(long value) {
+public string to_s(long value) {
 	return tango.text.convert.Integer.toString(value);
 }
 /*******/
@@ -567,7 +567,7 @@ public static string to_s(long value) {
  *    Returns an ulong converted to a string.
  * SOURCE
  */
-public static string to_s(ulong value) {
+public string to_s(ulong value) {
 	char[66] tmp = void;
 	return tango.text.convert.Integer.format(tmp, cast(long)value, "u").dup;
 }
@@ -578,7 +578,7 @@ public static string to_s(ulong value) {
  *    Returns a float converted to a string.
  * SOURCE
  */
-public static string to_s(float value) {
+public string to_s(float value) {
 	return tango.text.convert.Float.toString(value);
 }
 /*******/
@@ -588,7 +588,7 @@ public static string to_s(float value) {
  *    Returns a double converted to a string.
  * SOURCE
  */
-public static string to_s(double value) {
+public string to_s(double value) {
 	return tango.text.convert.Float.toString(value);
 }
 /*******/
@@ -598,7 +598,7 @@ public static string to_s(double value) {
  *    Returns a real converted to a string.
  * SOURCE
  */
-public static string to_s(real value) {
+public string to_s(real value) {
 	return tango.text.convert.Float.toString(value);
 }
 /*******/
@@ -608,7 +608,7 @@ public static string to_s(real value) {
  *    Returns a bool converted to a string.
  * SOURCE
  */
-public static string to_s(bool value) {
+public string to_s(bool value) {
 	return value ? "true" : "false";
 }
 /*******/
@@ -618,7 +618,7 @@ public static string to_s(bool value) {
  *    Returns a string converted to a string.
  * SOURCE
  */
-public static string to_s(string value) {
+public string to_s(string value) {
 	return value.dup;
 }
 /*******/
@@ -628,7 +628,7 @@ public static string to_s(string value) {
  *    Returns a char converted to a string.
  * SOURCE
  */
-public static string to_s(char value) {
+public string to_s(char value) {
 	string new_value;
 	new_value ~= value;
 	return new_value;
@@ -640,7 +640,7 @@ public static string to_s(char value) {
  *    Returns a FixedPoint converted to a string.
  * SOURCE
  */
-public static string to_s(FixedPoint value) {
+public string to_s(FixedPoint value) {
 	if(value)
 		return value.toString();
 	else
@@ -653,7 +653,7 @@ public static string to_s(FixedPoint value) {
  *    Returns an int converted to a string.
  * SOURCE
  */
-public static int to_int(string value) {
+public int to_int(string value) {
 	return tango.text.convert.Integer.toInt(value);
 }
 /*******/
@@ -663,7 +663,7 @@ public static int to_int(string value) {
  *    Returns an uint converted to a string.
  * SOURCE
  */
-public static uint to_uint(string value) {
+public uint to_uint(string value) {
 	return cast(uint) tango.text.convert.Integer.convert(value);
 }
 /*******/
@@ -673,7 +673,7 @@ public static uint to_uint(string value) {
  *    Returns a short converted to a string.
  * SOURCE
  */
-public static short to_short(string value) {
+public short to_short(string value) {
 	return cast(short) tango.text.convert.Integer.convert(value);
 }
 /*******/
@@ -683,7 +683,7 @@ public static short to_short(string value) {
  *    Returns an ushort converted to a string.
  * SOURCE
  */
-public static ushort to_ushort(string value) {
+public ushort to_ushort(string value) {
 	return cast(ushort) tango.text.convert.Integer.convert(value);
 }
 /*******/
@@ -693,7 +693,7 @@ public static ushort to_ushort(string value) {
  *    Returns a long converted to a string.
  * SOURCE
  */
-public static long to_long(string value) {
+public long to_long(string value) {
 	return tango.text.convert.Integer.toLong(value);
 }
 /*******/
@@ -703,7 +703,7 @@ public static long to_long(string value) {
  *    Returns an ulong converted to a string.
  * SOURCE
  */
-public static ulong to_ulong(string value) {
+public ulong to_ulong(string value) {
 	return tango.text.convert.Integer.convert(value);
 }
 /*******/
@@ -713,7 +713,7 @@ public static ulong to_ulong(string value) {
  *    Returns a float converted to a string.
  * SOURCE
  */
-public static float to_float(string value) {
+public float to_float(string value) {
 	return tango.text.convert.Float.toFloat(value);
 }
 /*******/
@@ -723,7 +723,7 @@ public static float to_float(string value) {
  *    Returns a double converted to a string.
  * SOURCE
  */
-public static double to_double(string value) {
+public double to_double(string value) {
 	return tango.text.convert.Float.parse(value);
 }
 /*******/
@@ -733,7 +733,7 @@ public static double to_double(string value) {
  *    Returns a real converted to a string.
  * SOURCE
  */
-public static real to_real(string value) {
+public real to_real(string value) {
 	return tango.text.convert.Float.parse(value);
 }
 /*******/
@@ -743,7 +743,7 @@ public static real to_real(string value) {
  *    Returns a bool converted to a string.
  * SOURCE
  */
-public static bool to_bool(string value) {
+public bool to_bool(string value) {
 	return value=="true" || value=="1";
 }
 /*******/
@@ -754,7 +754,7 @@ public static bool to_bool(string value) {
  *    Returns a string converted to a FixedPoint.
  * SOURCE
  */
-public static FixedPoint to_FixedPoint(string value) {
+public FixedPoint to_FixedPoint(string value) {
 	try {
 		string[] pair = split(value, ".");
 		if(pair.length == 2) {
@@ -770,28 +770,28 @@ public static FixedPoint to_FixedPoint(string value) {
 
 // FIXME: Should this be changed to aliases?
 // Add alternate named methods
-public static int to_integer(string value) { return to_int(value); }
-public static int to_boolean(string value) { return to_bool(value); }
-public static string to_string(short value) { return to_s(value); }
-public static string to_string(ushort value) { return to_s(value); }
-public static string to_string(int value) { return to_s(value); }
-public static string to_string(uint value) { return to_s(value); }
-public static string to_string(long value) { return to_s(value); }
-public static string to_string(ulong value) { return to_s(value); }
-public static string to_string(float value) { return to_s(value); }
-public static string to_string(double value) { return to_s(value); }
-public static string to_string(real value) { return to_s(value); }
-public static string to_string(bool value) { return to_s(value); }
-public static string to_string(string value) { return to_s(value); }
-public static string to_string(char value) { return to_s(value); }
-public static string to_string(FixedPoint value) { return to_s(value); }
+public int to_integer(string value) { return to_int(value); }
+public int to_boolean(string value) { return to_bool(value); }
+public string to_string(short value) { return to_s(value); }
+public string to_string(ushort value) { return to_s(value); }
+public string to_string(int value) { return to_s(value); }
+public string to_string(uint value) { return to_s(value); }
+public string to_string(long value) { return to_s(value); }
+public string to_string(ulong value) { return to_s(value); }
+public string to_string(float value) { return to_s(value); }
+public string to_string(double value) { return to_s(value); }
+public string to_string(real value) { return to_s(value); }
+public string to_string(bool value) { return to_s(value); }
+public string to_string(string value) { return to_s(value); }
+public string to_string(char value) { return to_s(value); }
+public string to_string(FixedPoint value) { return to_s(value); }
 
 /****f* language_helper/json_to_dict( string )
  *  FUNCTION
  *    Converts a json string into a Dictionary.
  * SOURCE
  */
-public static void json_to_dict(ref Dictionary dict, string json_in_a_string) {
+public void json_to_dict(ref Dictionary dict, string json_in_a_string) {
 	auto json = new Json!(char);
 	json.parse(json_in_a_string);
 	json_to_dict(dict, json.value());
@@ -803,7 +803,7 @@ public static void json_to_dict(ref Dictionary dict, string json_in_a_string) {
  *    Converts a json value into a Dictionary.
  * SOURCE
  */
-public static void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
+public void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
 	switch(value.type) {
 		case Json!(char).Type.Null:
 			dict.value = to_s("null");
@@ -847,7 +847,7 @@ public static void json_to_dict(ref Dictionary dict, Json!(char).Value value) {
  *    Converts an xml string into a Dictionary.
  * SOURCE
  */
-public static void xml_to_dict(ref Dictionary dict, string xml_in_a_string) {
+public void xml_to_dict(ref Dictionary dict, string xml_in_a_string) {
 	auto doc = new Document!(char);
 	doc.parse(xml_in_a_string);
 	xml_to_dict(dict, doc.tree);
@@ -859,7 +859,7 @@ public static void xml_to_dict(ref Dictionary dict, string xml_in_a_string) {
  *    Converts an xml node into a Dictionary.
  * SOURCE
  */
-public static void xml_to_dict(ref Dictionary dict, Document!(char).Node node) {
+public void xml_to_dict(ref Dictionary dict, Document!(char).Node node) {
 	switch(node.type) {
 		case XmlNodeType.Data:
 			dict.value = to_s(node.value);
