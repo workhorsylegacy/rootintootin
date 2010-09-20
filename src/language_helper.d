@@ -192,6 +192,14 @@ unittest {
 public static bool contains(string value, string match) {
 	return tango.text.Util.containsPattern!(char)(value, match);
 }
+
+unittest {
+	assert(contains("abc", "c"));
+	assert(!contains("abc", "z"));
+	assert(!contains("abc", ""));
+	assert(!contains("", "abc"));
+	assert(!contains("", ""));
+}
 /*******/
 
 /****f* language_helper/pair
@@ -212,6 +220,15 @@ public static bool pair(string value, string separator, ref string[] pair) {
 	pair[1] = value[i+separator.length .. length];
 
 	return true;
+}
+
+unittest {
+	string[] _pair = new string[2];
+	assert(pair("abc", "b", _pair));
+	assert(_pair == ["a", "c"]);
+
+	assert(!pair("abc", "z", _pair));
+	assert(_pair == ["a", "c"]);
 }
 /*******/
 
@@ -296,6 +313,13 @@ public static string strip(char[] value, char[] match) {
 	retval = tango.text.Util.chopr!(char)(retval, match);
 	return retval;
 }
+
+unittest {
+	assert(strip(null, null) == null);
+	assert(strip("abc", "") == "abc");
+	assert(strip(" abc ", " ") == "abc");
+	assert(strip(" abc\t ", " ") == "abc\t");
+}
 /*******/
 
 /****f* language_helper/join
@@ -328,6 +352,13 @@ public static bool starts_with(string value, string match) {
 
 	return value[0 .. match.length] == match;
 }
+
+unittest {
+	assert(!starts_with(null, null));
+	assert(starts_with("abc", ""));
+	assert(starts_with("abc", "a"));
+	assert(!starts_with("abc", "b"));
+}
 /*******/
 
 /****f* language_helper/ends_with
@@ -346,6 +377,13 @@ public static bool ends_with(string value, string match) {
 		return false;
 
 	return value[length-match.length .. length] == match;
+}
+
+unittest {
+	assert(!ends_with(null, null));
+	assert(ends_with("abc", ""));
+	assert(ends_with("abc", "c"));
+	assert(!ends_with("abc", "b"));
 }
 /*******/
 
@@ -1196,6 +1234,7 @@ public class Dictionary {
 	}
 	/*******/
 }
+
 
 /****c* language_helper/FixedPoint
  *  NAME
