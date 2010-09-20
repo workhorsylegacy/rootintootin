@@ -498,13 +498,10 @@ class HttpApp {
 		dict["file_path"].value = "uploads/" ~ file_name;
 		dict["file_content_type"].value = content_type;
 
-		// FIXME: File uploads don't work in fcgi mode.
-		if(!_is_fcgi) {
-			// Write the file to disk
-			File file = new File(dict["file_path"].value, File.WriteCreate);
-			file.write(file_data);
-			file.close();
-		}
+		// Write the file to disk
+		File file = new File(dict["file_path"].value, File.WriteCreate);
+		file.write(file_data);
+		file.close();
 	}
 }
 

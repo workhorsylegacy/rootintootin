@@ -40,6 +40,7 @@ directory = config['production']['server']['directory']
 httpd = config['production']['server']['httpd']
 user = config['production']['server']['user']
 httpd = config['production']['server']['httpd']
+port = config['production']['server']['port']
 
 if directory.startswith("~/"):
 	directory = os.path.expanduser(directory)
@@ -60,18 +61,23 @@ build_framework()
 build_server()
 build_application(True)
 
-# Copy the files to the server
+# Make ~/fastcgi empty and accessable by the user
 remove_folder_on_server('~/fastcgi')
 create_folder_on_server('~/fastcgi')
+chown_folder_on_server('~/fastcgi', user)
+
+# Copy the files to the server
 copy_files_to_server('public')
 copy_files_to_server('config')
-copy_files_to_server('application', 'application_new')
-rename_remote_file('application_new', 'application')
+copy_files_to_server('uploads')
+copy_files_to_server('application')
+
+# Make the ~/fastcgi folder belong to thw www-data user
 chown_folder_on_server('~/fastcgi', 'www-data')
 
 # Restart the server
 restart_remote_server()
-print "Lighttpd running in production mode on http://localhost:90"
+print httpd + " running in production mode on http://localhost:" + port
 
 
 

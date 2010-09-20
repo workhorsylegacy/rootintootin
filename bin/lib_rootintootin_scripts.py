@@ -888,7 +888,7 @@ def run_server():
 		pass
 
 def copy_files_to_server(name, new_name=''):
-	sys.stdout.write(("Copying " + name + " ...").ljust(78, ' '))
+	sys.stdout.write(("Copying " + name + " to remote server ...").ljust(78, ' '))
 	sys.stdout.flush()
 
 	command = "scp -r " + user + "@" + ip + ":" + scratch + name + "/ " + directory + new_name
@@ -1020,29 +1020,29 @@ def remove_folder_on_server(name):
 							"Last login:", 
 							"\[sudo\] password for " + user + ":", 
 							"Sorry, try again.", 
-							"", 
 							pexpect.EOF]
 
+	is_running = True
 	had_error = False
-	while True:
+	while is_running:
 		result = child.expect(expected_from_list)
 
 		if result == 0:
 			child.sendline(password)
 		elif result == 1:
 			had_error = True
+			is_running = False
 			child.sendcontrol('c')
 		elif result == 2:
-			child.sendline("sudo rm -rf " + name)
+			child.sendline("sudo rm -rf " + name + ";exit")
 		elif result == 3:
 			child.sendline(password)
 		elif result == 4:
 			had_error = True
+			is_running = False
 			child.sendcontrol('d')
-		elif result == 5:
-			break
 		elif result == len(expected_from_list)-1:
-			break
+			is_running = False
 
 	child.close()
 	if had_error:
@@ -1055,7 +1055,7 @@ def remove_folder_on_server(name):
 		sys.stdout.flush()
 
 def create_folder_on_server(name):
-	sys.stdout.write(("Creatig remote folder " + name + " ...").ljust(78, ' '))
+	sys.stdout.write(("Creating remote folder " + name + " ...").ljust(78, ' '))
 	sys.stdout.flush()
 
 	command = "ssh " + user + "@" + ip
@@ -1066,11 +1066,11 @@ def create_folder_on_server(name):
 							"Last login:", 
 							"\[sudo\] password for " + user + ":", 
 							"Sorry, try again.", 
-							"", 
 							pexpect.EOF]
 
+	is_running = True
 	had_error = False
-	while True:
+	while is_running:
 		result = child.expect(expected_from_list)
 
 		if result == 0:
@@ -1079,16 +1079,14 @@ def create_folder_on_server(name):
 			had_error = True
 			child.sendcontrol('c')
 		elif result == 2:
-			child.sendline("sudo mkdir " + name)
+			child.sendline("sudo mkdir " + name + ";exit")
 		elif result == 3:
 			child.sendline(password)
 		elif result == 4:
 			had_error = True
 			child.sendcontrol('d')
-		elif result == 5:
-			break
 		elif result == len(expected_from_list)-1:
-			break
+			is_running = False
 
 	child.close()
 	if had_error:
@@ -1101,7 +1099,7 @@ def create_folder_on_server(name):
 		sys.stdout.flush()
 
 def chown_folder_on_server(name, chown_user):
-	sys.stdout.write(("Chowning remote folder " + name + " to " + user + " ...").ljust(78, ' '))
+	sys.stdout.write(("Chowning remote folder " + name + " to " + chown_user + " ...").ljust(78, ' '))
 	sys.stdout.flush()
 
 	command = "ssh " + user + "@" + ip
@@ -1112,11 +1110,11 @@ def chown_folder_on_server(name, chown_user):
 							"Last login:", 
 							"\[sudo\] password for " + user + ":", 
 							"Sorry, try again.", 
-							"", 
 							pexpect.EOF]
 
+	is_running = True
 	had_error = False
-	while True:
+	while is_running:
 		result = child.expect(expected_from_list)
 
 		if result == 0:
@@ -1125,16 +1123,14 @@ def chown_folder_on_server(name, chown_user):
 			had_error = True
 			child.sendcontrol('c')
 		elif result == 2:
-			child.sendline("sudo chown -R " + chown_user + " " + name)
+			child.sendline("sudo chown -R " + chown_user + " " + name + ";exit")
 		elif result == 3:
 			child.sendline(password)
 		elif result == 4:
 			had_error = True
 			child.sendcontrol('d')
-		elif result == 5:
-			break
 		elif result == len(expected_from_list)-1:
-			break
+			is_running = False
 
 	child.close()
 	if had_error:
