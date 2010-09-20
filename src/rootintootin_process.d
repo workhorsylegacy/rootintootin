@@ -40,8 +40,8 @@ class RootinTootinAppProcess : RootinTootinApp {
 	public void start() {
 		if(!_is_fcgi) {
 			_unix_socket_fd = create_unix_socket_fd("socket");
-			_output = new File("log", File.WriteCreate);
 		}
+		_output = new File("log", File.WriteCreate);
 
 		_buffer = new char[1024 * 10];
 		_file_buffer = new char[1024 * 10];
@@ -95,11 +95,7 @@ class RootinTootinAppProcess : RootinTootinApp {
 	}
 
 	protected override void write_to_log(string message) {
-		if(_is_fcgi) {
-			Stdout(message).flush;
-		} else {
-			_output.write(message);
-		}
+		_output.write(message);
 	}
 }
 

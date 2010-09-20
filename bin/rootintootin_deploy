@@ -51,6 +51,9 @@ if directory.startswith("~/"):
 # Read the password from stdin
 password = getpass.getpass(user + "@" + ip + "'s password: ")
 
+# FIXME: Move this into each project. That way users can customize 
+# it for their project.
+
 # Build everything
 generate_application_files()
 build_framework()
@@ -58,13 +61,17 @@ build_server()
 build_application(True)
 
 # Copy the files to the server
-deploy_files_to_server('public')
-deploy_files_to_server('config')
-deploy_files_to_server('application', 'application_new')
+remove_folder_on_server('~/fastcgi')
+create_folder_on_server('~/fastcgi')
+copy_files_to_server('public')
+copy_files_to_server('config')
+copy_files_to_server('application', 'application_new')
 rename_remote_file('application_new', 'application')
+chown_folder_on_server('~/fastcgi', 'www-data')
 
 # Restart the server
 restart_remote_server()
+print "Lighttpd running in production mode on http://localhost:90"
 
 
 

@@ -887,8 +887,8 @@ def run_server():
 	except KeyboardInterrupt:
 		pass
 
-def deploy_files_to_server(name, new_name=''):
-	sys.stdout.write(("Deploying " + name + " ...").ljust(78, ' '))
+def copy_files_to_server(name, new_name=''):
+	sys.stdout.write(("Copying " + name + " ...").ljust(78, ' '))
 	sys.stdout.flush()
 
 	command = "scp -r " + user + "@" + ip + ":" + scratch + name + "/ " + directory + new_name
@@ -956,48 +956,6 @@ def rename_remote_file(name, new_name):
 		sys.stdout.write(":)\n")
 		sys.stdout.flush()
 
-def old_restart_remote_server():
-	sys.stdout.write("Restarting remote server ...".ljust(78, ' '))
-	sys.stdout.flush()
-
-	command = 'bash -c "sudo /etc/init.d/' + httpd + ' force-reload"'
-	child = pexpect.spawn(command, timeout=5)
-
-	expected_from_list = ["\[sudo\] password for [\w|\s]*: ",
-					"Sorry, try again.", 
-					"\[ OK \]", 
-					pexpect.EOF]
-
-	still_reading = True
-	error_message = None
-	while still_reading:
-		result = child.expect(expected_from_list)
-
-		if result == 0:
-			#print "sending password"
-			#print child.after
-			child.sendline(password)
-		elif result == 1:
-			still_reading = False
-			error_message = "Invalid user name or password."
-			#print child.after
-		elif result == 2:
-			had_error = False
-			#print "restarted ok"
-			#print child.after
-		elif result == len(expected_from_list)-1:
-			#print child.after
-			still_reading = False
-
-	child.close()
-	if error_message:
-		sys.stdout.write(":(\n")
-		sys.stdout.flush()
-		print error_message + " Exiting ..."
-	else:
-		sys.stdout.write(":)\n")
-		sys.stdout.flush()
-
 def restart_remote_server():
 	sys.stdout.write("Restarting remote server ...".ljust(78, ' '))
 	sys.stdout.flush()
@@ -1024,6 +982,150 @@ def restart_remote_server():
 			child.sendcontrol('c')
 		elif result == 2:
 			child.sendline("sudo /etc/init.d/" + httpd + " force-reload")
+		elif result == 3:
+			child.sendline(password)
+		elif result == 4:
+			had_error = True
+			child.sendcontrol('d')
+		elif result == 5:
+			break
+		elif result == len(expected_from_list)-1:
+			break
+
+	child.close()
+	if had_error:
+		sys.stdout.write(":(\n")
+		sys.stdout.flush()
+		print "Invalid user name or password. Exiting ..."
+		exit()
+	else:
+		sys.stdout.write(":)\n")
+		sys.stdout.flush()
+
+def remove_folder_on_server(name):
+	sys.stdout.write(("Removing remote folder '" + (name or "") + "' ...").ljust(78, ' '))
+	sys.stdout.flush()
+
+	if name is None or len(name.strip()) == 0:
+		sys.stdout.write(":(\n")
+		sys.stdout.flush()
+		print "The name was blank. Exiting ..."
+		exit()
+
+	command = "ssh " + user + "@" + ip
+	child = pexpect.spawn(command, timeout=10)
+
+	expected_from_list = [user + "@" + ip + "'s password:", 
+							"Permission denied, please try again.", 
+							"Last login:", 
+							"\[sudo\] password for " + user + ":", 
+							"Sorry, try again.", 
+							"", 
+							pexpect.EOF]
+
+	had_error = False
+	while True:
+		result = child.expect(expected_from_list)
+
+		if result == 0:
+			child.sendline(password)
+		elif result == 1:
+			had_error = True
+			child.sendcontrol('c')
+		elif result == 2:
+			child.sendline("sudo rm -rf " + name)
+		elif result == 3:
+			child.sendline(password)
+		elif result == 4:
+			had_error = True
+			child.sendcontrol('d')
+		elif result == 5:
+			break
+		elif result == len(expected_from_list)-1:
+			break
+
+	child.close()
+	if had_error:
+		sys.stdout.write(":(\n")
+		sys.stdout.flush()
+		print "Invalid user name or password. Exiting ..."
+		exit()
+	else:
+		sys.stdout.write(":)\n")
+		sys.stdout.flush()
+
+def create_folder_on_server(name):
+	sys.stdout.write(("Creatig remote folder " + name + " ...").ljust(78, ' '))
+	sys.stdout.flush()
+
+	command = "ssh " + user + "@" + ip
+	child = pexpect.spawn(command, timeout=10)
+
+	expected_from_list = [user + "@" + ip + "'s password:", 
+							"Permission denied, please try again.", 
+							"Last login:", 
+							"\[sudo\] password for " + user + ":", 
+							"Sorry, try again.", 
+							"", 
+							pexpect.EOF]
+
+	had_error = False
+	while True:
+		result = child.expect(expected_from_list)
+
+		if result == 0:
+			child.sendline(password)
+		elif result == 1:
+			had_error = True
+			child.sendcontrol('c')
+		elif result == 2:
+			child.sendline("sudo mkdir " + name)
+		elif result == 3:
+			child.sendline(password)
+		elif result == 4:
+			had_error = True
+			child.sendcontrol('d')
+		elif result == 5:
+			break
+		elif result == len(expected_from_list)-1:
+			break
+
+	child.close()
+	if had_error:
+		sys.stdout.write(":(\n")
+		sys.stdout.flush()
+		print "Invalid user name or password. Exiting ..."
+		exit()
+	else:
+		sys.stdout.write(":)\n")
+		sys.stdout.flush()
+
+def chown_folder_on_server(name, chown_user):
+	sys.stdout.write(("Chowning remote folder " + name + " to " + user + " ...").ljust(78, ' '))
+	sys.stdout.flush()
+
+	command = "ssh " + user + "@" + ip
+	child = pexpect.spawn(command, timeout=10)
+
+	expected_from_list = [user + "@" + ip + "'s password:", 
+							"Permission denied, please try again.", 
+							"Last login:", 
+							"\[sudo\] password for " + user + ":", 
+							"Sorry, try again.", 
+							"", 
+							pexpect.EOF]
+
+	had_error = False
+	while True:
+		result = child.expect(expected_from_list)
+
+		if result == 0:
+			child.sendline(password)
+		elif result == 1:
+			had_error = True
+			child.sendcontrol('c')
+		elif result == 2:
+			child.sendline("sudo chown -R " + chown_user + " " + name)
 		elif result == 3:
 			child.sendline(password)
 		elif result == 4:
