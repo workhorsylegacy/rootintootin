@@ -22,7 +22,7 @@
 		},
 		"server" : {
 			"header_max_size" : "8192", 
-			"port" : "4000", 
+			"port" : "90", 
 			"max_waiting_clients" : "100", 
 			"ip" : "127.0.0.1", 
 			"directory" : "~/fastcgi/", 
