@@ -553,10 +553,36 @@ public static size_t rindex(string value, string match) {
  *  INPUTS
  *    value   - the string to look in.
  *    match   - the part of the string to find.
+ *  NOTES
+ *    The tango count function is broken. This:
+ *    tango.text.Util.count!(char)("method", "%")
+ *    returns 1 instead of 0. So we create our own.
  * SOURCE
  */
 public static size_t count(string value, string match) {
-	return tango.text.Util.count!(char)(value, match);
+	// Just return 0 if the length is 0
+	if(match.length == 0)
+		return 0;
+
+	size_t retval = 0;
+	size_t i = 0;
+	while(i < value.length && i + match.length <= value.length) {
+		if(value[i .. i+match.length] == match)
+			retval++;
+		i++;
+	}
+
+	return retval;
+}
+
+unittest {
+	assert(count("", "") == 0);
+	assert(count("abc", "abcdef") == 0);
+	assert(count("method", "") == 0);
+	assert(count("method", "m") == 1);
+	assert(count("methhod", "hh") == 1);
+	assert(count("hhmethhod", "hh") == 2);
+	assert(count("hhmethhodhh", "hh") == 3);
 }
 /*******/
 
@@ -615,7 +641,7 @@ public static string[] split_lines(string value) {
  * SOURCE
  */
 public static string[] split(string value, string separator) {
-	string[] retval = new string[count(value, separator)];
+	string[] retval = new string[count(value, separator)+1];
 	size_t start = 0;
 	size_t value_length = value.length;
 	size_t separator_length = separator.length;
@@ -638,6 +664,14 @@ public static string[] split(string value, string separator) {
 	}
 
 	return retval;
+}
+
+unittest {
+	assert(split("abc", "") == ["abc"]);
+	assert(split("abc", "z") == ["abc"]);
+	assert(split("abc", "b") == ["a", "c"]);
+	assert(split("abc", "a") == ["", "bc"]);
+	assert(split("abc", "c") == ["ab", ""]);
 }
 /*******/
 
@@ -1569,3 +1603,5 @@ template Array(T) {
 	/*******/
 }
 
+//void main() {}
+// clear; ldc -g language_helper.d -unittest -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a
