@@ -1,4 +1,5 @@
 * Release 0.7.0
+	* Fixed Bug #635161: 'Sessions ids are always unknown'.
 	* Fixed Bug #643251: 'Crud put and delete no longer work'.
 	* Fixed Bug #632083: 'Apps under fast cgi can't log or create files'.
 	* Fixed Bug #636098: 'The ubuntu package does not work on amd64'.

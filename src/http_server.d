@@ -330,20 +330,18 @@ class HttpApp {
 		}
 
 		// Copy the modified session back to the sessions
-		if(request._sessions.length > 0)
-			_sessions[hashed_session_id] = request._sessions;
+		_sessions[hashed_session_id] = request._sessions;
 
 		// FIXME: this prints out all the values we care about
 		/*
-		Stdout.format("Total params: {}\n", request._params.length).flush;
-		foreach(string name, string value ; request._params) {
-			Stdout.format("\t{} => {}\n", name, value).flush;
+		this.write_to_log("Sessions { :\n");
+		foreach(string n, string[string] values ; _sessions) {
+			this.write_to_log("\t" ~ n ~ "\n");
+			foreach(string name, string value ; values) {
+				this.write_to_log("\t\t" ~ name ~ " => " ~ value ~ "\n");
+			}
 		}
-
-		Stdout.format("Total cookies: {}\n", _cookies.length).flush;
-		foreach(string name, string value ; _cookies) {
-			Stdout.format("\t{} => {}\n", name, value).flush;
-		}
+		this.write_to_log("}\n");
 		*/
 	}
 

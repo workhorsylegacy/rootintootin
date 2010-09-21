@@ -18,6 +18,13 @@
 
 private import language_helper;
 
+private import tango.io.Stdout;
+
+private import tango.math.random.engines.Twister;
+private import tango.time.chrono.Gregorian;
+private import tango.time.WallClock;
+private import tango.time.Clock;
+
 private import tango.util.digest.Digest;
 private import tango.util.digest.Sha256;
 private import tango.util.encode.Base64;
@@ -228,6 +235,16 @@ public class Helper {
 		string encodebuf = new char[tango.util.encode.Base64.allocateEncodeSize(encoded)];
 		return tango.util.encode.Base64.encode(encoded, encodebuf);
 	}
+
+	unittest {
+		string session_id = Helper.hash_and_base64("1", "secret");
+		string hashed_session_id = Helper.escape(session_id);
+		string unhashed_session_id = Helper.unescape(hashed_session_id);
+
+		assert(session_id, "1");
+		assert(hashed_session_id, "pLl3XK16GbhWPs9BmUho9Q73VAOllCeIsVQQMFvnYr4%3D");
+		assert(unhashed_session_id, "1");
+	}
 	/*******/
 
 	public static this() {
@@ -330,4 +347,5 @@ public class Helper {
 	/*******/
 }
 
-
+//void main() {}
+// clear; ldc -g helper.d language_helper.d -unittest -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a
