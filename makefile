@@ -16,9 +16,6 @@ remove:
 	rm -f /usr/bin/rootintootin_deploy
 	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
 	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
-	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin.pyc
-	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.pyc
-	rm -f /usr/local/lib/python2.6/dist-packages/rootintootin-?.?.?.egg-info
 
 install: remove
 	cp -R . /usr/share/rootintootin/
@@ -33,19 +30,16 @@ install: remove
 	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 	ln -s /usr/share/rootintootin/bin/rootintootin_deploy /usr/bin/rootintootin_deploy
-	cd bin; python setup.py install
-	rm -rf bin/build/
+	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
+	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
 
 dev: remove
 	ln -s `pwd` /usr/share/rootintootin
-	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/share/pyshared/lib_rootintootin.py
-	ln -s /usr/share/rootintootin/bin/rootintootin-0.7.0.egg-info /usr/share/pyshared/rootintootin-0.7.0.egg-info
-	ln -s /usr/share/rootintootin/bin/python-rootintootin /usr/share/pyshared-data/python-rootintootin
 	ln -s /usr/share/rootintootin/bin/rootintootin /usr/bin/rootintootin
 	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 	ln -s /usr/share/rootintootin/bin/rootintootin_deploy /usr/bin/rootintootin_deploy
-
 	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
 	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
+
 
