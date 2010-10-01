@@ -21,6 +21,44 @@ public import db;
 private import helper;
 private import http_server;
 
+string find(Condition...)(Condition conditions) {
+	string[] retval;
+	foreach(condition; conditions)
+		retval ~= condition._value;
+
+	return join(retval, " ") ~ ";";
+}
+
+Condition where(T, A...)(T query, A values) {
+	string[] retval;
+
+	size_t i = 0;
+	string[] parts = split(query, "?");
+	foreach(value; values) {
+		retval ~= parts[i++];
+		// FIXME: Sanitize this as it is untrusted.
+		retval ~= to_s(value);
+	}
+	retval ~= parts[i++];
+	return new Condition("WHERE " ~ join(retval, ""));
+}
+
+Condition group_by(string value) {
+	return new Condition("GROUP BY " ~ value);
+}
+
+Condition limit(int value) {
+	return new Condition("LIMIT " ~ to_s(value));
+}
+
+public class Condition {
+	public string _value;
+
+	public this(string value) {
+		_value = value;
+	}
+}
+
 // FIXME: Rename this to ResourceRunnerBase
 // FIXME: Remove the id argument because it is duplicating the id in the params.
 // FIXME: Remove the events_to_trigger argument.
