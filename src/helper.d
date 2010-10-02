@@ -237,13 +237,12 @@ public class Helper {
 	}
 
 	unittest {
-		string session_id = Helper.hash_and_base64("1", "secret");
-		string hashed_session_id = Helper.escape(session_id);
-		string unhashed_session_id = Helper.unescape(hashed_session_id);
-
-		assert(session_id, "1");
-		assert(hashed_session_id, "pLl3XK16GbhWPs9BmUho9Q73VAOllCeIsVQQMFvnYr4%3D");
-		assert(unhashed_session_id, "1");
+		describe("helper#hash_and_base64", 
+			it("Should hash and base64 the string", function() {
+				string session_id = Helper.hash_and_base64("1", "secret");
+				assert(session_id == "pLl3XK16GbhWPs9BmUho9Q73VAOllCeIsVQQMFvnYr4=");
+			})
+		);
 	}
 	/*******/
 
@@ -347,5 +346,3 @@ public class Helper {
 	/*******/
 }
 
-//void main() {}
-// clear; ldc -g helper.d language_helper.d -unittest -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a

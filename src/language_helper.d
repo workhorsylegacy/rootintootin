@@ -214,7 +214,7 @@ public size_t count(string value, string match) {
 }
 
 unittest {
-	describe("count", 
+	describe("language_helper#count", 
 		it("Should not find blanks", function() {
 			assert(count("", "") == 0);
 		}),
@@ -234,7 +234,7 @@ unittest {
 			assert(count("methhod", "hh") == 1);
 		}),
 		it("Should find multiple matches", function() {
-			assert(count("hhmethhod", "hhn") == 2);
+			assert(count("hhmethhod", "hh") == 2);
 		})
 	);
 }
@@ -253,11 +253,23 @@ public bool contains(string value, string match) {
 }
 
 unittest {
-	assert(contains("abc", "c"));
-	assert(!contains("abc", "z"));
-	assert(!contains("abc", ""));
-	assert(!contains("", "abc"));
-	assert(!contains("", ""));
+	describe("language_helper#contains", 
+		it("Should not find blanks", function() {
+			assert(!contains("", ""));
+		}),
+		it("Should find single matches in the front", function() {
+			assert(contains("abc", "c"));
+		}),
+		it("Should not find matches that are not there", function() {
+			assert(!contains("abc", "z"));
+		}),
+		it("Should not find blank matches", function() {
+			assert(!contains("abc", ""));
+		}),
+		it("Should not find anythin in a blank value", function() {
+			assert(!contains("", "abc"));
+		})
+	);
 }
 /*******/
 
@@ -282,12 +294,18 @@ public bool pair(string value, string separator, ref string[] pair) {
 }
 
 unittest {
-	string[] _pair = new string[2];
-	assert(pair("abc", "b", _pair));
-	assert(_pair == ["a", "c"]);
-
-	assert(!pair("abc", "z", _pair));
-	assert(_pair == ["a", "c"]);
+	describe("language_helper#pair", 
+		it("Should split the string in two parts", function() {
+			string[] _pair = new string[2];
+			assert(pair("abc", "b", _pair));
+			assert(_pair == ["a", "c"]);
+		}),
+		it("Should not split when the separator is not found", function() {
+			string[] _pair = new string[2];
+			assert(!pair("abc", "z", _pair));
+			assert(_pair == ["", ""]);
+		})
+	);
 }
 /*******/
 
@@ -338,11 +356,26 @@ public string[] split(string value, string separator) {
 }
 
 unittest {
-	assert(split("abc", "") == ["abc"]);
-	assert(split("abc", "z") == ["abc"]);
-	assert(split("abc", "b") == ["a", "c"]);
-	assert(split("abc", "a") == ["", "bc"]);
-	assert(split("abc", "c") == ["ab", ""]);
+	describe("language_helper#split", 
+		it("Should return the value if the separator is blank", function() {
+			assert(split("abc", "") == ["abc"]);
+		}),
+		it("Should return the value if the separator is not found", function() {
+			assert(split("abc", "z") == ["abc"]);
+		}),
+		it("Should split the middle", function() {
+			assert(split("abc", "b") == ["a", "c"]);
+		}),
+		it("Should split the tail", function() {
+			assert(split("abc", "a") == ["", "bc"]);
+		}),
+		it("Should split the head", function() {
+			assert(split("abc", "c") == ["ab", ""]);
+		}),
+		it("Should split multiple strings when multiple separators are found", function() {
+			assert(split("abababababa", "b") == ["a", "a", "a", "a", "a", "a"]);
+		})
+	);
 }
 /*******/
 
@@ -374,10 +407,23 @@ public string strip(string value, string match) {
 }
 
 unittest {
-	assert(strip(null, null) == null);
-	assert(strip("abc", "") == "abc");
-	assert(strip(" abc ", " ") == "abc");
-	assert(strip(" abc\t ", " ") == "abc\t");
+	describe("language_helper#strip", 
+		it("Should return null on null arguemnts", function() {
+			assert(strip(null, null) == null);
+		}),
+		it("Should return the value if the match is not found", function() {
+			assert(strip("abc", "") == "abc");
+		}),
+		it("Should strip matches from the sides", function() {
+			assert(strip(" abc ", " ") == "abc");
+		}),
+		it("Should only strip one match from the sides", function() {
+			assert(strip("  abc  ", " ") == " abc ");
+		}),
+		it("Should ignore other white space on space strip", function() {
+			assert(strip(" abc\t ", " ") == "abc\t");
+		})
+	);
 }
 /*******/
 
@@ -413,10 +459,20 @@ public bool starts_with(string value, string match) {
 }
 
 unittest {
-	assert(!starts_with(null, null));
-	assert(starts_with("abc", ""));
-	assert(starts_with("abc", "a"));
-	assert(!starts_with("abc", "b"));
+	describe("language_helper#strip", 
+		it("Should return false on null arguemnts", function() {
+			assert(!starts_with(null, null));
+		}),
+		it("Should return true on blank match", function() {
+			assert(starts_with("abc", ""));
+		}),
+		it("Should return true if the start matches", function() {
+			assert(starts_with("abc", "a"));
+		}),
+		it("Should return false if the start does not match", function() {
+			assert(!starts_with("abc", "b"));
+		})
+	);
 }
 /*******/
 
@@ -439,10 +495,20 @@ public bool ends_with(string value, string match) {
 }
 
 unittest {
-	assert(!ends_with(null, null));
-	assert(ends_with("abc", ""));
-	assert(ends_with("abc", "c"));
-	assert(!ends_with("abc", "b"));
+	describe("language_helper#strip", 
+		it("Should return false on null arguemnts", function() {
+			assert(!ends_with(null, null));
+		}),
+		it("Should return true on blank match", function() {
+			assert(ends_with("abc", ""));
+		}),
+		it("Should return true if the end matches", function() {
+			assert(ends_with("abc", "c"));
+		}),
+		it("Should return false if the end does not match", function() {
+			assert(!ends_with("abc", "b"));
+		})
+	);
 }
 /*******/
 
@@ -1563,141 +1629,148 @@ public class FixedPoint {
 	/*******/
 
 	unittest {
-		bool has_thrown = false;
+		describe("language_helper#FixedPoint", 
+			it("Should have the properties return the same values from the constructor", function() {
+				auto a = new FixedPoint(11, 3, 10, 2);
+				assert(a.precision == 11);
+				assert(a.scale == 3);
+				assert(a.max_scale_width == 2);
+				assert(a.max_precision_width == 10);
+				assert(a.max_scale == 99);
+			}),
+			it("Should have properties working with nagative numbers", function() {
+				auto a = new FixedPoint(-9, 4, 10, 2);
+				assert(a.precision == -9);
+				assert(a.scale == 4);
+				assert(a.max_scale_width == 2);
+				assert(a.max_precision_width == 10);
+				assert(a.max_scale == 99);
+			}),
+			it("Should convert to other data types", function() {
+				auto a = new FixedPoint(11, 3, 10, 2);
+				assert(a.toDouble == 11.03);
+				assert(a.toLong == 11);
+				assert(a.toString == "11.03");
+			}),
+			it("Should convert to other data types with negative numbers", function() {
+				auto a = new FixedPoint(-9, 4, 10, 2);
+				assert(a.toDouble == -9.04);
+				assert(a.toLong == -9);
+				assert(a.toString == "-9.04");
+			}),
+			it("Should work with += FixedPoint", function() {
+				auto a = new FixedPoint(11, 3, 10, 2);
+				auto b = new FixedPoint(34, 1, 10, 2);
+				a += b;
+				assert(a == 45.04);
 
-		// Test properties
-		auto a = new FixedPoint(11, 3, 10, 2);
-		assert(a.precision == 11, to_s(a.precision) ~ " != 11");
-		assert(a.scale == 3, to_s(a.scale) ~ " != 3");
-		assert(a.max_scale_width == 2, to_s(a.max_scale_width) ~ " != 2");
-		assert(a.max_precision_width == 10, to_s(a.max_precision_width) ~ " != 10");
-		assert(a.max_scale == 99, to_s(a.max_scale) ~ " != 99");
-
-		// Test properties negative
-		a = new FixedPoint(-9, 4, 10, 2);
-		assert(a.precision == -9, to_s(a.precision) ~ " != -9");
-		assert(a.scale == 4, to_s(a.scale) ~ " != 4");
-		assert(a.max_scale_width == 2, to_s(a.max_scale_width) ~ " != 2");
-		assert(a.max_precision_width == 10, to_s(a.max_precision_width) ~ " != 10");
-		assert(a.max_scale == 99, to_s(a.max_scale) ~ " != 99");
-
-		// Test converters
-		a = new FixedPoint(11, 3, 10, 2);
-		assert(a.toDouble == 11.03, to_s(a.toDouble) ~ " != 11.03");
-		assert(a.toLong == 11, to_s(a.toLong) ~ " != 11");
-		assert(a.toString ==  "11.03", a.toString ~ " != 11.03");
-
-		// Test converters negative
-		a = new FixedPoint(-9, 4, 10, 2);
-		assert(a.toDouble == -9.04, to_s(a.toDouble) ~ " != -9.04");
-		assert(a.toLong == -9, to_s(a.toLong) ~ " != -9");
-		assert(a.toString ==  "-9.04", a.toString ~ " != -9.04");
-
-		// Test += FixedPoint
-		a = new FixedPoint(11, 3, 10, 2);
-		auto b = new FixedPoint(34, 1, 10, 2);
-		a += b;
-		assert(a == 45.04, a.toString ~ " != 45.04");
-
-		// Test += FixedPoint
-		auto c = new FixedPoint(12, 99, 10, 2);
-		a += c;
-		assert(a == 58.03, a.toString ~ " != 58.03");
-
-		// Test += FixedPoint with round
-		auto d = new FixedPoint(12, 99, 10, 2);
-		a += d;
-		assert(a == 71.02, a.toString ~ " != 71.02");
-
-		// Test += int
-		int e = 1;
-		a += e;
-		assert(a == 72.02, a.toString ~ " != 72.02");
-
-		// Test += float
-		float f = 3.02;
-		a += f;
-		assert(a == 75.04, a.toString ~ " != 75.04");
-
-		// Test += float with round
-		float g = 2.99;
-		a += g;
-		assert(a == 78.03, a.toString ~ " != 78.03");
-
-		// Test += double
-		double h = 1.1;
-		a += h;
-		assert(a == 79.13, a.toString ~ " != 79.13");
-
-		// Test += double with round
-		double i = 1.99;
-		a += i;
-		assert(a == 81.12, a.toString ~ " != 81.12");
-
-		// Test += FixedPoint negative
-		b = new FixedPoint(-13, 5, 10, 2);
-		a += b;
-		assert(a == 68.07, a.toString ~ " != 68.07");
-
-		// Test -= FixedPoint
-		b = new FixedPoint(13, 5, 10, 2);
-		a -= b;
-		assert(a == 55.02, a.toString ~ " != 55.02");
-
-		// Test -= FixedPoint negative
-		b = new FixedPoint(-13, 4, 10, 2);
-		a -= b;
-		assert(a == 68.06, a.toString ~ " != 68.06");
-
-		// Test += double negative
-		i = -1.99;
-		a  = new FixedPoint(68, 6, 10, 2);
-		a += i;
-		assert(a == 66.07, a.toString ~ " != 66.07");
-
-		// Precision overflow
-		i = 1;
-		a = new FixedPoint(99, 0, 2, 1);
-		a += i;
-		assert(a == 99.0, a.toString ~ " != 99.0");
-
-		// Make sure the max_precision_width breaks at zero
-		has_thrown = false;
-		try {
-			auto j = new FixedPoint(0, 0, 1, 0);
-		} catch(Exception err) {
-			has_thrown = true;
-		}
-		assert(has_thrown == true, "FixedPoint max_precision_width did not break at 0.");
-
-		// Make sure the max_scale_width breaks at zero
-		has_thrown = false;
-		try {
-			auto k = new FixedPoint(0, 0, 0, 1);
-		} catch(Exception err) {
-			has_thrown = true;
-		}
-		assert(has_thrown == true, "FixedPoint max_scale_width did not break at 0.");
-
-		// Make sure the max_precision_width breaks at > 19
-		has_thrown = false;
-		try {
-			auto l = new FixedPoint(0, 0, 20, 1);
-		} catch(Exception err) {
-			has_thrown = true;
-		}
-		assert(has_thrown == true, "FixedPoint max_precision_width did not break at > 19.");
-
-		// Make sure the max_scale_width breaks at > 19
-		has_thrown = false;
-		try {
-			auto m = new FixedPoint(0, 0, 1, 20);
-		} catch(Exception err) {
-			has_thrown = true;
-		}
-		assert(has_thrown == true, "FixedPoint max_scale_width did not break at > 19.");
+				auto c = new FixedPoint(12, 99, 10, 2);
+				a += c;
+				assert(a == 58.03);
+			}),
+			it("Should round properly with += FixedPoint", function() {
+				auto d = new FixedPoint(12, 99, 10, 2);
+				auto a = new FixedPoint(58, 3, 10, 2);
+				a += d;
+				assert(a == 71.02);
+			}),
+			it("Should += with int", function() {
+				auto a = new FixedPoint(71, 2, 10, 2);
+				int e = 1;
+				a += e;
+				assert(a == 72.02);
+			}),
+			it("Should += with float", function() {
+				auto a = new FixedPoint(72, 2, 10, 2);
+				float f = 3.02;
+				a += f;
+				assert(a == 75.04);
+			}),
+			it("Should round properly with += float", function() {
+				auto a = new FixedPoint(75, 4, 10, 2);
+				float g = 2.99;
+				a += g;
+				assert(a == 78.03);
+			}),
+			it("Should += double", function() {
+				auto a = new FixedPoint(78, 3, 10, 2);
+				double h = 1.1;
+				a += h;
+				assert(a == 79.13);
+			}),
+			it("Should round properly with += double", function() {
+				auto a = new FixedPoint(79, 13, 10, 2);
+				double i = 1.99;
+				a += i;
+				assert(a == 81.12);
+			}),
+			it("Should += negative FixedPoint", function() {
+				auto a = new FixedPoint(81, 12, 10, 2);
+				auto b = new FixedPoint(-13, 5, 10, 2);
+				a += b;
+				assert(a == 68.07);
+			}),
+			it("Should -= FixedPoint", function() {
+				auto a = new FixedPoint(68, 7, 10, 2);
+				auto b = new FixedPoint(13, 5, 10, 2);
+				a -= b;
+				assert(a == 55.02);
+			}),
+			it("Should -= negative FixedPoint", function() {
+				auto a = new FixedPoint(55, 2, 10, 2);
+				auto b = new FixedPoint(-13, 4, 10, 2);
+				a -= b;
+				assert(a == 68.06);
+			}),
+			it("Should += negative double", function() {
+				auto a  = new FixedPoint(68, 6, 10, 2);
+				double i = -1.99;
+				a += i;
+				assert(a == 66.07);
+			}),
+			it("Should not overflow the precision", function() {
+				auto a = new FixedPoint(99, 0, 2, 1);
+				double i = 1;
+				a += i;
+				assert(a == 99.0);
+			}),
+			it("Should not allow a max_precision_width of zero", function() {
+				bool has_thrown = false;
+				try {
+					auto j = new FixedPoint(0, 0, 1, 0);
+				} catch(Exception err) {
+					has_thrown = true;
+				}
+				assert(has_thrown == true);
+			}),
+			it("Should not allow a max_scale_width of zero", function() {
+				bool has_thrown = false;
+				try {
+					auto k = new FixedPoint(0, 0, 0, 1);
+				} catch(Exception err) {
+					has_thrown = true;
+				}
+				assert(has_thrown == true);
+			}),
+			it("Should not allow a max_precision_width > 19", function() {
+				bool has_thrown = false;
+				try {
+					auto l = new FixedPoint(0, 0, 20, 1);
+				} catch(Exception err) {
+					has_thrown = true;
+				}
+				assert(has_thrown == true);
+			}),
+			it("Should not allow a max_scale_width > 19", function() {
+				bool has_thrown = false;
+				try {
+					auto m = new FixedPoint(0, 0, 1, 20);
+				} catch(Exception err) {
+					has_thrown = true;
+				}
+				assert(has_thrown == true);
+			})
+		);
 	}
 }
 
-//void main() {}
-// clear; ldc -g language_helper.d -unittest -I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a
