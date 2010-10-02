@@ -46,6 +46,49 @@ public const size_t BUFFER_SIZE = 1024 * 10;
 public alias char[] string;
 /*******/
 
+private struct TestPair {
+	public string message;
+	public void function() func;
+}
+
+private class Test {
+	public static string[][string] _fail_messages;
+	public static ulong _fail_count;
+	public static ulong _success_count;
+}
+
+public void describe(TestPair...)(string message, TestPair pairs) {
+	foreach(pair; pairs) {
+		try {
+			pair.func();
+			Test._success_count++;
+		} catch(tango.core.Exception.AssertException err) {
+			Test._fail_messages[message] ~= "\"" ~ pair.message ~ "\" " ~ err.file ~ "(" ~ to_s(err.line) ~ ")";
+			Test._fail_count++;
+		}
+	}
+}
+
+public TestPair it(string message, void function() func) {
+	TestPair retval;
+	retval.message = message;
+	retval.func = func;
+
+	return retval;
+}
+
+public void print_test_status() {
+	Stdout("Unit Test Results:").newline.flush;
+	Stdout.format("{} total, {} successful, {} failed", Test._success_count + Test._fail_count, Test._success_count, Test._fail_count).newline.flush;
+
+	foreach(a, b; Test._fail_messages) {
+		Stdout.format("{}", a).newline.flush;
+		foreach(c; b) {
+			Stdout.format("- {}", c).newline.flush;
+		}
+	}
+}
+
 /****f* language_helper/pow 1
  *  FUNCTION
  *    Returns x to the power of n.
@@ -171,13 +214,29 @@ public size_t count(string value, string match) {
 }
 
 unittest {
-	assert(count("", "") == 0);
-	assert(count("abc", "abcdef") == 0);
-	assert(count("method", "") == 0);
-	assert(count("method", "m") == 1);
-	assert(count("methhod", "hh") == 1);
-	assert(count("hhmethhod", "hh") == 2);
-	assert(count("hhmethhodhh", "hh") == 3);
+	describe("count", 
+		it("Should not find blanks", function() {
+			assert(count("", "") == 0);
+		}),
+		it("Should not find blank matches", function() {
+			assert(count("method", "") == 0);
+		}),
+		it("Should not find similar but different strings", function() {
+			assert(count("abc", "abcdef") == 0);
+		}),
+		it("Should find single matches in the front", function() {
+			assert(count("method", "m") == 1);
+		}),
+		it("Should find single matches in the back", function() {
+			assert(count("method", "d") == 1);
+		}),
+		it("Should find single matches in the middle", function() {
+			assert(count("methhod", "hh") == 1);
+		}),
+		it("Should find multiple matches", function() {
+			assert(count("hhmethhod", "hhn") == 2);
+		})
+	);
 }
 /*******/
 

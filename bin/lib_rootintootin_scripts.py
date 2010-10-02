@@ -430,7 +430,7 @@ def _generate_layouts():
 			out_file.write(fragment)
 		out_file.close()
 
-def _generate_application(version, routes, table_map, reference_map):
+def _generate_application(version, routes, table_map, reference_map, include_unit_test):
 	generator = Generator()
 	generator.set_mode(mode)
 
@@ -545,6 +545,15 @@ def _generate_application(version, routes, table_map, reference_map):
 	db_user = config[mode]['database']['user']
 	db_password = config[mode]['database']['password']
 	db_name = config[mode]['database']['name']
+
+	if include_unit_test:
+		out_file.write(
+			"int main(){\n" + 
+			"	print_test_status();\n" + 
+			"	return 0;\n" + 
+			"}\n\n"
+		)
+		return
 
 	# Write the main function header
 	out_file.write(
@@ -706,7 +715,7 @@ def load_configurations():
 	with open('config/config.json', 'r') as f:
 		globals()['config'] = json.loads(f.read())
 
-def generate_application_files():
+def generate_application_files(include_unit_test = False):
 	# Get the Rootin Tootin version
 	f = open(scratch+'version')
 	version = f.read().strip()
@@ -717,9 +726,9 @@ def generate_application_files():
 	_generate_controllers()
 	_generate_layouts()
 	_generate_views(routes)
-	_generate_application(version, routes, table_map, reference_map)
+	_generate_application(version, routes, table_map, reference_map, include_unit_test)
 
-def build_framework():
+def build_framework(include_unit_test = False):
 	sys.stdout.write("Rebuilding framework ...".ljust(78, ' '))
 	sys.stdout.flush()
 
@@ -732,7 +741,7 @@ def build_framework():
 	result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
 	result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
 	result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
-	command = "ldc -g -w -c language_helper.d helper.d rootintootin.d " + \
+	command = "ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -c language_helper.d helper.d rootintootin.d " + \
 			"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
 			"rootintootin_process.d app_builder.d " + \
 			" db.d file_system.d regex.d shared_memory.d socket.d fcgi.d " + tango
@@ -779,7 +788,7 @@ def build_server():
 		print compile_error
 		exit()
 
-def build_application(is_first_loop):
+def build_application(is_first_loop, include_unit_test = False):
 	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
 	sys.stdout.flush()
 
@@ -853,7 +862,7 @@ def build_application(is_first_loop):
 
 	# Build the app
 	command = \
-		"ldc -g -w -of application_new application.d " + \
+		"ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -of application_new application.d " + \
 		str.join(' ', files) + \
 		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" -L=\"-lfcgi\" " + \
 		tango
@@ -881,6 +890,15 @@ def run_server():
 		process = subprocess.Popen([scratch + "server", mode, pwd])
 	elif mode == "production":
 		process = subprocess.Popen([scratch + "server", mode])
+
+	try:
+		process.wait()
+	except KeyboardInterrupt:
+		pass
+
+def run_application_tests():
+	# Run the application in its own process
+	process = subprocess.Popen([scratch + "application"])
 
 	try:
 		process.wait()

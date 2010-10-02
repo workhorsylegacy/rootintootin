@@ -14,6 +14,7 @@ remove:
 	rm -f /usr/bin/rootintootin_run
 	rm -f /usr/bin/rootintootin_gen
 	rm -f /usr/bin/rootintootin_deploy
+	rm -f /usr/bin/rootintootin_test
 	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
 	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
 
@@ -30,6 +31,7 @@ install: remove
 	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 	ln -s /usr/share/rootintootin/bin/rootintootin_deploy /usr/bin/rootintootin_deploy
+	ln -s /usr/share/rootintootin/bin/rootintootin_test /usr/bin/rootintootin_test
 	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
 	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
 
@@ -39,6 +41,7 @@ dev: remove
 	ln -s /usr/share/rootintootin/bin/rootintootin_run /usr/bin/rootintootin_run
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 	ln -s /usr/share/rootintootin/bin/rootintootin_deploy /usr/bin/rootintootin_deploy
+	ln -s /usr/share/rootintootin/bin/rootintootin_test /usr/bin/rootintootin_test
 	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
 	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
 
