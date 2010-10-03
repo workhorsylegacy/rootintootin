@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import os, sys, shutil, signal, subprocess
-import threading, time
+import threading, time, distutils.core
 import errno
 import functools
 import commands
@@ -650,9 +650,9 @@ def copy_files_to_scratch():
 	# Copy all the framework files into a scratch dir
 	if not os.path.exists(rootintootin_dir):
 		os.mkdir(rootintootin_dir)
-	if os.path.exists(scratch):
-		shutil.rmtree(scratch)
-	shutil.copytree(os.sys.path[0]+'/../src/', scratch)
+
+	# Copy the project files into the scratch dir
+	distutils.dir_util.copy_tree(os.sys.path[0]+'/../src/', scratch)
 
 	# Remove all the old app files
 	if os.path.exists(scratch+'app/'):
@@ -732,27 +732,68 @@ def build_framework(include_unit_test = False):
 	sys.stdout.write("Rebuilding framework ...".ljust(78, ' '))
 	sys.stdout.flush()
 
-	# Compile the framework into object files
-	result = ''
-	result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
-	result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
-	result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
-	result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
-	result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
-	result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
-	result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
-	command = "ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -c language_helper.d helper.d rootintootin.d " + \
-			"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
-			"rootintootin_process.d app_builder.d " + \
-			" db.d file_system.d regex.d shared_memory.d socket.d fcgi.d " + tango
-	result += commands.getoutput(command)
+	# FIXME: This needs to remove any .o, .a, .c, and .d files that are
+	# not in the project, but in the scratch dir.
 
-	# Combine the framework into a static library
-	command = "ar rcs rootintootin.a language_helper.o helper.o " + \
-			"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
-			"tcp_server.o rootintootin_process.o app_builder.o " + \
-			"db.o file_system.o regex.o shared_memory.o socket.o fcgi.o"
-	result += commands.getoutput(command)
+	# Compile the libs into object files
+	is_library_changed = False
+	result = ''
+	if is_file_newer("db.c", "db.o"):
+		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
+		is_library_changed = True
+
+	if is_file_newer("file_system.c", "file_system.o"):
+		result += commands.getoutput("gcc -g -c -Wall -Werror file_system.c -o file_system.o")
+		is_library_changed = True
+
+	if is_file_newer("regex.c", "regex.o"):
+		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
+		is_library_changed = True
+
+	if is_file_newer("shared_memory.c", "shared_memory.o"):
+		result += commands.getoutput("gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o")
+		is_library_changed = True
+
+	if is_file_newer("socket.c", "socket.o"):
+		result += commands.getoutput("gcc -g -c -Wall -Werror socket.c -o socket.o")
+		is_library_changed = True
+
+	if is_file_newer("fcgi.c", "fcgi.o"):
+		result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
+		is_library_changed = True
+
+	if is_library_changed:
+		# Combine the libs into a static library
+		result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
+
+	if is_file_newer("language_helper.d", "language_helper.o") or \
+		is_file_newer("helper.d", "helper.o") or \
+		is_file_newer("rootintootin.d", "rootintootin.o") or \
+		is_file_newer("ui.d", "ui.o") or \
+		is_file_newer("rootintootin_server.d", "rootintootin_server.o") or \
+		is_file_newer("http_server.d", "http_server.o") or \
+		is_file_newer("tcp_server.d", "tcp_server.o") or \
+		is_file_newer("rootintootin_process.d", "rootintootin_process.o") or \
+		is_file_newer("app_builder.d", "app_builder.o") or \
+		is_file_newer("db.d", "db.o") or \
+		is_file_newer("file_system.d", "file_system.o") or \
+		is_file_newer("regex.d", "regex.o") or \
+		is_file_newer("shared_memory.d", "shared_memory.o") or \
+		is_file_newer("socket.d", "socket.o") or \
+		is_file_newer("fcgi.d", "fcgi.o"):
+		# Build the framework
+		command = "ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -c language_helper.d helper.d rootintootin.d " + \
+				"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
+				"rootintootin_process.d app_builder.d " + \
+				" db.d file_system.d regex.d shared_memory.d socket.d fcgi.d " + tango
+		result += commands.getoutput(command)
+
+		# Combine the framework into a static library
+		command = "ar rcs rootintootin.a language_helper.o helper.o " + \
+				"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
+				"tcp_server.o rootintootin_process.o app_builder.o " + \
+				"db.o file_system.o regex.o shared_memory.o socket.o fcgi.o"
+		result += commands.getoutput(command)
 
 	compile_error = None
 	if os.path.exists("rootintootin.a"):
@@ -788,7 +829,7 @@ def build_server():
 		print compile_error
 		exit()
 
-def build_application(is_first_loop, include_unit_test = False):
+def build_application(include_unit_test = False):
 	sys.stdout.write("Rebuilding application ...".ljust(78, ' '))
 	sys.stdout.flush()
 
@@ -811,50 +852,24 @@ def build_application(is_first_loop, include_unit_test = False):
 
 	# Get all the app's files for a rebuild
 	files = [];
-	is_newer = False
-	if not is_first_loop:
-		for model_name in model_names:
-			if file_exist(".",  model_name + ".o"):
-				is_newer = is_file_newer("app/models/", model_name + ".d", ".", model_name + ".o")
-			else:
-				is_newer = True
-			files.append(model_name + ['.d', '.o'][is_newer])
-			files.append(model_name + "_base" + ['.d', '.o'][is_newer])
+	for model_name in model_names:
+		is_newer = is_file_newer("app/models/" + model_name + ".d", model_name + ".o")
+		files.append(model_name + ['.o', '.d'][is_newer])
+		files.append(model_name + "_base" + ['.o', '.d'][is_newer])
 
-		for controller_name, route_maps in routes.items():
-			controller = generator.singularize(controller_name)
-			if file_exist(".",  controller + "_controller.o"):
-				is_newer = is_file_newer("app/controllers/", controller + "_controller.d", ".", controller + "_controller.o");
-			else:
-				is_newer = True
-			files.append(controller + "_controller" + ['.d', '.o'][is_newer])
+	for controller_name, route_maps in routes.items():
+		controller = generator.singularize(controller_name)
+		is_newer = is_file_newer("app/controllers/" + controller + "_controller.d", controller + "_controller.o")
+		files.append(controller + "_controller" + ['.o', '.d'][is_newer])
 
-		for view_name in view_names:
-			controller = view_name.split("_")[0]
-			action = view_name.split("_")[1]
-			if file_exist(".",  "view_" + controller + "_" + action + ".o"):
-				is_newer = is_file_newer("app/views/" + controller + "/",  action + ".html.ed", ".", "view_" + controller + "_" + action + ".o")
-			else:
-				is_newer = True;
-			files.append("view_" + controller + "_" + action + ['.d', '.o'][is_newer])
+	for view_name in view_names:
+		controller = view_name.split("_")[0]
+		action = view_name.split("_")[1]
+		is_newer = is_file_newer("app/views/" + controller + "/" + action + ".html.ed", "view_" + controller + "_" + action + ".o")
+		files.append("view_" + controller + "_" + action + ['.o', '.d'][is_newer])
 
-		if file_exist(".",  "view_layouts_default.o"):
-			is_newer = is_file_newer("app/views/layouts/", "default.html.ed", ".", "view_layouts_default.o")
-		else:
-			is_newer = True
-		files.append("view_layouts_default" + ['.d', '.o'][is_newer])
-
-	# Get all the app's files for a first build
-	if is_first_loop:
-		for model_name in model_names:
-			files.append(model_name + ".d")
-			files.append(model_name + "_base.d")
-
-		for controller_name, route_maps in routes.items():
-			files.append(generator.singularize(controller_name) + "_controller.d")
-		for view_name in view_names:
-			files.append("view_" + view_name + ".d")
-		files.append("view_layouts_default.d")
+	is_newer = is_file_newer("app/views/layouts/default.html.ed", "view_layouts_default.o")
+	files.append("view_layouts_default" + ['.o', '.d'][is_newer])
 
 	# Save the configuration changes that will be needed by the running program
 	_port = int(config[mode]["server"]["port"])
@@ -866,7 +881,6 @@ def build_application(is_first_loop, include_unit_test = False):
 		str.join(' ', files) + \
 		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" -L=\"-lfcgi\" " + \
 		tango
-
 	compile_error = commands.getoutput(command)
 
 	# Make sure the application was built

@@ -16,6 +16,13 @@ import MySQLdb
 
 rootintootin_path = os.path.dirname(os.sys.path[0]) + '/'
 
+# Returns true if file_a is newer than file_b
+# Returns true if file_b does not exist
+def is_file_newer(file_a, file_b):
+	if not os.path.exists(file_b):
+		return True
+	return os.path.getmtime(file_a) > os.path.getmtime(file_b)
+
 def exec_file(file, globals, locals):
 	with open(file, "r") as fh:
 		exec(fh.read()+"\n", globals, locals)

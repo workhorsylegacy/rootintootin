@@ -44,7 +44,7 @@ move_to_scratch()
 load_configurations()
 generate_application_files(include_unit_test = True)
 build_framework(include_unit_test = True)
-build_application(True, include_unit_test = True)
+build_application(include_unit_test = True)
 run_application_tests()
 
 

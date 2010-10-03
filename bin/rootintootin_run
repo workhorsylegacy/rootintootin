@@ -57,7 +57,7 @@ elif mode == "development" and build_type == 'application':
 	move_to_scratch()
 	load_configurations()
 	generate_application_files()
-	build_application(True)
+	build_application()
 # Or build both
 elif mode == "production":
 	copy_files_to_scratch()
@@ -66,7 +66,7 @@ elif mode == "production":
 	generate_application_files()
 	build_framework()
 	build_server()
-	build_application(True)
+	build_application()
 	run_server()
 
 

@@ -59,7 +59,7 @@ password = getpass.getpass(user + "@" + ip + "'s password: ")
 generate_application_files()
 build_framework()
 build_server()
-build_application(True)
+build_application()
 
 # Make ~/fastcgi empty and accessable by the user
 remove_folder_on_server('~/fastcgi')
