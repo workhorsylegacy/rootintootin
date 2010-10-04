@@ -107,7 +107,7 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 					"	protected " + has_manies.capitalize() + " _" + has_manies + ";\n\n" + \
 					"	public void after_this() {\n" + \
 					"		_" + has_manies + " = new " + has_manies.capitalize() + "(\n" + \
- 					"		" + has_many.capitalize() + "Base.find_all(_model_name ~ \"_id = \" ~ to_s(_id))\n" + \
+ 					"		" + has_many.capitalize() + "Base.find_all(where(_model_name ~ \"_id = \" ~ to_s(_id)))\n" + \
 					"		);\n" + \
 					"	}\n\n" + \
 					"	public void " + has_manies + "(" + has_manies.capitalize() + " value) {\n" + \

@@ -459,7 +459,7 @@ public bool starts_with(string value, string match) {
 }
 
 unittest {
-	describe("language_helper#strip", 
+	describe("language_helper#starts_with", 
 		it("Should return false on null arguemnts", function() {
 			assert(!starts_with(null, null));
 		}),
@@ -495,7 +495,7 @@ public bool ends_with(string value, string match) {
 }
 
 unittest {
-	describe("language_helper#strip", 
+	describe("language_helper#ends_with", 
 		it("Should return false on null arguemnts", function() {
 			assert(!ends_with(null, null));
 		}),

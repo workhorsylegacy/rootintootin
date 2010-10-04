@@ -21,37 +21,139 @@ public import db;
 private import helper;
 private import http_server;
 
-string find(Condition...)(Condition conditions) {
-	string[] retval;
-	foreach(condition; conditions)
-		retval ~= condition._value;
 
-	return join(retval, " ") ~ ";";
-}
-
-Condition where(T, A...)(T query, A values) {
+Clause where(T, A...)(T query, A values) {
 	string[] retval;
+
+	// Make sure the query is not null or blank
+	if(trim(query) == "") {
+		throw new Exception("The query cannot be blank.");
+	}
+
+	// Make sure the number of params and arguments match
+	size_t question_count = count(query, "?");
+	if(question_count != values.length) {
+		throw new Exception("There were " ~ to_s(question_count) ~ " parameter(s) expected, but " ~ to_s(values.length) ~ " parameter(s) provided.");
+	}
 
 	size_t i = 0;
 	string[] parts = split(query, "?");
 	foreach(value; values) {
 		retval ~= parts[i++];
 		// FIXME: Sanitize this as it is untrusted.
-		retval ~= to_s(value);
+		retval ~= "'" ~ to_s(value) ~ "'";
 	}
 	retval ~= parts[i++];
-	return new Condition("WHERE " ~ join(retval, ""));
+	return new Clause("WHERE " ~ join(retval, ""));
 }
 
-Condition group_by(string value) {
-	return new Condition("GROUP BY " ~ value);
+unittest {
+	describe("rootintootin#where", 
+		it("Should create an SQL where clause", function() {
+			string clause = where("name = ? and age = ?", "tim", 56)._value;
+			assert(clause == "WHERE name = 'tim' and age = '56'");
+		}),
+		it("Should throw if there are too few arguments", function() {
+			bool has_thrown = false;
+			try {
+				string clause = where("name = ? and age = ?", "tim")._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "There were 2 parameter(s) expected, but 1 parameter(s) provided.");
+			}
+			assert(has_thrown);
+		}),
+		it("Should throw if there are too many arguments", function() {
+			bool has_thrown = false;
+			try {
+				string clause = where("name = ? and age = ?", "tim", "bob", "frank")._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "There were 2 parameter(s) expected, but 3 parameter(s) provided.");
+			}
+			assert(has_thrown);
+		}),
+		it("Should throw if the query is blank", function() {
+			bool has_thrown = false;
+			try {
+				string query = null;
+				string clause = where(" ")._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "The query cannot be blank.");
+			}
+			assert(has_thrown);
+		})
+	);
 }
 
-Condition limit(int value) {
-	return new Condition("LIMIT " ~ to_s(value));
+Clause order_by(string field_name) {
+	// Make sure the field is not null or blank
+	if(field_name is null || trim(field_name) == "") {
+		throw new Exception("The field name cannot be blank or null.");
+	}
+
+	return new Clause("ORDER BY " ~ field_name);
 }
 
-public class Condition {
+unittest {
+	describe("rootintootin#order_by", 
+		it("Should create an SQL order by clause", function() {
+			string clause = order_by("name")._value;
+			assert(clause == "ORDER BY name");
+		}),
+		it("Should throw if the field is null", function() {
+			bool has_thrown = false;
+			try {
+				string clause = order_by(null)._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "The field name cannot be blank or null.");
+			}
+			assert(has_thrown);
+		}),
+		it("Should throw if the field is blank", function() {
+			bool has_thrown = false;
+			try {
+				string clause = order_by(" ")._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "The field name cannot be blank or null.");
+			}
+			assert(has_thrown);
+		})
+	);
+}
+
+Clause limit(ulong value) {
+	// Make sure the value is not zero
+	if(value == 0) {
+		throw new Exception("The value must be greater than zero.");
+	}
+
+	return new Clause("LIMIT " ~ to_s(value));
+}
+
+unittest {
+	describe("rootintootin#limit", 
+		it("Should create an SQL limit clause", function() {
+			string clause = limit(2)._value;
+			assert(clause == "LIMIT 2");
+		}),
+		it("Should throw if the value is 0", function() {
+			bool has_thrown = false;
+			try {
+				string clause = limit(0)._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "The value must be greater than zero.");
+			}
+			assert(has_thrown);
+		})
+	);
+}
+
+public class Clause {
 	public string _value;
 
 	public this(string value) {
@@ -563,7 +665,7 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	 *  FUNCTION
 	 *    Returns a single model that matches the id, or null if not found.
 	 *  INPUTS
-	 *    id    - The database id of the object to find.
+	 *    id          - The database id of the object to find.
 	 * SOURCE
 	 */
 	static T find_by_id(ulong id) {
@@ -615,17 +717,22 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	 *  FUNCTION
 	 *    Returns all the models.
 	 *  INPUTS
-	 *    conditions   - The 'where' part of the sql query. Is null by default.
-	 *    order        - The 'order by' part of the sql query. Is null by 
-	 *                   default.
+	 *    clauses  - The clauses to use to create the SQL select query.
+	 *               Such as where, order by, and limit.
+	 *  NOTES
+	 *    See http://digitalmars.com/d/1.0/function.html#variadic
 	 * SOURCE
 	 */
-	static T[] find_all(string conditions = null, string order = null) {
+	static T[] find_all(Clause[] clauses ...) {
+		string[] retval;
+		foreach(clause; clauses)
+			retval ~= clause._value;
+
 		// Create the query and run it
 		T[] all = [];
 		string query = "select " ~ field_names_as_comma_string ~ " from " ~ _table_name;
-		if(conditions != null) query ~= " where " ~ conditions;
-		if(order != null) query ~= " order by " ~ order;
+		if(retval.length)
+			query ~= " " ~ join(retval, " ");
 		query ~= ";";
 		int row_len, col_len;
 		char*** result = Db.query_with_result(query, row_len, col_len);
@@ -646,6 +753,17 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 		Db.free_query_with_result(result, row_len, col_len);
 
 		return all;
+	}
+
+	unittest {
+		describe("ModelBaseMixin.find_all", 
+			it("Should find everything with no parameters", function() {
+				assert(false);
+			}),
+			it("Should find one model with the id", function() {
+				assert(false);
+			})
+		);
 	}
 	/*******/
 
