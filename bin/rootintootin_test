@@ -31,10 +31,10 @@ os.chdir(os.sys.path[0])
 
 # Get all the variables needed for building
 pwd = sys.argv[1]
-mode = 'development'
+mode = 'test'
 rootintootin_dir = os.path.expanduser('~/.rootintootin')
 project_name = pwd.split('/')[-1]
-scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+scratch = rootintootin_dir + '/' + project_name + '/' + mode + '/'
 tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 

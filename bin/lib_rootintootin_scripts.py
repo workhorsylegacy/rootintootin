@@ -677,30 +677,6 @@ def copy_files_to_scratch():
 		shutil.copytree(pwd+'/public/', scratch+'public/')
 	os.mkdir(scratch+'uploads/')
 
-def copy_changed_files_to_scratch():
-	# Remove all the old app files
-	if os.path.exists(scratch+'app/'):
-		shutil.rmtree(scratch+'app/')
-	if os.path.exists(scratch+'config/'):
-		shutil.rmtree(scratch+'config/')
-	if os.path.exists(scratch+'db/'):
-		shutil.rmtree(scratch+'db/')
-	if os.path.exists(scratch+'public/'):
-		shutil.rmtree(scratch+'public/')
-	if os.path.exists(scratch+'uploads/'):
-		shutil.rmtree(scratch+'uploads/')
-
-	# Copy all the app files into a scratch dir
-	if os.path.exists(pwd+'/app/'):
-		shutil.copytree(pwd+'/app/', scratch+'app/')
-	if os.path.exists(pwd+'/config/'):
-		shutil.copytree(pwd+'/config/', scratch+'config/')
-	if os.path.exists(pwd+'/db/'):
-		shutil.copytree(pwd+'/db/', scratch+'db/')
-	if os.path.exists(pwd+'/public/'):
-		shutil.copytree(pwd+'/public/', scratch+'public/')
-	os.mkdir(scratch+'uploads/')
-
 def move_to_scratch():
 	os.chdir(scratch)
 

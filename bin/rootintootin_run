@@ -19,15 +19,11 @@ from lib_rootintootin import *
 
 # Make sure the first arg is a path
 if len(sys.argv) < 3:
-	print "usage: ./rootintootin_run 'working directory' [server|application|all] [development|production]"
+	print "usage: ./rootintootin_run 'working directory' [server|application|all]"
 	exit(1)
 elif not os.path.exists(sys.argv[1]):
 	print "The path '" + sys.argv[1] + "' does not exist. Exiting ..."
 	exit(1)
-elif sys.argv[2] == "server":
-	if len(sys.argv) < 4 or not sys.argv[3] in ['development', 'production']:
-		print "./run [development|production]"
-		exit(1)
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
@@ -36,10 +32,10 @@ os.chdir(os.sys.path[0])
 # Get all the variables needed for building
 pwd = sys.argv[1]
 build_type = sys.argv[2]
-mode = sys.argv[3]
+mode = 'development'
 rootintootin_dir = os.path.expanduser('~/.rootintootin')
 project_name = pwd.split('/')[-1]
-scratch = rootintootin_dir + '/' + project_name + '/scratch/'
+scratch = rootintootin_dir + '/' + project_name + '/' + mode + '/'
 tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
@@ -53,21 +49,11 @@ if mode == "development" and build_type == 'server':
 	run_server()
 # Or build the application
 elif mode == "development" and build_type == 'application':
-	copy_changed_files_to_scratch()
-	move_to_scratch()
-	load_configurations()
-	generate_application_files()
-	build_application()
-# Or build both
-elif mode == "production":
 	copy_files_to_scratch()
 	move_to_scratch()
 	load_configurations()
 	generate_application_files()
-	build_framework()
-	build_server()
 	build_application()
-	run_server()
 
 
 

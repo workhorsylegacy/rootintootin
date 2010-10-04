@@ -20,11 +20,11 @@ def print_usage():
 	print "    types: boolean, date, datetime, decimal, decimal[18,2]"
 	print "    more: float, integer, string, text, time, timestamp'"
 	print "./gen migrate [production|development]"
-	print "./gen configure [production|development] database [user:root] [password:password] [host:location] [name:db_name]"
-	print "./gen configure [production|development] server [port:number] [max_waiting_clients:number] [header_max_size:number] [ip:127.0.0.1] [directory:/home/user/fastcgi/] [httpd:lighttpd] [user:user name]"
-	print "./gen create [production|development] database"
-	print "./gen drop [production|development] database"
-	print "./gen recreate [production|development] database"
+	print "./gen configure [production|development|test] database [user:root] [password:password] [host:location] [name:db_name]"
+	print "./gen configure [production|development|test] server [port:number] [max_waiting_clients:number] [header_max_size:number] [ip:127.0.0.1] [directory:/home/user/fastcgi/] [httpd:lighttpd] [user:user name]"
+	print "./gen create [production|development|test] database"
+	print "./gen drop [production|development|test] database"
+	print "./gen recreate [production|development|test] database"
 	exit(1)
 
 # Make sure the first arg is a path
@@ -38,20 +38,20 @@ elif not os.path.exists(sys.argv[1]):
 os.chdir(sys.argv[1])
 generator = Generator()
 
-# create [production|development] database
-if re.match("^create (production|development) database$", str.join(' ', sys.argv[2:])):
+# create [production|development|test] database
+if re.match("^create (production|development|test) database$", str.join(' ', sys.argv[2:])):
 	mode = str.join(' ', sys.argv[2:]).lstrip("create").strip("database").strip()
 	generator.set_mode(mode)
 	generator.create_database()
 
-# drop [production|development] database
-elif re.match("^drop (production|development) database$", str.join(' ', sys.argv[2:])):
+# drop [production|development|test] database
+elif re.match("^drop (production|development|test) database$", str.join(' ', sys.argv[2:])):
 	mode = str.join(' ', sys.argv[2:]).lstrip("drop").strip("database").strip()
 	generator.set_mode(mode)
 	generator.drop_database()
 
-# recreate [production|development] database
-elif re.match("^recreate (production|development) database$", str.join(' ', sys.argv[2:])):
+# recreate [production|development|test] database
+elif re.match("^recreate (production|development|test) database$", str.join(' ', sys.argv[2:])):
 	mode = str.join(' ', sys.argv[2:]).lstrip("recreate").strip("database").strip()
 	generator.set_mode(mode)
 	generator.drop_database()
@@ -90,24 +90,24 @@ elif str.join(' ', sys.argv[2:4]) == "create scaffold":
 	generator.create_migration(controller_name, pairs[5:])
 	generator.configure_routes(controller_name, pairs[4:])
 
-# migrate [production|development]
-elif re.match("^migrate (production|development)$", str.join(' ', sys.argv[2:])):
+# migrate [production|development|test]
+elif re.match("^migrate (production|development|test)$", str.join(' ', sys.argv[2:])):
 	mode = str.join(' ', sys.argv[2:]).lstrip("migrate").strip()
 	generator.set_mode(mode)
 	generator.migrate()
 
-# configure [production|development] database [user:root] [password:password] \
+# configure [production|development|test] database [user:root] [password:password] \
 #						[host:location] [name:db_name]
-elif re.match("^configure (production|development) database$", str.join(' ', sys.argv[2:5])):
+elif re.match("^configure (production|development|test) database$", str.join(' ', sys.argv[2:5])):
 	mode = sys.argv[3]
 	generator.set_mode(mode)
 	generator.configure_database(sys.argv[5:])
 
-# configure [production|development] server [port:number] \
+# configure [production|development|test] server [port:number] \
 #			[max_waiting_clients:number] [header_max_size:number] \
 #			[ip:127.0.0.1] [directory:/home/user/fastcgi/] \
 #			[httpd:lighttpd] [user:user name]
-elif re.match("^configure (production|development) server$", str.join(' ', sys.argv[2:5])):
+elif re.match("^configure (production|development|test) server$", str.join(' ', sys.argv[2:5])):
 	mode = sys.argv[3]
 	generator.set_mode(mode)
 	generator.configure_server(sys.argv[5:])

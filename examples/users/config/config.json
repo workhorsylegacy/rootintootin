@@ -13,6 +13,19 @@
 			"max_waiting_clients" : "100"
 		}
 	}, 
+	"test" : {
+		"database" : {
+			"host" : "localhost", 
+			"password" : "letmein", 
+			"name" : "users_test", 
+			"user" : "root"
+		},
+		"server" : {
+			"header_max_size" : "8192", 
+			"port" : "3000", 
+			"max_waiting_clients" : "100"
+		}
+	}, 
 	"production" : {
 		"database" : {
 			"host" : "localhost", 

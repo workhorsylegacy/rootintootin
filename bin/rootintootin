@@ -60,12 +60,10 @@ if mode == "new":
 
 	# Update the configuration files and create the database
 	generator = Generator()
-	for mode in ['development', 'production']:
+	for mode in ['development', 'production', 'test']:
 		generator.set_mode(mode)
 		generator.configure_database(['user:'+db_user, 'password:'+db_password, 'name:'+name+'_'+mode])
-	generator.set_mode('development')
-	generator.configure_server(['port:'+port])
-	generator.configure_server(['user:'+getpass.getuser()])
+		generator.configure_server(['port:'+port, 'user:'+getpass.getuser()])
 
 
 

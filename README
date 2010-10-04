@@ -42,7 +42,7 @@ cd ~/Desktop/examples/users
 ./gen configure development server port:3000
 ./gen recreate development database
 ./gen migrate development
-./run development
+./run
 
 
 6. Navigate your web browser to http://localhost:3000/users and you should 
