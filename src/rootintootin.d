@@ -22,7 +22,17 @@ private import helper;
 private import http_server;
 
 
-Clause where(T, A...)(T query, A values) {
+/****f* rootintootin/where
+ *  FUNCTION
+ *    Returns a clause that holds the 'where' part of the SQL query.
+ *  INPUTS
+ *    query     - the conditional part of the SQL query.
+ *    values    - the values to put into the query.
+ *  EXAMPLE
+ *    Clause clause = where("name = ? and age = ?", "tim", 57);
+ * SOURCE
+ */
+Clause where(T ...)(string query, T values) {
 	string[] retval;
 
 	// Make sure the query is not null or blank
@@ -76,7 +86,6 @@ unittest {
 		it("Should throw if the query is blank", function() {
 			bool has_thrown = false;
 			try {
-				string query = null;
 				string clause = where(" ")._value;
 			} catch(Exception err) {
 				has_thrown = true;
@@ -86,7 +95,15 @@ unittest {
 		})
 	);
 }
+/*******/
 
+/****f* rootintootin/order_by
+ *  FUNCTION
+ *    Returns a clause that holds the 'order by' part of the SQL query.
+ *  INPUTS
+ *    field_name     - the name of the field to sort by.
+ * SOURCE
+ */
 Clause order_by(string field_name) {
 	// Make sure the field is not null or blank
 	if(field_name is null || trim(field_name) == "") {
@@ -124,7 +141,61 @@ unittest {
 		})
 	);
 }
+/*******/
 
+/****f* rootintootin/group_by
+ *  FUNCTION
+ *    Returns a clause that holds the 'group by' part of the SQL query.
+ *  INPUTS
+ *    field_name     - the name of the field to group by.
+ * SOURCE
+ */
+Clause group_by(string field_name) {
+	// Make sure the field is not null or blank
+	if(field_name is null || trim(field_name) == "") {
+		throw new Exception("The field name cannot be blank or null.");
+	}
+
+	return new Clause("GROUP BY " ~ field_name);
+}
+
+unittest {
+	describe("rootintootin#group_by", 
+		it("Should create an SQL group by clause", function() {
+			string clause = group_by("name")._value;
+			assert(clause == "GROUP BY name");
+		}),
+		it("Should throw if the field is null", function() {
+			bool has_thrown = false;
+			try {
+				string clause = group_by(null)._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "The field name cannot be blank or null.");
+			}
+			assert(has_thrown);
+		}),
+		it("Should throw if the field is blank", function() {
+			bool has_thrown = false;
+			try {
+				string clause = group_by(" ")._value;
+			} catch(Exception err) {
+				has_thrown = true;
+				assert(err.msg == "The field name cannot be blank or null.");
+			}
+			assert(has_thrown);
+		})
+	);
+}
+/*******/
+
+/****f* rootintootin/limit
+ *  FUNCTION
+ *    Returns a clause that holds the 'limit' part of the SQL query.
+ *  INPUTS
+ *    value     - the max number of rows to return.
+ * SOURCE
+ */
 Clause limit(ulong value) {
 	// Make sure the value is not zero
 	if(value == 0) {
@@ -152,13 +223,73 @@ unittest {
 		})
 	);
 }
+/*******/
 
+/****c* rootintootin/Clause
+ *  NAME
+ *    Clause
+ *  FUNCTION
+ *    A class used to create SQL clauses for a query.
+ ******
+ */
 public class Clause {
 	public string _value;
 
+	/****m* rootintootin/Clause.this
+	 *  FUNCTION
+	 *    A constructor.
+	 *  INPUTS
+	 *    value       - the string that makes up this part of the SQL clause.
+	 * SOURCE
+	 */
 	public this(string value) {
+		if(contains(value, ";"))
+			throw new Exception("Sql clauses cannot contain ';'.");
+
+		if(contains(value, "--"))
+			throw new Exception("Sql clauses cannot contain '--'.");
+
+		if(contains(value, "union"))
+			throw new Exception("Sql clauses cannot contain 'union'.");
+
 		_value = value;
 	}
+
+	unittest {
+		describe("rootintootin#Clause", 
+			it("Should not allow the sql injection '--'", function() {
+				bool has_thrown = false;
+				try {
+					new Clause("--");
+				} catch(Exception err) {
+					has_thrown = true;
+					assert(err.msg == "Sql clauses cannot contain '--'.");
+				}
+				assert(has_thrown);
+			}),
+			it("Should not allow the sql injection ';'", function() {
+				bool has_thrown = false;
+				try {
+					new Clause(";");
+				} catch(Exception err) {
+					has_thrown = true;
+					assert(err.msg == "Sql clauses cannot contain ';'.");
+				}
+				assert(has_thrown);
+			}),
+			it("Should not allow the sql injection 'union'", function() {
+				bool has_thrown = false;
+				try {
+					new Clause("union");
+				} catch(Exception err) {
+					has_thrown = true;
+					assert(err.msg == "Sql clauses cannot contain 'union'.");
+				}
+				assert(has_thrown);
+			})
+		);
+	}
+	/*******/
 }
 
 // FIXME: Rename this to ResourceRunnerBase
@@ -720,7 +851,8 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 	 *    clauses  - The clauses to use to create the SQL select query.
 	 *               Such as where, order by, and limit.
 	 *  NOTES
-	 *    See http://digitalmars.com/d/1.0/function.html#variadic
+	 *    For more info on variadic arguments see:
+	 *    http://digitalmars.com/d/1.0/function.html#variadic
 	 * SOURCE
 	 */
 	static T[] find_all(Clause[] clauses ...) {
@@ -769,11 +901,16 @@ public template ModelBaseMixin(T, string model_name, string table_name) {
 
 	/****m* rootintootin/ModelBaseMixin.find_first
 	 *  FUNCTION
-	 *    Returns the first model found.
+	 *    Returns the first model found, or null if not found.
 	 * SOURCE
 	 */
-	static T find_first() {
-		throw new Exception("ModelBaseMixin.find_first is not implemented yet.");
+	static T find_first(Clause[] clauses ...) {
+		T[] models = find_all(clauses ~ limit(1));
+		if(models.length > 0) {
+			return models[0];
+		} else {
+			return null;
+		}
 	}
 	/*******/
 
