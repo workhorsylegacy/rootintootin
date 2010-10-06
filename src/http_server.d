@@ -8,6 +8,10 @@
 
 
 private import tango.io.Stdout;
+private import tango.core.Thread;
+private import tango.net.http.HttpClient;
+private import tango.net.http.HttpHeaders;
+
 private import tango.math.random.engines.Twister;
 private import tango.time.chrono.Gregorian;
 private import tango.time.WallClock;
@@ -510,6 +514,59 @@ class HttpServer : TcpServer {
 
 	protected override void on_started(bool is_event_triggered = true) {
 		Stdout.format("Running on http://localhost:{} ...", this._port).newline.flush;
+	}
+
+	unittest {
+		class AppServer : HttpServer {
+			public this(ushort port, int max_waiting_clients) {
+				super(port, max_waiting_clients);
+			}
+
+			protected override void on_started(bool is_event_triggered = true) {
+			}
+
+			protected override void on_connection_ready(int fd) {
+				socket_write(fd, "HTTP/1.0 200 OK\r\nStatus: 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 4\r\n\r\nblah");
+				socket_close(fd);
+			}
+		}
+
+		describe("HttpServer", 
+			it("Should respond to a connection", function() {
+				// Start the server
+				auto thread = new Thread(function() {
+					auto server = new AppServer(3000, 100);
+
+					// Start the server and have it stop after one request
+					server.start(delegate(TcpServer server) {
+						server._is_running  = false;
+					});
+				});
+				thread.start();
+				Thread.sleep(0.01);
+
+				// Make sure the response was HTTP OK
+				auto client = new HttpClient(HttpClient.Get, "http://127.0.0.1:3000/");
+				client.open();
+				assert(client.isResponseOK);
+
+				// Make sure the length is valid
+				auto length = client.getResponseHeaders.getInt(HttpHeader.ContentLength);
+				assert(length == 4);
+
+				// Make sure the type is valid
+				auto type = client.getResponseHeaders.get(HttpHeader.ContentType);
+				assert(type == "text/plain");
+
+				// Make sure the body is valid
+				client.read(delegate(void[] content) {
+					assert(content == "blah");
+				}, length);
+
+				client.close();
+				thread.join();
+			})
+		);
 	}
 }
 

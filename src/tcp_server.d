@@ -15,6 +15,7 @@ private import socket;
 
 
 class TcpServer {
+	public bool _is_running = false;
 	private int _sock = -1;
 	private char[1024*256] _buffer;
 	private char[] _response;
@@ -29,11 +30,12 @@ class TcpServer {
 		_is_address_reusable = true;
 	}
 
-	public void start() {
+	public void start(void delegate(TcpServer server) after_request_func = null) {
 		// Get a new socket
 		this.open();
+		_is_running = true;
 
-		while(true) {
+		while(_is_running) {
 			// If the configuration is different get a new socket
 			if(_is_configuration_changed) {
 				this.close();
@@ -51,6 +53,9 @@ class TcpServer {
 			}
 
 			on_connection_ready(fd);
+
+			if(after_request_func)
+				after_request_func(this);
 		}
 	}
 
