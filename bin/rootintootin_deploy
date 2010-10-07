@@ -30,7 +30,7 @@ tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
 # Copy the files
-copy_files_to_scratch()
+copy_files_to_scratch(is_symlinking_public = False)
 move_to_scratch()
 load_configurations()
 

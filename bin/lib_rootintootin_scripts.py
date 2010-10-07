@@ -646,7 +646,7 @@ def _process_template_body(body, output):
 		# Set the remaining text as the body, so it can be processed next
 		body = after
 
-def copy_files_to_scratch():
+def copy_files_to_scratch(is_symlinking_public = True):
 	# Copy all the framework files into a scratch dir
 	if not os.path.exists(rootintootin_dir):
 		os.mkdir(rootintootin_dir)
@@ -662,7 +662,10 @@ def copy_files_to_scratch():
 	if os.path.exists(scratch+'db/'):
 		shutil.rmtree(scratch+'db/')
 	if os.path.exists(scratch+'public/'):
-		shutil.rmtree(scratch+'public/')
+		if os.path.islink(scratch+'public'):
+			os.remove(scratch+'public')
+		else:
+			shutil.rmtree(scratch+'public/')
 	if os.path.exists(scratch+'uploads/'):
 		shutil.rmtree(scratch+'uploads/')
 
@@ -674,7 +677,10 @@ def copy_files_to_scratch():
 	if os.path.exists(pwd+'/db/'):
 		shutil.copytree(pwd+'/db/', scratch+'db/')
 	if os.path.exists(pwd+'/public/'):
-		shutil.copytree(pwd+'/public/', scratch+'public/')
+		if is_symlinking_public:
+			os.symlink(pwd+'/public', scratch+'public')
+		else:
+			shutil.copytree(pwd+'/public/', scratch+'public/')
 	os.mkdir(scratch+'uploads/')
 
 def move_to_scratch():

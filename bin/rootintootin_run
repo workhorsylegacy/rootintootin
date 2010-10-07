@@ -41,7 +41,7 @@ exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
 # Build the server
 if mode == "development" and build_type == 'server':
-	copy_files_to_scratch()
+	copy_files_to_scratch(is_symlinking_public = True)
 	move_to_scratch()
 	load_configurations()
 	build_framework()
@@ -49,7 +49,7 @@ if mode == "development" and build_type == 'server':
 	run_server()
 # Or build the application
 elif mode == "development" and build_type == 'application':
-	copy_files_to_scratch()
+	#copy_files_to_scratch(is_symlinking_public = True)
 	move_to_scratch()
 	load_configurations()
 	generate_application_files()

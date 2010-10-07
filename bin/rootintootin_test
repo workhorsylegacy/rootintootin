@@ -39,7 +39,7 @@ tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
 # Build everything
-copy_files_to_scratch()
+copy_files_to_scratch(is_symlinking_public = True)
 move_to_scratch()
 load_configurations()
 generate_application_files(include_unit_test = True)

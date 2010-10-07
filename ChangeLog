@@ -1,4 +1,5 @@
 * Release 0.7.0
+	* Fixed Bug #598630: 'In dev and test modes symlink public folder instead of copying'.
 	* Fixed Bug #653419: 'Add a way to run unit tests'.
 	* Fixed Bug #652783: 'Add model find conditions'.
 	* Fixed Bug #635131: 'Building script regression rebuilds everything'.
