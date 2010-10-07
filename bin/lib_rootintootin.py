@@ -491,7 +491,7 @@ class Generator(object):
 				return
 
 	def configure_database(self, pairs):
-		# Add each key-value pair to the configuration hash
+		# Add each key-value pair to the configuration dict
 		for pair in pairs:
 			key, value = pair.split(':')
 
@@ -505,7 +505,7 @@ class Generator(object):
 		self.save_configuration()
 
 	def configure_server(self, pairs):
-		# Add each key-value pair to the configuration hash
+		# Add each key-value pair to the configuration dict
 		for pair in pairs:
 			key, value = pair.split(':')
 

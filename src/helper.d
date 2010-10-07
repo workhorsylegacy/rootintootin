@@ -212,7 +212,7 @@ public class Helper {
 	 *  FUNCTION
 	 *    This function is ideal for creating secure sequential hashes. The
 	 *    idea is that you want to use sequential numbers for the value, but
-	 *    have it so the hashes can't be enumerated by an adversary.
+	 *    have it so the values can't be enumerated by an adversary.
 	 *
 	 *    The pipeline is:
 	 *    string + salt >> hash >> base64
