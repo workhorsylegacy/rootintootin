@@ -1,5 +1,7 @@
 
+private import language_helper;
 private import comment_base;
+private import user;
 
 public class Comment : CommentBase {
 	public void validate() {
@@ -12,5 +14,16 @@ public class Comment : CommentBase {
 	}
 }
 
-
-
+unittest {
+	describe("Comment", 
+		it("Should require the value and user fields to be valid", function() {
+			auto comment = new Comment();
+			assert(!comment.is_valid);
+			
+			comment.value = "Likes to eat pie";
+			auto user = new User();
+			comment.parent = user;
+			assert(comment.is_valid);
+		})
+	);
+}

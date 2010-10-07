@@ -1,4 +1,5 @@
 
+private import language_helper;
 private import user_base;
 
 public class User : UserBase {
@@ -6,6 +7,19 @@ public class User : UserBase {
 		_errors = [];
 		validates_presence_of(["name", "email"]);
 	}
+}
+
+unittest {
+	describe("User", 
+		it("Should require the name and email fields to be valid", function() {
+			auto user = new User();
+			assert(!user.is_valid);
+			
+			user.name = "tim";
+			user.email = "tim@blah.com";
+			assert(user.is_valid);
+		})
+	);
 }
 
 
