@@ -36,6 +36,15 @@
 		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
 		<input id="${model_name}_${field_name}" name="${model_name}[${field_name}]" type="text" value="<@@=controller._${model_name}.${field_name}@@>" />
 	</p>
+% elif field_type in ['reference']:
+	<p>
+		<label for="${model_name}_${field_name}">${field_name.capitalize()}</label><br />
+		<select id="${model_name}_${field_name}" name="${model_name}[${field_name}]">
+			<@@ foreach(${field_name.capitalize()} ${field_name} ; controller._${pluralize(field_name)}) { @@>
+				<option value="<@@=${field_name}.id@@>"><@@=${field_name}.id@@></option>
+			<@@ } @@>
+		</select>
+	</p>
 % endif
 % endfor
 

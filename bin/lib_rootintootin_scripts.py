@@ -81,7 +81,7 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 		for has_many in has_manys:
 			if has_many[:-1] == model_name:
 				properties += \
-						"	protected " + table_name.capitalize() + "Base _" + table_name + " = null;\n" + \
+						"	public " + table_name.capitalize() + "Base _" + table_name + " = null;\n" + \
 						"\n" + \
 						"	public void parent(" + table_name.capitalize() + "Base value) {\n" + \
 						"		ensure_was_pulled_from_database();\n" + \

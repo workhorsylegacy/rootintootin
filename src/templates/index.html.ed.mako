@@ -20,7 +20,11 @@
 	<tr>
 % for field in pairs:
 <% field_name, field_type = field.split(':') %>\
+% if field_type == "reference":
+		<td><@@= ${model_name}._${field_name}.id @@></td>
+% else:
 		<td><@@= ${model_name}.${field_name} @@></td>
+% endif
 % endfor
 		<td><@@#link_to("Show", "/${pluralize(model_name)}/" ~ to_s(${model_name}.id))@@></td>
 		<td><@@#link_to("Edit", "/${pluralize(model_name)}/" ~ to_s(${model_name}.id) ~ ";edit")@@></td>

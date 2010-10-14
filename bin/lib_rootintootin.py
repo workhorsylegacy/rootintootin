@@ -155,7 +155,8 @@ def migration_type_to_sql_type(migration_type):
 				'unique_integer'   : 'int(11)',
 				'unique_string'    : 'varchar(255)',
 				'unique_time'      : 'time',
-				'unique_timestamp' : 'datetime'}
+				'unique_timestamp' : 'datetime',
+				'reference'        : 'int(11)'}
 
 	return type_map[migration_type]
 
@@ -529,8 +530,13 @@ class Generator(object):
 	def configure_routes(self, model_name, pairs):
 		model_name = self.pluralize(model_name)
 
-		f = open('config/routes.json', 'w')
+		# Read the original routes
+		original_json_routes = None
+		with open('config/routes.json', 'r') as f:
+			original_json_routes = json.loads(f.read())
 
+		# Write the new routes
+		f = open('config/routes.json', 'w')
 		f.write(
 			"{\n" + 
 			"	\"routes\" : 	{\"" + model_name + "\" : \n" + 
@@ -544,8 +550,22 @@ class Generator(object):
 			"	}\n" + 
 			"}"
 		)
-
 		f.close()
+
+		# Read the new routes
+		new_json_routes = None
+		with open('config/routes.json', 'r') as f:
+			new_json_routes = json.loads(f.read())
+
+		# Merge the original and new routes
+		original_json_routes = original_json_routes[u'routes']
+		new_json_routes = new_json_routes[u'routes']
+		original_json_routes.update(new_json_routes)
+		merged_json_routes = {u'routes' : original_json_routes}
+
+		# Write the merged routes
+		with open('config/routes.json', 'w') as f:
+			f.write(json.dumps(merged_json_routes, sort_keys=True, indent=4))
 
 	def create_noun(self, pairs):
 		singular, plural = None, None
