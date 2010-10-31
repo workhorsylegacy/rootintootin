@@ -32,22 +32,19 @@ fastcgi.server = ( "/" =>
 private import tango.sys.Environment;
 private import tango.io.device.File;
 
-void fcgi_write_stderr(char[] message) {
-	c_fcgi_write_stderr(message.ptr, message.length);
-}
 
 int fcgi_accept() {
 	return c_fcgi_accept();
 }
 
-void fcgi_printf(char[] message) {
-	c_fcgi_printf(message.ptr);
-}
-
-void fcgi_puts(char[] message) {
-	c_fcgi_puts(message.ptr);
-}
-
+// FIXME: Rename to fcgi_read_request_header
+/****f* fcgi_accept
+ *  FUNCTION
+ *    Accepts a connection and returns the request header.
+ *  INPUTS
+ *    request     - the string to read the request header into.
+ * SOURCE
+ */
 bool fcgi_accept(out char[] request) {
 	// Just return false on no connections
 	if(c_fcgi_accept() < 0)
@@ -80,9 +77,40 @@ bool fcgi_accept(out char[] request) {
 
 	return true;
 }
+/*******/
 
+// FIXME: Rename to fcgi_write_response
+/****f* fcgi_printf
+ *  FUNCTION
+ *    Writes the response to the client.
+ *  INPUTS
+ *    message     - the string to write.
+ * SOURCE
+ */
+void fcgi_printf(char[] message) {
+	c_fcgi_printf(message.ptr);
+}
+/*******/
+
+// FIXME: Rename to fcgi_read_request_body
+/****f* fcgi_get_stdin
+ *  FUNCTION
+ *    Reads the incomming request body into the buffer.
+ *  INPUTS
+ *    buffer     - the string the write the body into.
+ * SOURCE
+ */
 void fcgi_get_stdin(char[] buffer) {
 	c_fcgi_get_stdin(buffer.ptr, buffer.length);
+}
+/*******/
+
+void fcgi_write_stderr(char[] message) {
+	c_fcgi_write_stderr(message.ptr, message.length);
+}
+
+void fcgi_puts(char[] message) {
+	c_fcgi_puts(message.ptr);
 }
 
 private:
