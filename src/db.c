@@ -33,7 +33,7 @@ char* c_db_get_error_message() {
 MysqlAddress c_db_connect(char* server, char* user_name, char* password, char* database) {
 	MysqlAddress address = 0;
 
-	MYSQL* mysql = calloc(1, sizeof(MYSQL*));
+	MYSQL* mysql = calloc(1, sizeof(MYSQL));
 	mysql_init(mysql);
 	mysql_real_connect(mysql,
 					server, 
