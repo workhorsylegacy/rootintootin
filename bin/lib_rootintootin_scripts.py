@@ -721,7 +721,7 @@ def build_framework(include_unit_test = False):
 	is_library_changed = False
 	result = ''
 	if is_file_newer("db.c", "db.o"):
-		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o")
+		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o -Wl,-static -lmysqlclient")
 		is_library_changed = True
 
 	if is_file_newer("file_system.c", "file_system.o"):
@@ -729,7 +729,7 @@ def build_framework(include_unit_test = False):
 		is_library_changed = True
 
 	if is_file_newer("regex.c", "regex.o"):
-		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
+		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -Wl,-static -lpcre")
 		is_library_changed = True
 
 	if is_file_newer("shared_memory.c", "shared_memory.o"):
@@ -741,12 +741,12 @@ def build_framework(include_unit_test = False):
 		is_library_changed = True
 
 	if is_file_newer("fcgi.c", "fcgi.o"):
-		result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
+		result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -Wl,-static -lfcgi")
 		is_library_changed = True
 
 	if is_library_changed:
 		# Combine the libs into a static library
-		result += commands.getoutput("ar rcs rootintootin_clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
+		result += commands.getoutput("ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
 
 	if is_file_newer("language_helper.d", "language_helper.o") or \
 		is_file_newer("helper.d", "helper.o") or \
@@ -796,7 +796,7 @@ def build_server():
 	# Compile the server and link it with the static library
 	result = ''
 	command = "ldc -g -w -of server server.d -L rootintootin.a " + \
-			"-L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
+			"-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
 	result += commands.getoutput(command)
 
 	compile_error = None
@@ -861,7 +861,7 @@ def build_application(include_unit_test = False):
 	command = \
 		"ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -of application_new application.d " + \
 		str.join(' ', files) + \
-		" -L rootintootin.a -L rootintootin_clibs.a -L=\"-lmysqlclient\" -L=\"-lpcre\" -L=\"-lfcgi\" " + \
+		" -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + \
 		tango
 	compile_error = commands.getoutput(command)
 

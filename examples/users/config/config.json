@@ -40,7 +40,7 @@
 			"ip" : "127.0.0.1", 
 			"directory" : "~/fastcgi/", 
 			"httpd" : "lighttpd", 
-			"user" : "user"
+			"user" : "matt"
 		}
 	}
 }
