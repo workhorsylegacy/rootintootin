@@ -406,6 +406,7 @@ public string strip(string value, string match) {
 	return value;
 }
 
+//FIXME: Reaname to rstrip
 /****f* language_helper/stripr
  *  FUNCTION
  *    Returns the value with the match removed from the right.
@@ -429,6 +430,7 @@ public string stripr(string value, string match) {
 	return value;
 }
 
+//FIXME: Reaname to lstrip
 /****f* language_helper/stripl
  *  FUNCTION
  *    Returns the value with the match removed from the left.
@@ -947,18 +949,14 @@ public bool to_bool(string value) {
 public FixedPoint to_FixedPoint(string value) {
 	long precision = 0;
 	ulong scale = 0;
-	//try {
-		string[] pair = split(value, ".");
-		precision = to_long(pair[0]);
-		if(pair.length == 2) {
-			Stdout.format("FUUU1: {}", pair[0]).newline.flush;
-			Stdout.format("FUUU2: {}", ljust(pair[1], 18, "0")).newline.flush;
-			scale =  to_ulong(stripl(ljust(pair[1], 18, "0"), "0"));
-		}
-		return new FixedPoint(precision, scale, 18, 18);
-	//} catch {
-	//}
-	//return new FixedPoint(0, 0, 18, 18);
+	string[] pair = split(value, ".");
+	precision = to_long(pair[0]);
+	if(pair.length == 2) {
+		Stdout.format("FUUU1: {}", pair[0]).newline.flush;
+		Stdout.format("FUUU2: {}", ljust(pair[1], 18, "0")).newline.flush;
+		scale =  to_ulong(stripl(ljust(pair[1], 18, "0"), "0"));
+	}
+	return new FixedPoint(precision, scale, 18, 18);
 }
 /*
 unittest {
@@ -1527,8 +1525,8 @@ public class FixedPoint {
 				to_s(max_width) ~ "' the max width.");
 		}
 
-		// Convert the scale to its full format
-		scale = to_ulong(ljust(to_s(scale), 18 - (max_scale_width-1), "0"));
+		//// Convert the scale to its full format
+		//scale = to_ulong(ljust(to_s(scale), 18, "0"));
 
 		// Make sure the max_precision_width is not zero
 		if(max_precision_width == 0) {
@@ -1575,7 +1573,7 @@ public class FixedPoint {
 	 * SOURCE
 	 */
 	public string toString() {
-		return to_s(_precision) ~ "." ~ to_s(_scale);
+		return to_s(_precision) ~ "." ~ stripr(rjust(to_s(_scale), 18, "0"), "0");
 	}
 	/*******/
 
@@ -1681,9 +1679,7 @@ public class FixedPoint {
 		// Save the result
 		_precision = new_precision;
 		_scale = new_scale;
-		Stdout("poozes").newline.flush;
 		Stdout.format("this: {}", this.toString()).newline.flush;
-		Stdout("pooz").newline.flush;
 	}
 	/*******/
 
@@ -1738,7 +1734,7 @@ public class FixedPoint {
 	unittest {
 		describe("language_helper#FixedPoint", 
 			it("Should have the properties return the same values from the constructor", function() {
-				auto a = new FixedPoint(11, 03, 10, 2);
+				auto a = new FixedPoint(11, 30000000000000000, 10, 2);
 				assert(a.precision == 11, to_s(a.precision) ~ " != 11");
 				assert(a.scale == 30000000000000000, to_s(a.scale) ~ " != 30000000000000000");
 				assert(a.max_scale_width == 2, to_s(a.max_scale_width) ~ " != 2");
@@ -1746,7 +1742,7 @@ public class FixedPoint {
 				assert(a.max_scale == 99, to_s(a.max_scale) ~ " != 99");
 			}),
 			it("Should have properties working with nagative numbers", function() {
-				auto a = new FixedPoint(-9, 04, 10, 2);
+				auto a = new FixedPoint(-9, 40000000000000000, 10, 2);
 				assert(a.precision == -9);
 				assert(a.scale == 40000000000000000);
 				assert(a.max_scale_width == 2);
@@ -1754,88 +1750,87 @@ public class FixedPoint {
 				assert(a.max_scale == 99);
 			}),
 			it("Should convert to other data types", function() {
-				auto a = new FixedPoint(11, 03, 10, 2);
-				assert(a.toDouble == 11.03, to_s(a.toDouble) ~ " == 11.03");
+				auto a = new FixedPoint(11, 30000000000000000, 10, 2);
+				assert(a.toString == "11.03", a.toString ~ " != 11.03");
+				assert(a.toDouble == 11.03, to_s(a.toDouble) ~ " != 11.03");
 				assert(a.toLong == 11);
-				assert(a.toString == "11.03");
-			})/*,
+			}),
 			it("Should convert to other data types with negative numbers", function() {
-				auto a = new FixedPoint(-9, 4, 10, 2);
+				auto a = new FixedPoint(-9, 40000000000000000, 10, 2);
 				assert(a.toDouble == -9.04);
 				assert(a.toLong == -9);
 				assert(a.toString == "-9.04");
 			}),
 			it("Should work with += FixedPoint", function() {
-				auto a = new FixedPoint(11, 3, 10, 2);
-				auto b = new FixedPoint(34, 1, 10, 2);
+				auto a = new FixedPoint(11, 30000000000000000, 10, 2);
+				auto b = new FixedPoint(34, 10000000000000000, 10, 2);
 				a += b;
 				assert(a == 45.04);
 
-				auto c = new FixedPoint(12, 99, 10, 2);
+				auto c = new FixedPoint(12, 990000000000000000, 10, 2);
 				a += c;
-				assert(a == 58.03);
+				assert(a == 58.03, to_s(a) ~ " != 58.03");
 			}),
 			it("Should round properly with += FixedPoint", function() {
-				auto d = new FixedPoint(12, 99, 10, 2);
-				auto a = new FixedPoint(58, 3, 10, 2);
+				auto d = new FixedPoint(12, 990000000000000000, 10, 2);
+				auto a = new FixedPoint(58, 30000000000000000, 10, 2);
 				a += d;
 				assert(a == 71.02);
 			}),
 			it("Should += with int", function() {
-				auto a = new FixedPoint(71, 2, 10, 2);
+				auto a = new FixedPoint(71, 20000000000000000, 10, 2);
 				int e = 1;
 				a += e;
 				assert(a == 72.02);
 			}),
 			it("Should += with float", function() {
-				auto a = new FixedPoint(72, 02, 10, 2);
+				auto a = new FixedPoint(72, 20000000000000000, 10, 2);
 				float f = 3.04;
 				a += f;
 				assert(a == 75.06, to_s(a) ~ " != 75.06");
 			}),
 			it("Should round properly with += float", function() {
-				auto a = new FixedPoint(75, 4, 10, 2);
+				auto a = new FixedPoint(75, 40000000000000000, 10, 2);
 				float g = 2.99;
 				a += g;
 				assert(a == 78.03);
 			}),
 			it("Should += double", function() {
-				auto a = new FixedPoint(78, 3, 10, 2);
+				auto a = new FixedPoint(78, 30000000000000000, 10, 2);
 				double h = 1.1;
 				a += h;
-				Stdout(to_s(a) ~ " 79.13").newline.flush;
-				assert(a == 79.13);
+				assert(a == 79.13, to_s(a) ~ " != 79.13");
 			}),
 			it("Should round properly with += double", function() {
-				auto a = new FixedPoint(79, 13, 10, 2);
+				auto a = new FixedPoint(79, 130000000000000000, 10, 2);
 				double i = 1.99;
 				a += i;
 				assert(a == 81.12);
 			}),
 			it("Should += negative FixedPoint", function() {
-				auto a = new FixedPoint(81, 12, 10, 2);
-				auto b = new FixedPoint(-13, 5, 10, 2);
+				auto a = new FixedPoint(81, 120000000000000000, 10, 2);
+				auto b = new FixedPoint(-13, 50000000000000000, 10, 2);
 				a += b;
 				assert(a == 68.07);
 			}),
 			it("Should -= FixedPoint", function() {
-				auto a = new FixedPoint(68, 7, 10, 2);
-				auto b = new FixedPoint(13, 5, 10, 2);
+				auto a = new FixedPoint(68, 70000000000000000, 10, 2);
+				auto b = new FixedPoint(13, 50000000000000000, 10, 2);
 				a -= b;
 				assert(a == 55.02);
 			}),
 			it("Should -= negative FixedPoint", function() {
-				auto a = new FixedPoint(55, 2, 10, 2);
-				auto b = new FixedPoint(-13, 4, 10, 2);
+				auto a = new FixedPoint(55, 20000000000000000, 10, 2);
+				auto b = new FixedPoint(-13, 40000000000000000, 10, 2);
 				a -= b;
 				assert(a == 68.06);
 			}),
 			it("Should += negative double", function() {
-				auto a  = new FixedPoint(68, 6, 10, 2);
+				auto a  = new FixedPoint(68, 60000000000000000, 10, 2);
 				double i = -1.99;
 				a += i;
-				assert(a == 66.07);
-			}),
+				assert(a == 66.07, to_s(a) ~ " != 66.07");
+			})/*,
 			it("Should not overflow the precision", function() {
 				auto a = new FixedPoint(99, 0, 2, 1);
 				double i = 1;
