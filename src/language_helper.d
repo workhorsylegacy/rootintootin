@@ -660,9 +660,6 @@ public string rjust(string value, uint width, string pad_char=" ") {
  */
 public string ljust(string value, uint width, string pad_char=" ") {
 	int len = value.length;
-	Stdout.format("FEEE: {}", value).newline.flush;
-	Stdout.format("len: {}", len).newline.flush;
-	Stdout.format("width: {}", width).newline.flush;
 	string retval = new char[width];
 	tango.text.Util.repeat(pad_char, width, retval);
 	retval[0 .. len] = value;
@@ -952,8 +949,6 @@ public FixedPoint to_FixedPoint(string value) {
 	string[] pair = split(value, ".");
 	precision = to_long(pair[0]);
 	if(pair.length == 2) {
-		Stdout.format("FUUU1: {}", pair[0]).newline.flush;
-		Stdout.format("FUUU2: {}", ljust(pair[1], 18, "0")).newline.flush;
 		scale =  to_ulong(stripl(ljust(pair[1], 18, "0"), "0"));
 	}
 	return new FixedPoint(precision, scale, 18, 18);
@@ -1573,7 +1568,10 @@ public class FixedPoint {
 	 * SOURCE
 	 */
 	public string toString() {
-		return to_s(_precision) ~ "." ~ stripr(rjust(to_s(_scale), 18, "0"), "0");
+		string retval = to_s(_precision) ~ "." ~ stripr(rjust(to_s(_scale), 18, "0"), "0");
+		if(ends_with(retval, "."))
+			retval ~= "0";
+		return retval;
 	}
 	/*******/
 
@@ -1619,12 +1617,6 @@ public class FixedPoint {
 	 * SOURCE
 	 */
 	public void opAddAssign(FixedPoint a) {
-		Stdout("\n\nopAddAssign").newline.flush;
-		Stdout.format("this.precision: {}", this.precision).newline.flush;
-		Stdout.format("this.scale: {}", rjust(to_s(this.scale), 18, "0")).newline.flush;
-		Stdout.format("a.precision   : {}", a.precision).newline.flush;
-		Stdout.format("a.scale   : {}", rjust(to_s(a.scale), 18, "0")).newline.flush;
-
 		// Get the new precision and scale
 		long new_precision = _precision + a._precision;
 		ulong new_scale;
@@ -1633,27 +1625,19 @@ public class FixedPoint {
 		} else {
 			if(a._scale > _scale) {
 				new_precision -= 1;
-				new_scale = (100 + _scale) - a._scale;
+				new_scale = (1000000000000000000 + _scale) - a._scale;
 			} else {
 				new_scale = _scale - a._scale;
 			}
 		}
-		Stdout("\nnew values").newline.flush;
-		Stdout.format("new_scale: {}", new_scale).newline.flush;
-		Stdout.format("new_precision: {}", new_precision).newline.flush;
 
 		// Perform the rounding
-		Stdout("\nrounding").newline.flush;
 		if(new_scale > 999999999999999999) {
 			ulong more_scale = new_scale - 1000000000000000000;
-			Stdout.format("more_scale: {}", more_scale).newline.flush;
 			new_precision += (new_scale / 1000000000000000000);
 			new_scale = more_scale;
 		}
-		Stdout.format("new_scale: {}", new_scale).newline.flush;
-		Stdout.format("new_precision: {}", new_precision).newline.flush;
 
-/*
 		// Make sure the new_precision does not overflow
 		if(to_s(new_precision).length > _max_precision_width) {
 			string[] buffer;
@@ -1661,10 +1645,7 @@ public class FixedPoint {
 				buffer ~= "9";
 			new_precision = to_long(join(buffer, ""));
 		}
-		Stdout("\nprecision overflow").newline.flush;
-		Stdout.format("new_scale: {}", new_scale).newline.flush;
-		Stdout.format("new_precision: {}", new_precision).newline.flush;
-
+/*
 		// Make sure the new_scale does not overflow
 		if(to_s(new_scale).length > _max_scale_width) {
 			string[] buffer;
@@ -1679,7 +1660,6 @@ public class FixedPoint {
 		// Save the result
 		_precision = new_precision;
 		_scale = new_scale;
-		Stdout.format("this: {}", this.toString()).newline.flush;
 	}
 	/*******/
 
@@ -1748,6 +1728,10 @@ public class FixedPoint {
 				assert(a.max_scale_width == 2);
 				assert(a.max_precision_width == 10);
 				assert(a.max_scale == 99);
+			}),
+			it("Should have a trailing zero on whole numbers", function() {
+				auto a = new FixedPoint(99, 0, 2, 2);
+				assert(to_s(a) == "99.0", to_s(a) ~ " != 99.0");
 			}),
 			it("Should convert to other data types", function() {
 				auto a = new FixedPoint(11, 30000000000000000, 10, 2);
@@ -1830,12 +1814,12 @@ public class FixedPoint {
 				double i = -1.99;
 				a += i;
 				assert(a == 66.07, to_s(a) ~ " != 66.07");
-			})/*,
+			}),
 			it("Should not overflow the precision", function() {
 				auto a = new FixedPoint(99, 0, 2, 1);
 				double i = 1;
 				a += i;
-				assert(a == 99.0);
+				assert(a == 99.0, to_s(a) ~ " != 99.0");
 			}),
 			it("Should not allow a max_precision_width of zero", function() {
 				bool has_thrown = false;
@@ -1855,24 +1839,24 @@ public class FixedPoint {
 				}
 				assert(has_thrown == true);
 			}),
-			it("Should not allow a max_precision_width > 19", function() {
+			it("Should not allow a max_precision_width > 18", function() {
 				bool has_thrown = false;
 				try {
-					auto l = new FixedPoint(0, 0, 20, 1);
+					auto l = new FixedPoint(0, 0, 19, 1);
 				} catch(Exception err) {
 					has_thrown = true;
 				}
 				assert(has_thrown == true);
 			}),
-			it("Should not allow a max_scale_width > 19", function() {
+			it("Should not allow a max_scale_width > 18", function() {
 				bool has_thrown = false;
 				try {
-					auto m = new FixedPoint(0, 0, 1, 20);
+					auto m = new FixedPoint(0, 0, 1, 19);
 				} catch(Exception err) {
 					has_thrown = true;
 				}
 				assert(has_thrown == true);
-			})*/
+			})
 		);
 	}
 }
