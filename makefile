@@ -15,8 +15,8 @@ remove:
 	rm -f /usr/bin/rootintootin_gen
 	rm -f /usr/bin/rootintootin_deploy
 	rm -f /usr/bin/rootintootin_test
-	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
-	rm -f /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
+	rm -f /usr/lib/python2.6/site-packages/lib_rootintootin.py
+	rm -f /usr/lib/python2.6/site-packages/lib_rootintootin_scripts.py
 
 install: remove
 	cp -R . /usr/share/rootintootin/
@@ -32,8 +32,8 @@ install: remove
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 	ln -s /usr/share/rootintootin/bin/rootintootin_deploy /usr/bin/rootintootin_deploy
 	ln -s /usr/share/rootintootin/bin/rootintootin_test /usr/bin/rootintootin_test
-	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
-	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
+	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/lib/python2.6/site-packages/lib_rootintootin.py
+	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/lib/python2.6/site-packages/lib_rootintootin_scripts.py
 
 dev: remove
 	ln -s `pwd` /usr/share/rootintootin
@@ -42,7 +42,7 @@ dev: remove
 	ln -s /usr/share/rootintootin/bin/rootintootin_gen /usr/bin/rootintootin_gen
 	ln -s /usr/share/rootintootin/bin/rootintootin_deploy /usr/bin/rootintootin_deploy
 	ln -s /usr/share/rootintootin/bin/rootintootin_test /usr/bin/rootintootin_test
-	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin.py
-	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py
+	ln -s /usr/share/rootintootin/bin/lib_rootintootin.py /usr/lib/python2.6/site-packages/lib_rootintootin.py
+	ln -s /usr/share/rootintootin/bin/lib_rootintootin_scripts.py /usr/lib/python2.6/site-packages/lib_rootintootin_scripts.py
 
 
