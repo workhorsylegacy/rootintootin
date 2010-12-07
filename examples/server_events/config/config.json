@@ -10,7 +10,8 @@
 		"server" : {
 			"header_max_size" : "8192", 
 			"port" : "3000", 
-			"max_waiting_clients" : "100"
+			"max_waiting_clients" : "100", 
+			"is_linked_statically" : true
 		}
 	}, 
 	"test" : {
@@ -23,7 +24,8 @@
 		"server" : {
 			"header_max_size" : "8192", 
 			"port" : "3000", 
-			"max_waiting_clients" : "100"
+			"max_waiting_clients" : "100", 
+			"is_linked_statically" : true
 		}
 	}, 
 	"production" : {
@@ -40,7 +42,8 @@
 			"ip" : "127.0.0.1", 
 			"directory" : "~/fastcgi/", 
 			"httpd" : "lighttpd", 
-			"user" : "user"
+			"user" : "user", 
+			"is_linked_statically" : true
 		}
 	}
 }

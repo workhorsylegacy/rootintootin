@@ -721,7 +721,10 @@ def build_framework(include_unit_test = False):
 	is_library_changed = False
 	result = ''
 	if is_file_newer("db.c", "db.o"):
-		result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o -Wl,-static -lmysqlclient")
+		if config[mode]['server']['is_linked_statically']:
+			result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o -Wl,-static -lmysqlclient")
+		else:
+			result += commands.getoutput("gcc -g -c -Wall -Werror db.c -o db.o -lmysqlclient")
 		is_library_changed = True
 
 	if is_file_newer("file_system.c", "file_system.o"):
@@ -729,7 +732,10 @@ def build_framework(include_unit_test = False):
 		is_library_changed = True
 
 	if is_file_newer("regex.c", "regex.o"):
-		result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -Wl,-static -lpcre")
+		if config[mode]['server']['is_linked_statically']:
+			result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -Wl,-static -lpcre")
+		else:
+			result += commands.getoutput("gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre")
 		is_library_changed = True
 
 	if is_file_newer("shared_memory.c", "shared_memory.o"):
@@ -741,7 +747,10 @@ def build_framework(include_unit_test = False):
 		is_library_changed = True
 
 	if is_file_newer("fcgi.c", "fcgi.o"):
-		result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -Wl,-static -lfcgi")
+		if config[mode]['server']['is_linked_statically']:
+			result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -Wl,-static -lfcgi")
+		else:
+			result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
 		is_library_changed = True
 
 	if is_library_changed:
@@ -795,8 +804,12 @@ def build_server():
 
 	# Compile the server and link it with the static library
 	result = ''
-	command = "ldc -g -w -of server server.d -L rootintootin.a " + \
-			"-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
+	command = "ldc -g -w -of server server.d -L rootintootin.a "
+
+	if config[mode]['server']['is_linked_statically']:
+		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
+	else:
+		command += "-L clibs.a -L/usr/lib/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
 
 	compile_error = None
@@ -860,9 +873,12 @@ def build_application(include_unit_test = False):
 	# Build the app
 	command = \
 		"ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -of application_new application.d " + \
-		str.join(' ', files) + \
-		" -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + \
-		tango
+		str.join(' ', files)
+
+	if config[mode]['server']['is_linked_statically']:
+		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
+	else:
+		command += " -L rootintootin.a -L clibs.a -L/usr/lib/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	compile_error = commands.getoutput(command)
 
 	# Make sure the application was built
