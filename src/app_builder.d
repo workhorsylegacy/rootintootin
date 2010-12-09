@@ -77,7 +77,7 @@ public class AppBuilder {
 		char[] c_stderr = "";
 
 		// Copy all the app files, and do code generation
-		this.run_command("python2.6 /usr/bin/rootintootin_run " ~ _app_path ~ " application " ~ _mode, c_stdout, c_stderr);
+		this.run_command("python /usr/bin/rootintootin_run " ~ _app_path ~ " application " ~ _mode, c_stdout, c_stderr);
 
 		// Print anything from stdout
 		Stdout(c_stdout).newline.flush;

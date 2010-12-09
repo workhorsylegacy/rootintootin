@@ -11,8 +11,8 @@ See http://rootin.toot.in for details.
 
 1. Install the dependencies for your distro:
 # ubuntu
-sudo apt-get install mysql-client mysql-server libmysqlclient16-dev \
-python-mysqldb python-pexpect python-mako build-essential \
+sudo apt-get install python-mysqldb python-pexpect \
+python-mako mysql-client mysql-server libmysqlclient16-dev build-essential \
 ldc libtango-ldc-dev libpcre3-dev libfcgi-dev inotify-tools
 sudo service mysql start
 
@@ -20,7 +20,9 @@ sudo service mysql start
 # Install ldc and tango from here:
 # http://www.dsource.org/projects/ldc/
 sudo yum groupinstall "Development Tools"
-sudo yum install mysql mysql-server MySQL-python pexpect python-mako bzr ldc pcre-devel fcgi-devel tango-devel inotify-tools
+sudo yum install MySQL-python pexpect \
+python-mako mysql mysql-devel mysql-server ldc pcre-devel fcgi-devel \
+tango-devel inotify-tools
 sudo service mysqld start
 
 

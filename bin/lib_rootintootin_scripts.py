@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-------------------------------------------------------------------------------
 #
@@ -16,6 +16,7 @@ import commands
 import json
 from lib_rootintootin import *
 
+tango = "-I /usr/include/d/ldc/ -L /usr/lib/libtango.a"
 
 def _model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
@@ -178,7 +179,7 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 	# Add the to_json method
 	properties += \
 				"	public string to_json() {\n" + \
-				"		auto json = new Json!(char);\n" + \
+				"		return null;/*auto json = new Json!(char);\n" + \
 				"		with(json)\n" + \
 				"			value = object(pair(\"" + model_name + "\", object(\n"
 
@@ -206,13 +207,13 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 				"		json.print((char[] s) {\n" + \
 				"			data ~= s;\n" + \
 				"		});\n" + \
-				"		return data;\n" + \
+				"		return data;*/\n" + \
 				"	}\n"
 
 	# Add the to_xml method
 	properties += \
 				"	public string to_xml() {\n" + \
-				"		auto doc = new Document!(char);\n" + \
+				"		return null;/*auto doc = new Document!(char);\n" + \
 				"		auto top = doc.tree.element(null, \"" + model_name + "\");\n" + \
 				"\n"
 
@@ -232,7 +233,7 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 	properties += \
 				"\n" + \
 				"		auto print = new DocPrinter!(char);\n" + \
-				"		return print(doc);\n" + \
+				"		return print(doc);*/\n" + \
 				"	}\n"
 
 	# Add class closing
@@ -809,7 +810,7 @@ def build_server():
 	if config[mode]['server']['is_linked_statically']:
 		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
 	else:
-		command += "-L clibs.a -L/usr/lib/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
+		command += "-L clibs.a -L/usr/lib/mysql/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
 
 	compile_error = None
@@ -878,7 +879,7 @@ def build_application(include_unit_test = False):
 	if config[mode]['server']['is_linked_statically']:
 		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
 	else:
-		command += " -L rootintootin.a -L clibs.a -L/usr/lib/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
+		command += " -L rootintootin.a -L clibs.a -L/usr/lib/mysql/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	compile_error = commands.getoutput(command)
 
 	# Make sure the application was built
