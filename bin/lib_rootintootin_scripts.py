@@ -9,6 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import os, sys, shutil, signal, subprocess
+import inspect
 import threading, time, distutils.core
 import errno
 import functools
@@ -16,7 +17,22 @@ import commands
 import json
 from lib_rootintootin import *
 
-tango = "-I /usr/include/d/ldc/ -L /usr/lib/libtango.a"
+def __line__():
+	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
+
+# Determine the OS specific locations of libraries
+tango, mysql = None, None
+os_name = commands.getoutput("lsb_release -is").lower()
+if os_name in ['ubuntu', 'debian']:
+	tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+	mysql = "/usr/lib/libmysqlclient"
+elif os_name == "fedora":
+	tango = "-I /usr/include/d/ldc/ -L /usr/lib/libtango.a"
+	mysql = "/usr/lib/mysql/libmysqlclient"
+else:
+	print "Unknown Operating System. Please update the code '" + __file__ + \
+	"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
+	exit()
 
 def _model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
@@ -808,9 +824,9 @@ def build_server():
 	command = "ldc -g -w -of server server.d -L rootintootin.a "
 
 	if config[mode]['server']['is_linked_statically']:
-		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
+		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/libpcre.a\" " + tango
 	else:
-		command += "-L clibs.a -L/usr/lib/mysql/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
+		command += "-L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
 
 	compile_error = None
@@ -877,9 +893,9 @@ def build_application(include_unit_test = False):
 		str.join(' ', files)
 
 	if config[mode]['server']['is_linked_statically']:
-		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"/usr/lib/libmysqlclient.a\" -L=\"/usr/lib/libpcre.a\" " + tango
+		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/libpcre.a\" " + tango
 	else:
-		command += " -L rootintootin.a -L clibs.a -L/usr/lib/mysql/libmysqlclient.so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
+		command += " -L rootintootin.a -L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	compile_error = commands.getoutput(command)
 
 	# Make sure the application was built

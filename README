@@ -20,7 +20,7 @@ sudo service mysql start
 # Install ldc and tango from here:
 # http://www.dsource.org/projects/ldc/
 sudo yum groupinstall "Development Tools"
-sudo yum install MySQL-python pexpect \
+sudo yum install redhat-lsb MySQL-python pexpect \
 python-mako mysql mysql-devel mysql-server ldc pcre-devel fcgi-devel \
 tango-devel inotify-tools
 sudo service mysqld start
