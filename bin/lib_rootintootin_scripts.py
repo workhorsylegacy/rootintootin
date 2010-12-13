@@ -195,8 +195,8 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 	# Add the to_json method
 	properties += \
 				"	public string to_json() {\n" + \
-				"		return null;/*auto json = new Json!(char);\n" + \
-				"		with(json)\n" + \
+				"		return \"{}\";/*auto jsoner = new Json!(char);\n" + \
+				"		with(jsoner)\n" + \
 				"			value = object(pair(\"" + model_name + "\", object(\n"
 
 	model_map_len = len(model_map)
@@ -220,7 +220,7 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 				"			)));\n" + \
 				"\n" + \
 				"		char[] data = \"\";\n" + \
-				"		json.print((char[] s) {\n" + \
+				"		jsoner.print((char[] s) {\n" + \
 				"			data ~= s;\n" + \
 				"		});\n" + \
 				"		return data;*/\n" + \
@@ -229,7 +229,7 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 	# Add the to_xml method
 	properties += \
 				"	public string to_xml() {\n" + \
-				"		return null;/*auto doc = new Document!(char);\n" + \
+				"		auto doc = new Document!(char);\n" + \
 				"		auto top = doc.tree.element(null, \"" + model_name + "\");\n" + \
 				"\n"
 
@@ -248,8 +248,8 @@ def _model_generated_properties_class(model_name, model_map, reference_map, mode
 
 	properties += \
 				"\n" + \
-				"		auto print = new DocPrinter!(char);\n" + \
-				"		return print(doc);*/\n" + \
+				"		auto printer = new DocPrinter!(char);\n" + \
+				"		return printer.print(doc);\n" + \
 				"	}\n"
 
 	# Add class closing
