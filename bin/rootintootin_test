@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-------------------------------------------------------------------------------
 #
@@ -35,7 +35,6 @@ mode = 'test'
 rootintootin_dir = os.path.expanduser('~/.rootintootin')
 project_name = pwd.split('/')[-1]
 scratch = rootintootin_dir + '/' + project_name + '/' + mode + '/'
-tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
 # Build everything
