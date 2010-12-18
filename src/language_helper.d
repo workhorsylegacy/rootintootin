@@ -760,7 +760,7 @@ public string to_s(float value) {
 unittest {
 	describe("language_helper#to_s", 
 		it("Should include the point", function() {
-			assert(to_s(6.7f) == "6.7");
+			assert(to_s(6.7f) == "6.7", to_s(6.7f) ~ "!= 6.7");
 			assert(to_s(6.0f) == "6.0");
 		})
 	);
