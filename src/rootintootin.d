@@ -1168,7 +1168,7 @@ public class ControllerBase {
 	}
 	/*******/
 
-	// FIXME: table_name is needed here to know how to pluralize the model name: <blahs type="array"><blah /></blah>
+	// FIXME: table_name is needed here to know how to pluralize the model name: <blahs type="array"><blah /></blahs>
 	// This should be gotten from ModelBase somehow.
 	/****m* rootintootin/ControllerBase.respond_with 2
 	 *  FUNCTION
