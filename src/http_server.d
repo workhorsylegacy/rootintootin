@@ -22,7 +22,7 @@ private import socket;
 private import fcgi;
 private import tcp_server;
 private import language_helper;
-private import helper;
+private import web_helper;
 
 
 public class Request {
@@ -183,7 +183,7 @@ class HttpApp {
 		request.http_version = first_line[2];
 
 		// If the format is unknown, return a 415 error
-		if(!(request.format in Helper.mimetype_map)) {
+		if(!(request.format in mimetype_map)) {
 			_response = render_text(request, "415 Unsupported Media Type: The server does not understand the '" ~ request.format ~ "' format.", 415, "txt");
 			return;
 		}
@@ -208,7 +208,7 @@ class HttpApp {
 		if(has_cookie_support && ("Cookie" in request._fields) != null) {
 			foreach(string cookie ; split(request._fields["Cookie"], "; ")) {
 				if(pair(cookie, "=", _pair)) {
-					request._cookies[_pair[0]] = Helper.unescape(_pair[1]);
+					request._cookies[_pair[0]] = unescape(_pair[1]);
 				} else {
 					this.write_to_log("Malformed cookie: " ~ cookie ~ "\n");
 				}
@@ -219,7 +219,7 @@ class HttpApp {
 		if(contains(request.uri, "?")) {
 			foreach(string param ; split(after(request.uri, "?"), "&")) {
 				if(pair(param, "=", _pair)) {
-					request._params[Helper.unescape(_pair[0])].value = Helper.unescape(_pair[1]);
+					request._params[unescape(_pair[0])].value = unescape(_pair[1]);
 				}
 			}
 		}
@@ -297,7 +297,7 @@ class HttpApp {
 			// Don't bother hashing or base64ing the session 
 			// if it is not going to be used by the client.
 			if(has_cookie_support)
-				hashed_session_id = Helper.hash_and_base64(to_s(new_session_id), _salt);
+				hashed_session_id = hash_and_base64(to_s(new_session_id), _salt);
 			else
 				hashed_session_id = to_s(new_session_id);
 			request._cookies["_appname_session"] = hashed_session_id;
@@ -406,7 +406,7 @@ class HttpApp {
 			throw new Exception("Something has already been rendered.");
 		}
 
-		string status = Helper.get_verbose_status_code(301);
+		string status = get_verbose_status_code(301);
 
 		string header = 
 		(_is_fcgi ? "" : "HTTP/1.1 " ~ status ~ "\r\n") ~ 
@@ -421,7 +421,7 @@ class HttpApp {
 	protected string render_text(Request request, string text, ushort status_code = 200, string format = null) {
 		if(format==null) format = request.format;
 		if(format==null) format = "txt";
-		string content_type = Helper.mimetype_map[format];
+		string content_type = mimetype_map[format];
 
 		// If a 404 page is less than 512 bytes, we pad it for Chrome/Chromium
 		// Otherwise the "Friendly 404" will show in the browser.
@@ -444,7 +444,7 @@ class HttpApp {
 		}
 
 		// Get the status code
-		string status = Helper.get_verbose_status_code(status_code);
+		string status = get_verbose_status_code(status_code);
 
 		// Add the HTTP headers
 		auto now = WallClock.now;
@@ -457,7 +457,7 @@ class HttpApp {
 
 		// Get all the new cookie values to send
 		foreach(string name, string value ; request._cookies) {
-			b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= Helper.escape(value) ;b~= "\r\n";
+			b~= "Set-Cookie: " ;b~= name ;b~= "=" ;b~= escape(value) ;b~= "\r\n";
 		}
 
 		b~= "Status: " ;b~= status ;b~= "\r\n" ;b~= 
@@ -475,7 +475,7 @@ class HttpApp {
 	}
 
 	private void urlencode_to_dict(ref Dictionary dict, string urlencode_in_a_string) {
-		string data = Helper.unescape(urlencode_in_a_string);
+		string data = unescape(urlencode_in_a_string);
 		foreach(string param ; split(data, "&")) {
 			string[] pair = split(param, "=");
 			if(pair.length == 2) {

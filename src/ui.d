@@ -8,7 +8,7 @@
 
 
 private import language_helper;
-private import helper;
+private import web_helper;
 private import rootintootin;
 
 public static ControllerBase controller = null;
@@ -16,7 +16,7 @@ public static void set_controller(ControllerBase value) {
 	controller = value;
 }
 
-public static string h(string value) { return Helper.html_escape(value); }
+public static string h(string value) { return escape_html(value); }
 public static string h(int value) { return h(to_s(value)); }
 public static string h(uint value) { return h(to_s(value)); }
 public static string h(long value) { return h(to_s(value)); }

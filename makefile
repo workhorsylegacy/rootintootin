@@ -107,14 +107,14 @@ test_ubuntu:
 	ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
 	\
 	# Compile all the Rootin Tootin files into object files \
-	ldc -unittest -g -w -c language_helper.d helper.d rootintootin.d \
+	ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d \
 	ui.d rootintootin_server.d http_server.d tcp_server.d \
 	rootintootin_process.d app_builder.d \
 	db.d file_system.d regex.d shared_memory.d socket.d fcgi.d \
 	-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a; \
 	\
 	# Combine the Rootin Tootin object files into a static library \
-	ar rcs rootintootin.a language_helper.o helper.o \
+	ar rcs rootintootin.a language_helper.o web_helper.o \
 	rootintootin.o ui.o rootintootin_server.o http_server.o \
 	tcp_server.o rootintootin_process.o app_builder.o \
 	db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
@@ -157,14 +157,14 @@ test_fedora:
 	ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
 	\
 	# Compile all the Rootin Tootin files into object files \
-	ldc -unittest -g -w -c language_helper.d helper.d rootintootin.d \
+	ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d \
 	ui.d rootintootin_server.d http_server.d tcp_server.d \
 	rootintootin_process.d app_builder.d \
 	db.d file_system.d regex.d shared_memory.d socket.d fcgi.d \
 	-I /usr/include/d/ldc/ -L /usr/lib/libtango.a; \
 	\
 	# Combine the Rootin Tootin object files into a static library \
-	ar rcs rootintootin.a language_helper.o helper.o \
+	ar rcs rootintootin.a language_helper.o web_helper.o \
 	rootintootin.o ui.o rootintootin_server.o http_server.o \
 	tcp_server.o rootintootin_process.o app_builder.o \
 	db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \

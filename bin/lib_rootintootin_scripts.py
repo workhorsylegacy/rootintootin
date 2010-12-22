@@ -468,7 +468,7 @@ def _generate_application(version, routes, table_map, reference_map, include_uni
 		"private import tango.io.device.File;\n" +
 		"private import tango.text.json.Json;\n\n" +
 		"private import language_helper;\n" +
-		"private import helper;\n" +
+		"private import web_helper;\n" +
 		"private import regex;\n" +
 		"private import file_system;\n" +
 		"private import rootintootin;\n" +
@@ -775,7 +775,7 @@ def build_framework(include_unit_test = False):
 		result += commands.getoutput("ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o")
 
 	if is_file_newer("language_helper.d", "language_helper.o") or \
-		is_file_newer("helper.d", "helper.o") or \
+		is_file_newer("web_helper.d", "web_helper.o") or \
 		is_file_newer("rootintootin.d", "rootintootin.o") or \
 		is_file_newer("ui.d", "ui.o") or \
 		is_file_newer("rootintootin_server.d", "rootintootin_server.o") or \
@@ -790,14 +790,14 @@ def build_framework(include_unit_test = False):
 		is_file_newer("socket.d", "socket.o") or \
 		is_file_newer("fcgi.d", "fcgi.o"):
 		# Build the framework
-		command = "ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -c language_helper.d helper.d rootintootin.d " + \
+		command = "ldc" + [' ', ' -unittest '][include_unit_test] + "-g -w -c language_helper.d web_helper.d rootintootin.d " + \
 				"ui.d rootintootin_server.d http_server.d tcp_server.d " + \
 				"rootintootin_process.d app_builder.d " + \
 				" db.d file_system.d regex.d shared_memory.d socket.d fcgi.d " + tango
 		result += commands.getoutput(command)
 
 		# Combine the framework into a static library
-		command = "ar rcs rootintootin.a language_helper.o helper.o " + \
+		command = "ar rcs rootintootin.a language_helper.o web_helper.o " + \
 				"rootintootin.o ui.o rootintootin_server.o http_server.o " + \
 				"tcp_server.o rootintootin_process.o app_builder.o " + \
 				"db.o file_system.o regex.o shared_memory.o socket.o fcgi.o"
