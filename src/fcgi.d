@@ -38,7 +38,7 @@ int fcgi_accept() {
 }
 
 // FIXME: Rename to fcgi_read_request_header
-/****f* fcgi_accept
+/****f* fcgi/fcgi_accept
  *  FUNCTION
  *    Accepts a connection and returns the request header.
  *  INPUTS
@@ -80,7 +80,7 @@ bool fcgi_accept(out char[] request) {
 /*******/
 
 // FIXME: Rename to fcgi_write_response
-/****f* fcgi_printf
+/****f* fcgi/fcgi_printf
  *  FUNCTION
  *    Writes the response to the client.
  *  INPUTS
@@ -93,7 +93,7 @@ void fcgi_printf(char[] message) {
 /*******/
 
 // FIXME: Rename to fcgi_read_request_body
-/****f* fcgi_get_stdin
+/****f* fcgi/fcgi_get_stdin
  *  FUNCTION
  *    Reads the incomming request body into the buffer.
  *  INPUTS

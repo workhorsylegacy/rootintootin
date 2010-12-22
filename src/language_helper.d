@@ -405,6 +405,7 @@ public string strip(string value, string match) {
 
 	return value;
 }
+/*******/
 
 //FIXME: Reaname to rstrip
 /****f* language_helper/stripr
@@ -429,6 +430,7 @@ public string stripr(string value, string match) {
 
 	return value;
 }
+/*******/
 
 //FIXME: Reaname to lstrip
 /****f* language_helper/stripl
