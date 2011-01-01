@@ -714,6 +714,25 @@ def load_configurations():
 	with open('config/config.json', 'r') as f:
 		globals()['config'] = json.loads(f.read())
 
+	# Make sure the static libraries exist
+	if config[mode]['server']['is_linked_statically']:
+		libs = []
+		if not os.path.exists("/usr/lib/libfcgi.a"):
+			libs.append("Lib FastCGI")
+		if not os.path.exists("/usr/lib/libpcre.a"):
+			libs.append("Lib PCRE")
+		if os_name in ['ubuntu', 'debian']:
+			if not os.path.exists("/usr/lib/libmysqlclient.a"):
+				libs.append("Lib MySQL")
+		elif os_name == "fedora":
+			if not os.path.exists("/usr/lib/mysql/libmysqlclient.a"):
+				libs.append("Lib MySQL")
+
+		if libs:
+			print "The following static libraries are missing: " + str.join(', ', libs) + ". "
+			print "Please install them, or change your config file to link dynamically: config/config.json > " + mode + " > server > is_linked_statically > true"
+			exit()
+
 def generate_application_files(include_unit_test = False):
 	# Get the Rootin Tootin version
 	f = open(scratch+'version')

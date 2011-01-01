@@ -1,4 +1,5 @@
 * Release 0.7.0
+	* Fixed Bug #687714: 'Give a nice error when static linking won't work'.
 	* Fixed Bug #635122: 'Rename helper to web_helper and extract from class'.
 	* Fixed Bug #691798: 'Add a way to run the unit test without installing'.
 	* Fixed Bug #687708: 'Make it work with python 2.6 and 2.7'.
