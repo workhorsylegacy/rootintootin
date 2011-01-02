@@ -4,7 +4,7 @@ designed to scale well by default, while still providing a developer experience
 similar to Ruby on Rails.
 
 Documentation is generated with RoboDoc:
-robodoc --src src/ --doc html/ --multidoc --index --html --tabsize 4 --documenttitle "WIP Rootin Tootin 0.7 API"
+robodoc --src src/ --doc html/ --multidoc --index --html --tabsize 4 --documenttitle "Rootin Tootin 0.7 API"
 
 See http://rootin.toot.in for details.
 
@@ -28,9 +28,9 @@ sudo service mysqld start
 
 2. Install Rootin Tootin from source
 cd ~
-wget http://launchpad.net/rester/trunk/0.5.0/+download/rootintootin-0.5.0.tar.gz
-tar -zxvf rootintootin-0.5.0.tar.gz
-cd rootintootin-0.5.0
+wget http://launchpad.net/rester/trunk/0.7.0/+download/rootintootin-0.7.0.tar.gz
+tar -zxvf rootintootin-0.7.0.tar.gz
+cd rootintootin-0.7.0
 sudo make install
 
 
