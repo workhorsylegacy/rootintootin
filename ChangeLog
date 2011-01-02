@@ -1,5 +1,6 @@
 * Release 0.7.0
-	* Fixed Bug #531142: 'The UI namespace in views is unnecessary'
+	* Fixed Bug #585975: 'There is no API reference'.
+	* Fixed Bug #531142: 'The UI namespace in views is unnecessary'.
 	* Fixed Bug #687714: 'Give a nice error when static linking won't work'.
 	* Fixed Bug #635122: 'Rename helper to web_helper and extract from class'.
 	* Fixed Bug #691798: 'Add a way to run the unit test without installing'.
