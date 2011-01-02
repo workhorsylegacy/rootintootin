@@ -7,9 +7,9 @@
 #-----------------------------------------------------------------------------*/
 
 
-/****h* web_helper/helper.d
+/****h* web_helper/web_helper.d
  *  NAME
- *    helper.d
+ *    web_helper.d
  *  FUNCTION
  *    Helper functions for the web.
  ******

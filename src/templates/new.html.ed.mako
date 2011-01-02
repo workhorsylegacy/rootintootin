@@ -8,7 +8,7 @@
 <@@# form_start("${pluralize(model_name)}", "new_${model_name}", "new_${model_name}", "post"); @@>
 	<h1>New ${model_name.capitalize()}</h1>
 
-	<@@# UI.errors_for(controller._${model_name}, "${model_name}") @@>
+	<@@# errors_for(controller._${model_name}, "${model_name}") @@>
 % for field in pairs:
 <% field_name, field_type = field.split(':') %>
 % if field_type in ['binary']:

@@ -28,7 +28,7 @@ private import tango.text.json.Json;
 private import tango.text.xml.Document;
 
 
-/****d* rootintootin/BUFFER_SIZE
+/****d* language_helper/BUFFER_SIZE
  *  FUNCTION
  *    The default size of of any string buffer.
  * SOURCE
@@ -407,7 +407,6 @@ public string strip(string value, string match) {
 }
 /*******/
 
-//FIXME: Reaname to rstrip
 /****f* language_helper/stripr
  *  FUNCTION
  *    Returns the value with the match removed from the right.
@@ -416,6 +415,7 @@ public string strip(string value, string match) {
  *    match   - the part of the string to remove.
  * SOURCE
  */
+//FIXME: Reaname to rstrip
 public string stripr(string value, string match) {
 	if(value == null || value.length == 0)
 		return value;
@@ -432,7 +432,6 @@ public string stripr(string value, string match) {
 }
 /*******/
 
-//FIXME: Reaname to lstrip
 /****f* language_helper/stripl
  *  FUNCTION
  *    Returns the value with the match removed from the left.
@@ -441,6 +440,7 @@ public string stripr(string value, string match) {
  *    match   - the part of the string to remove.
  * SOURCE
  */
+//FIXME: Reaname to lstrip
 public string stripl(string value, string match) {
 	if(value == null || value.length == 0)
 		return value;

@@ -2,7 +2,7 @@
 <%# form_start("messages", "new_message", "new_message", "post"); %>
 	<h1>New Message</h1>
 
-	<%# UI.errors_for(controller._message, "message") %>
+	<%# errors_for(controller._message, "message") %>
 
 	<p>
 		<label for="message_text">Text</label><br />

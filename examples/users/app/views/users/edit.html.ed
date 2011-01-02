@@ -2,7 +2,7 @@
 <%# form_start("users/" ~ to_s(controller._user.id) ~ "?method=PUT", "edit_user_" ~ to_s(controller._user.id), "edit_user", "post"); %>
 	<h1>Editing User</h1>
 
-	<%# UI.errors_for(controller._user, "user") %>
+	<%# errors_for(controller._user, "user") %>
 
 	<p>
 		<label for="user_name">Name</label><br />

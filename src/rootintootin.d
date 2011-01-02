@@ -292,9 +292,6 @@ public class Clause {
 	/*******/
 }
 
-// FIXME: Rename this to ResourceRunnerBase
-// FIXME: Remove the id argument because it is duplicating the id in the params.
-// FIXME: Remove the events_to_trigger argument.
 /****c* rootintootin/RunnerBase
  *  NAME
  *    RunnerBase
@@ -302,6 +299,9 @@ public class Clause {
  *    A base class for the generated application class.
  ******
  */
+// FIXME: Rename this to ResourceRunnerBase
+// FIXME: Remove the id argument because it is duplicating the id in the params.
+// FIXME: Remove the events_to_trigger argument.
 public class RunnerBase {
 	/****m* rootintootin/RunnerBase.this
 	 *  FUNCTION

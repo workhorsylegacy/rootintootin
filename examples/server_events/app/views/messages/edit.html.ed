@@ -2,7 +2,7 @@
 <%# form_start("messages/" ~ to_s(controller._message.id) ~ "?method=PUT", "edit_message_" ~ to_s(controller._message.id), "edit_message", "post"); %>
 	<h1>Editing Message</h1>
 
-	<%# UI.errors_for(controller._message, "message") %>
+	<%# errors_for(controller._message, "message") %>
 
 	<p>
 		<label for="message_text">Text</label><br />

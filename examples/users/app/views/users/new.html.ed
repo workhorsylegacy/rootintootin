@@ -2,7 +2,7 @@
 <%# form_start("users", "new_user", "new_user", "post"); %>
 	<h1>New User</h1>
 
-	<%# UI.errors_for(controller._user, "user") %>
+	<%# errors_for(controller._user, "user") %>
 
 	<p>
 		<label for="user_name">Name</label><br />
