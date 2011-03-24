@@ -38,9 +38,9 @@ project_name = pwd.split('/')[-1]
 scratch = rootintootin_dir + '/' + project_name + '/' + mode + '/'
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
-# Build the server
+# Build and run the server
 if mode == "development" and build_type == 'server':
-	copy_files_to_scratch(is_symlinking_public = True)
+	copy_files_to_scratch(is_public_symlinked = True)
 	move_to_scratch()
 	load_configurations()
 	build_framework()
@@ -48,7 +48,7 @@ if mode == "development" and build_type == 'server':
 	run_server()
 # Or build the application
 elif mode == "development" and build_type == 'application':
-	copy_files_to_scratch(is_symlinking_public = True)
+	copy_files_to_scratch(is_public_symlinked = True)
 	move_to_scratch()
 	load_configurations()
 	generate_application_files()

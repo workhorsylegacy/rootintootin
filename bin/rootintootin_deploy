@@ -29,7 +29,7 @@ scratch = rootintootin_dir + '/' + project_name + '/' + mode + '/'
 exec_file("lib_rootintootin_scripts.py", globals(), locals())
 
 # Copy the files
-copy_files_to_scratch(is_symlinking_public = False)
+copy_files_to_scratch(is_public_symlinked = False)
 move_to_scratch()
 load_configurations()
 
@@ -60,7 +60,7 @@ build_framework()
 build_server()
 build_application()
 
-# Make ~/fastcgi empty and accessable by the user
+# Make ~/fastcgi empty and accessible by the user
 remove_folder_on_server('~/fastcgi')
 create_folder_on_server('~/fastcgi')
 chown_folder_on_server('~/fastcgi', user)
