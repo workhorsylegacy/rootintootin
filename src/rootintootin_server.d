@@ -6,6 +6,13 @@
 #
 #-----------------------------------------------------------------------------*/
 
+/****h* rootintootin_server/rootintootin_server.d
+ *  NAME
+ *    rootintootin_server.d
+ *  FUNCTION
+ *    Contains the base rootin tootin application and server.
+ ******
+ */
 
 private import tango.io.device.File;
 private import Path = tango.io.Path;
@@ -19,6 +26,14 @@ private import regex;
 private import rootintootin;
 
 
+/****c* rootintootin_server/RootinTootinApp
+ *  NAME
+ *    RootinTootinApp
+ *  FUNCTION
+ *    A class used to create a basic RootinTootin application. It is 
+ *    designed to work with RootinTootinServer.
+ ******
+ */
 public class RootinTootinApp : HttpApp {
 	private RunnerBase _runner = null;
 	private string[Regex][string][string] _routes = null;
@@ -159,6 +174,14 @@ public class RootinTootinApp : HttpApp {
 	}
 }
 
+/****c* rootintootin_server/RootinTootinServer
+ *  NAME
+ *    RootinTootinServer
+ *  FUNCTION
+ *    A class used to create a basic RootinTootin server. It is designed to 
+ *    work with RootinTootinApp.
+ ******
+ */
 public class RootinTootinServer : HttpServer {
 	public this(ushort port, int max_waiting_clients) {
 		super(port, max_waiting_clients);

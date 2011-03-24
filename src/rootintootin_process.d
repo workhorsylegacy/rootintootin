@@ -6,6 +6,13 @@
 #
 #-----------------------------------------------------------------------------*/
 
+/****h* rootintootin_process/rootintootin_process.d
+ *  NAME
+ *    rootintootin_process.d
+ *  FUNCTION
+ *    Contains the rootin tootin application and server processes.
+ ******
+ */
 
 private import tango.io.Stdout;
 private import tango.core.Thread;
@@ -22,6 +29,15 @@ private import rootintootin;
 private import rootintootin_server;
 
 
+/****c* rootintootin_process/RootinTootinAppProcess
+ *  NAME
+ *    RootinTootinAppProcess
+ *  FUNCTION
+ *    A class that is designed to run a RootinTootinApp in its 
+ *    own process. It is designed to work with a RootinTootinServerProcess
+ *    running in its own process.
+ ******
+ */
 class RootinTootinAppProcess : RootinTootinApp {
 	private File _output = null;
 	private int _unix_socket_fd;
@@ -99,6 +115,15 @@ class RootinTootinAppProcess : RootinTootinApp {
 	}
 }
 
+/****c* rootintootin_process/RootinTootinServerProcess
+ *  NAME
+ *    RootinTootinServerProcess
+ *  FUNCTION
+ *    A class that is designed to run a RootinTootinServer in its 
+ *    own process. It is designed to work with a RootinTootinAppProcess
+ *    running in its own process.
+ ******
+ */
 class RootinTootinServerProcess : RootinTootinServer {
 	private char[] _app_path = null;
 	private char[] _app_name = null;

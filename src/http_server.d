@@ -6,6 +6,13 @@
 #
 #-----------------------------------------------------------------------------*/
 
+/****h* http_server/http_server.d
+ *  NAME
+ *    http_server.d
+ *  FUNCTION
+ *    Contains the code needed for basic HTTP servers and applications.
+ ******
+ */
 
 private import tango.io.Stdout;
 private import tango.core.Thread;
@@ -25,6 +32,22 @@ private import language_helper;
 private import web_helper;
 
 
+/****c* http_server/Request
+ *  NAME
+ *    Request
+ *  FUNCTION
+ *    Contains the request data parsed into the fields:
+ *        method:         HTTP request method
+ *        uri:            HTTP request URI
+ *        format:         HTTP format
+ *        http_version:   HTTP version
+ *        params:         HTTP GET parameters
+ *        fields:         HTTP fields
+ *        cookies:        HTTP cookies
+ *        sessions:       HTTP sessions
+ *        content_length: HTTP request content length
+ ******
+ */
 public class Request {
 	private bool _has_rendered = false;
 	private bool _was_format_specified;
@@ -69,6 +92,14 @@ public class Request {
 	public void content_length(uint value) { _content_length = value; }
 }
 
+/****c* http_server/HttpApp
+ *  NAME
+ *    HttpApp
+ *  FUNCTION
+ *    A class used to create a basic HTTP application. It is designed to 
+ *    work with HttpServer.
+ ******
+ */
 class HttpApp {
 	private int _session_id = 0;
 	private string[string][string] _sessions;
@@ -507,6 +538,14 @@ class HttpApp {
 	}
 }
 
+/****c* http_server/HttpServer
+ *  NAME
+ *    HttpServer
+ *  FUNCTION
+ *    A class used to create a basic HTTP server. It is designed to 
+ *    work with HttpApp.
+ ******
+ */
 class HttpServer : TcpServer {
 	public this(ushort port, int max_waiting_clients) {
 		super(port, max_waiting_clients);

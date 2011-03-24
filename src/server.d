@@ -6,6 +6,14 @@
 #
 #-----------------------------------------------------------------------------*/
 
+/****h* server/server.d
+ *  NAME
+ *    server.d
+ *  FUNCTION
+ *    Contains the development Rootin Tootin server. It watches the project
+ *    files and automatically rebuilds them and runs them as the application.
+ ******
+ */
 
 private import tango.io.device.File;
 private import tango.text.json.Json;

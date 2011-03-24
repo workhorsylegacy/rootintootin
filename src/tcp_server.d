@@ -7,6 +7,14 @@
 #-----------------------------------------------------------------------------*/
 
 
+/****h* tcp_server/tcp_server.d
+ *  NAME
+ *    tcp_server.d
+ *  FUNCTION
+ *    Contains the code needed for basic TCP.
+ ******
+ */
+
 private import tango.io.Stdout;
 private import tango.core.Thread;
 
@@ -14,6 +22,13 @@ private import language_helper;
 private import socket;
 
 
+/****c* tcp_server/TcpServer
+ *  NAME
+ *    TcpServer
+ *  FUNCTION
+ *    A class used to create a basic TCP server.
+ ******
+ */
 class TcpServer {
 	public bool _is_running = false;
 	private int _sock = -1;
