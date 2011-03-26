@@ -1,4 +1,5 @@
 * Release 0.8.0
+	* Fixed Bug #742952: 'LSB Release is missing as a Fedora requirement'.
 	* Fixed Bug #722510: 'Rebuilding no longer picks up code changes'.
 2011-01-01 Release 0.7.0
 	* Fixed Bug #585975: 'There is no API reference'.
