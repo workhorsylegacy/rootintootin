@@ -9,7 +9,7 @@ Homepage: http://rootin.toot.in
 Package: rootintootin
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, 
-	mysql-client, mysql-server, libmysqlclient16-dev, 
+	mysql-client, mysql-server, libmysqlclient-dev, 
 	python-mysqldb, python-pexpect, python-mako, build-essential, 
 	ldc, libtango-ldc-dev, libpcre3-dev, libfcgi-dev, inotify-tools
 Description: A web framework and server that is written in D
