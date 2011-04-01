@@ -15,14 +15,41 @@ os.chdir(os.sys.path[0])
 pwd = os.sys.path[0]
 
 # Make sure we are in python 2.6 or 2.7
-vmaj, vmin = sys.version_info[0:2]
-version = str(vmaj) + '.' + str(vmin)
+version = "%s.%s" % (sys.version_info[0:2])
 if version not in ['2.6', '2.7']:
-	print "Only Python 2.6 and 2.7 are supported."
+	print "Only Python 2.6 and 2.7 are supported, not %s. Exiting ..." % (version)
 	exit()
 
-print "Replace the hard coded 2.6 with version variable"
-exit()
+def cpfile(source, dest):
+	if not os.path.isfile(source):
+		print "The command cpfile will only copy a file. '%s' is not a file. Exiting ..." % (source)
+		exit()
+
+	shutil.copy2(source, dest)
+
+def cpdir(source, dest):
+	if not os.path.isdir(source):
+		print "The command cpdir will only copy a directory. '%s' is not a directory. Exiting ..." % (source)
+		exit()
+
+	shutil.copytree(source, dest)
+
+def mkdir(source):
+	fail = None
+
+	if os.path.isdir(source):
+		fail = 'directory'
+	if os.path.isfile(source):
+		fail = 'file'
+	if os.path.islink(source):
+		fail = 'symlink'
+
+	if fail:
+		print "The command mkdir will only create a directory if nothing exists with the same name."
+		print "'%s' is used by a %s. Exiting ..." % (source, fail)
+		exit()
+
+	os.mkdir(source)
 
 def rmdir(name):
 	if os.path.islink(name):
@@ -46,9 +73,9 @@ def all():
 	print "'sudo ./make install' - Install for normal web development."
 	print "'sudo ./make dev' - Install for development on the framework itself."
 	print "'sudo ./make remove' - Removes it from the system."
-	print "'./make test_debian' - Compiles it and runs all the unit tests on Debian."
-	print "',.make test_fedora' - Compiles it and runs all the unit tests on Fedora."
-	print "',.make test_ubuntu' - Compiles it and runs all the unit tests on Ubuntu."
+	#print "'./make test_debian' - Compiles it and runs all the unit tests on Debian."
+	#print "',.make test_fedora' - Compiles it and runs all the unit tests on Fedora."
+	#print "',.make test_ubuntu' - Compiles it and runs all the unit tests on Ubuntu."
 
 def remove():
 	rmdir('/usr/share/doc/rootintootin/')
@@ -59,18 +86,18 @@ def remove():
 	rmfile('/usr/bin/rootintootin_gen')
 	rmfile('/usr/bin/rootintootin_deploy')
 	rmfile('/usr/bin/rootintootin_test')
-	if os.path.isdir('/usr/local/lib/python2.6/site-packages/'): 
-		rmfile('/usr/local/lib/python2.6/site-packages/lib_rootintootin.py')
-		rmfile('/usr/local/lib/python2.6/site-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/local/lib/python2.6/dist-packages/'): 
-		rmfile('/usr/local/lib/python2.6/dist-packages/lib_rootintootin.py')
-		rmfile('/usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/lib/python2.6/site-packages/'): 
-		rmfile('/usr/lib/python2.6/site-packages/lib_rootintootin.py')
-		rmfile('/usr/lib/python2.6/site-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/lib/python2.6/dist-packages/'): 
-		rmfile('/usr/lib/python2.6/dist-packages/lib_rootintootin.py')
-		rmfile('/usr/lib/python2.6/dist-packages/lib_rootintootin_scripts.py')
+	if os.path.isdir('/usr/local/lib/python%s/site-packages/' % (version)):
+		rmfile('/usr/local/lib/python%s/site-packages/lib_rootintootin.py' % (version))
+		rmfile('/usr/local/lib/python%s/site-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/local/lib/python%s/dist-packages/' % (version)):
+		rmfile('/usr/local/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
+		rmfile('/usr/local/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/lib/python%s/site-packages/' % (version)):
+		rmfile('/usr/lib/python%s/site-packages/lib_rootintootin.py' % (version))
+		rmfile('/usr/lib/python%s/site-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/lib/python%s/dist-packages/' % (version)):
+		rmfile('/usr/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
+		rmfile('/usr/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
 
 def dev():
 	symlink(pwd, '/usr/share/rootintootin')
@@ -79,18 +106,18 @@ def dev():
 	symlink('/usr/share/rootintootin/bin/rootintootin_gen', '/usr/bin/rootintootin_gen')
 	symlink('/usr/share/rootintootin/bin/rootintootin_deploy', '/usr/bin/rootintootin_deploy')
 	symlink('/usr/share/rootintootin/bin/rootintootin_test', '/usr/bin/rootintootin_test')
-	if os.path.isdir('/usr/local/lib/python2.6/site-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python2.6/site-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python2.6/site-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/local/lib/python2.6/dist-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python2.6/dist-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/lib/python2.6/site-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python2.6/site-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python2.6/site-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/lib/python2.6/dist-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python2.6/dist-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python2.6/dist-packages/lib_rootintootin_scripts.py')
+	if os.path.isdir('/usr/local/lib/python%s/site-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python%s/site-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python%s/site-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/local/lib/python%s/dist-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/lib/python%s/site-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python%s/site-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python%s/site-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/lib/python%s/dist-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
 
 
 def install():
@@ -107,23 +134,19 @@ def install():
 	symlink('/usr/share/rootintootin/bin/rootintootin_gen', '/usr/bin/rootintootin_gen')
 	symlink('/usr/share/rootintootin/bin/rootintootin_deploy', '/usr/bin/rootintootin_deploy')
 	symlink('/usr/share/rootintootin/bin/rootintootin_test', '/usr/bin/rootintootin_test')
-	if os.path.isdir('/usr/local/lib/python2.6/site-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python2.6/site-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python2.6/site-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/local/lib/python2.6/dist-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python2.6/dist-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python2.6/dist-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/lib/python2.6/site-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python2.6/site-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python2.6/site-packages/lib_rootintootin_scripts.py')
-	elif os.path.isdir('/usr/lib/python2.6/dist-packages/'):
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python2.6/dist-packages/lib_rootintootin.py')
-		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python2.6/dist-packages/lib_rootintootin_scripts.py')
+	if os.path.isdir('/usr/local/lib/python%s/site-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python%s/site-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python%s/site-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/local/lib/python%s/dist-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/local/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/local/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/lib/python%s/site-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python%s/site-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python%s/site-packages/lib_rootintootin_scripts.py' % (version))
+	elif os.path.isdir('/usr/lib/python%s/dist-packages/' % (version)):
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
+		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
 '''
-uninstall_python2.6: remove_python2.6
-
-uninstall_python2.7: remove_python2.7
-
 test_debian: test_ubuntu
 
 test_ubuntu:
