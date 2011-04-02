@@ -9,7 +9,9 @@
 #-------------------------------------------------------------------------------
 
 import os, sys
-import shutil, commands
+import shutil
+import inspect
+from subprocess import *
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
@@ -24,12 +26,21 @@ if version not in ['2.6', '2.7']:
 def __line__():
 	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
 
+def cd(name):
+	if not os.path.isdir(name):
+		print "The command cd will only change to an existing directory. '%s' is not a directory. Exiting ..." % (source)
+		exit()
+
+	os.chdir(name)
+	print "Changed to '%s'" % (name)
+
 def cpfile(source, dest):
 	if not os.path.isfile(source):
 		print "The command cpfile will only copy a file. '%s' is not a file. Exiting ..." % (source)
 		exit()
 
 	shutil.copy2(source, dest)
+	print "Copied the file '%s' to '%s'" % (source, dest)
 
 def cpdir(source, dest):
 	if not os.path.isdir(source):
@@ -37,6 +48,7 @@ def cpdir(source, dest):
 		exit()
 
 	shutil.copytree(source, dest)
+	print "Copied the dir '%s' to '%s'" % (source, dest)
 
 def mkdir(source):
 	fail = None
@@ -54,6 +66,7 @@ def mkdir(source):
 		exit()
 
 	os.mkdir(source)
+	print "Made the dir '%s'" % (source)
 
 def rmdir(name):
 	if os.path.islink(name):
@@ -77,9 +90,9 @@ def all():
 	print "'sudo ./make install' - Install for normal web development."
 	print "'sudo ./make dev' - Install for development on the framework itself."
 	print "'sudo ./make remove' - Removes it from the system."
-	#print "'./make test_debian' - Compiles it and runs all the unit tests on Debian."
-	#print "',.make test_fedora' - Compiles it and runs all the unit tests on Fedora."
-	#print "',.make test_ubuntu' - Compiles it and runs all the unit tests on Ubuntu."
+	print "'./make test_debian' - Compiles it and runs all the unit tests on Debian."
+	print "',.make test_fedora' - Compiles it and runs all the unit tests on Fedora."
+	print "',.make test_ubuntu' - Compiles it and runs all the unit tests on Ubuntu."
 
 def remove():
 	rmdir('/usr/share/doc/rootintootin/')
@@ -153,18 +166,24 @@ def install():
 
 def ensure_root():
 	# Make sure we are root
-	if commands.getoutput('whoami') != 'root':
+	if run('whoami') != 'root':
 		print "Must be run as root. Exiting ..."
+		exit()
+
+def ensure_not_root():
+	# Make sure we are NOT root
+	if run('whoami') == 'root':
+		print "Must not be run as root. Exiting ..."
 		exit()
 
 def ensure_requirements():
 	# Make sure lsb release is installed
-	if commands.getoutput('which lsb_release') == '':
+	if run('which lsb_release') == '':
 		print 'Please install lsb_release. Exiting ...'
 		exit()
 
 	# Make sure all the requirements are installed
-	os_name = commands.getoutput('lsb_release -is').lower()
+	os_name = run('lsb_release -is').lower()
 	if os_name in ['ubuntu', 'debian']:
 		missing_libs = []
 		# build-essential
@@ -180,7 +199,7 @@ def ensure_requirements():
 		if not os.path.isfile('/usr/share/pyshared/mako/__init__.py'):
 			missing_libs.append('python-mako')
 		# LDC
-		if not os.path.isdir('/usr/include/d/ldc/'):
+		if not os.path.isfile('/usr/bin/ldc'):
 			missing_libs.append('ldc')
 		# Tango setup for LDC
 		if not os.path.isfile('/usr/lib/d/libtango-user-ldc.a'):
@@ -217,108 +236,101 @@ def ensure_requirements():
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
 		exit()
 
-'''
-test_debian: test_ubuntu
+def run(command):
+	p = Popen(command, stderr=PIPE, stdout=PIPE, shell=True)
+	p.wait()
+	if p.returncode:
+		raise Exception(p.stderr.read().rstrip())
 
-test_ubuntu:
-	# Make sure the user is not root
-	runner=`whoami` ; \
-	if test $$runner != "root" ; \
-	then \
-		echo "You are not root. Continuing ..."; \
-	else \
-		echo "You are root. Do not run this as root." ; \
-		exit 1 ; \
-	fi
+	return p.stdout.read().rstrip()
 
+def run_say(command):
+	print command
+	output = run(command)
+	if len(output) > 0:
+		print output
+
+def test_ubuntu():
+	test_debian()
+
+def test_debian():
 	# Remove the old test files
-	rm -f -rf test/
-	cp -R src/ test/
-	cd test; \
-	\
-	# Compile the D wrappers for the C libraries and combine them into a static library \
-	gcc -g -c -Wall -Werror db.c -o db.o -lmysqlclient; \
-	gcc -g -c -Wall -Werror file_system.c -o file_system.o; \
-	gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre; \
-	gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o; \
-	gcc -g -c -Wall -Werror socket.c -o socket.o; \
-	gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi; \
-	ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
-	\
-	# Compile all the Rootin Tootin files into object files \
-	ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d \
-	ui.d rootintootin_server.d http_server.d tcp_server.d \
-	rootintootin_process.d app_builder.d \
-	db.d file_system.d regex.d shared_memory.d socket.d fcgi.d \
-	-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a; \
-	\
-	# Combine the Rootin Tootin object files into a static library \
-	ar rcs rootintootin.a language_helper.o web_helper.o \
-	rootintootin.o ui.o rootintootin_server.o http_server.o \
-	tcp_server.o rootintootin_process.o app_builder.o \
-	db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
-	\
-	# Compile the test program and link against the static libraries \
-	ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a \
-	-L-lz \
-	-L/usr/lib/libmysqlclient.a -L/usr/lib/libpcre.a -L/usr/lib/libfcgi.a \
-	-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a; \
-	\
-	# Run the tests \
-	./test;
-	\
-	# Remove the old test files
-	rm -f -rf test/
+	rmdir('test/')
+	cpdir('src/', 'test/')
+	cd('test')
 
-test_fedora:
-	# Make sure the user is not root
-	runner=`whoami` ; \
-	if test $$runner != "root" ; \
-	then \
-		echo "You are not root. Continuing ..."; \
-	else \
-		echo "You are root. Do not run this as root." ; \
-		exit 1 ; \
-	fi
+	# Compile the D wrappers for the C libraries and combine them into a static library
+	run_say('gcc -g -c -Wall -Werror db.c -o db.o -lmysqlclient')
+	run_say('gcc -g -c -Wall -Werror file_system.c -o file_system.o')
+	run_say('gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre')
+	run_say('gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o')
+	run_say('gcc -g -c -Wall -Werror socket.c -o socket.o')
+	run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi')
+	run_say('ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
+
+	# Compile all the Rootin Tootin files into object files
+	run_say('ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d ' + \
+	'ui.d rootintootin_server.d http_server.d tcp_server.d ' + \
+	'rootintootin_process.d app_builder.d ' + \
+	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d ' + \
+	'-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a')
+
+	# Combine the Rootin Tootin object files into a static library
+	run_say('ar rcs rootintootin.a language_helper.o web_helper.o ' + \
+	'rootintootin.o ui.o rootintootin_server.o http_server.o ' + \
+	'tcp_server.o rootintootin_process.o app_builder.o ' + \
+	'db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
+
+	# Compile the test program and link against the static libraries
+	run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+	'-L-lz ' + \
+	'-L/usr/lib/libmysqlclient.a -L/usr/lib/libpcre.a -L/usr/lib/libfcgi.a ' + \
+	'-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a')
+
+	# Run the tests
+	run_say('./test')
 
 	# Remove the old test files
-	rm -f -rf test/
-	cp -R src/ test/
-	cd test; \
-	\
-	# Compile the D wrappers for the C libraries and combine them into a static library \
-	gcc -g -c -Wall -Werror db.c -o db.o -lmysqlclient; \
-	gcc -g -c -Wall -Werror file_system.c -o file_system.o; \
-	gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre; \
-	gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o; \
-	gcc -g -c -Wall -Werror socket.c -o socket.o; \
-	gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi; \
-	ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
-	\
-	# Compile all the Rootin Tootin files into object files \
-	ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d \
-	ui.d rootintootin_server.d http_server.d tcp_server.d \
-	rootintootin_process.d app_builder.d \
-	db.d file_system.d regex.d shared_memory.d socket.d fcgi.d \
-	-I /usr/include/d/ldc/ -L /usr/lib/libtango.a; \
-	\
-	# Combine the Rootin Tootin object files into a static library \
-	ar rcs rootintootin.a language_helper.o web_helper.o \
-	rootintootin.o ui.o rootintootin_server.o http_server.o \
-	tcp_server.o rootintootin_process.o app_builder.o \
-	db.o file_system.o regex.o shared_memory.o socket.o fcgi.o; \
-	\
-	# Compile the test program and link against the static and shared libraries \
-	ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a \
-	-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi \
-	-I /usr/include/d/ldc/ -L /usr/lib/libtango.a; \
-	\
-	# Run the tests \
-	./test;
-	\
+	rmdir('test/')
+
+def test_fedora():
 	# Remove the old test files
-	rm -f -rf test/
-'''
+	rmdir('test/')
+	cpdir('src/', 'test/')
+	cd('test/')
+
+	# Compile the D wrappers for the C libraries and combine them into a static library
+	run_say('gcc -g -c -Wall -Werror db.c -o db.o -lmysqlclient')
+	run_say('gcc -g -c -Wall -Werror file_system.c -o file_system.o')
+	run_say('gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre')
+	run_say('gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o')
+	run_say('gcc -g -c -Wall -Werror socket.c -o socket.o')
+	run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi')
+	run_say('ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
+
+	# Compile all the Rootin Tootin files into object files
+	run_say('ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d ' + \
+	'ui.d rootintootin_server.d http_server.d tcp_server.d ' + \
+	'rootintootin_process.d app_builder.d ' + \
+	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d ' + \
+	'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
+
+	# Combine the Rootin Tootin object files into a static library
+	run_say('ar rcs rootintootin.a language_helper.o web_helper.o ' + \
+	'rootintootin.o ui.o rootintootin_server.o http_server.o ' + \
+	'tcp_server.o rootintootin_process.o app_builder.o ' + \
+	'db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
+
+	# Compile the test program and link against the static and shared libraries
+	run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+	'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
+	'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
+
+	# Run the tests
+	run_say('./test')
+
+	# Remove the old test files
+	rmdir('test/')
 
 if len(sys.argv) == 2 and sys.argv[1] == 'remove':
 	ensure_root()
@@ -336,6 +348,15 @@ elif len(sys.argv) == 2 and sys.argv[1] == 'install':
 	ensure_requirements()
 	remove()
 	install()
+elif len(sys.argv) == 2 and sys.argv[1] == 'test_debian':
+	ensure_not_root()
+	test_debian()
+elif len(sys.argv) == 2 and sys.argv[1] == 'test_ubuntu':
+	ensure_not_root()
+	test_ubuntu()
+elif len(sys.argv) == 2 and sys.argv[1] == 'test_fedora':
+	ensure_not_root()
+	test_fedora()
 else:
 	all()
 
