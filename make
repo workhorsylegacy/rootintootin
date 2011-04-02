@@ -8,7 +8,8 @@
 #
 #-------------------------------------------------------------------------------
 
-import os, sys, shutil
+import os, sys
+import shutil, commands
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
@@ -19,6 +20,9 @@ version = "%s.%s" % (sys.version_info[0:2])
 if version not in ['2.6', '2.7']:
 	print "Only Python 2.6 and 2.7 are supported, not %s. Exiting ..." % (version)
 	exit()
+
+def __line__():
+	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
 
 def cpfile(source, dest):
 	if not os.path.isfile(source):
@@ -146,6 +150,73 @@ def install():
 	elif os.path.isdir('/usr/lib/python%s/dist-packages/' % (version)):
 		symlink('/usr/share/rootintootin/bin/lib_rootintootin.py', '/usr/lib/python%s/dist-packages/lib_rootintootin.py' % (version))
 		symlink('/usr/share/rootintootin/bin/lib_rootintootin_scripts.py', '/usr/lib/python%s/dist-packages/lib_rootintootin_scripts.py' % (version))
+
+def ensure_root():
+	# Make sure we are root
+	if commands.getoutput('whoami') != 'root':
+		print "Must be run as root. Exiting ..."
+		exit()
+
+def ensure_requirements():
+	# Make sure lsb release is installed
+	if commands.getoutput('which lsb_release') == '':
+		print 'Please install lsb_release. Exiting ...'
+		exit()
+
+	# Make sure all the requirements are installed
+	os_name = commands.getoutput('lsb_release -is').lower()
+	if os_name in ['ubuntu', 'debian']:
+		missing_libs = []
+		# build-essential
+		if not os.path.isdir('/usr/share/build-essential/'):
+			missing_libs.append('build-essential')
+		# python-mysqldb
+		if not os.path.isfile('/usr/share/pyshared/MySQLdb/__init__.py'):
+			missing_libs.append('python-mysqldb')
+		# python-pexpect
+		if not os.path.isfile('/usr/share/pyshared/pexpect.py'):
+			missing_libs.append('python-pexpect')
+		# python-mako
+		if not os.path.isfile('/usr/share/pyshared/mako/__init__.py'):
+			missing_libs.append('python-mako')
+		# LDC
+		if not os.path.isdir('/usr/include/d/ldc/'):
+			missing_libs.append('ldc')
+		# Tango setup for LDC
+		if not os.path.isfile('/usr/lib/d/libtango-user-ldc.a'):
+			missing_libs.append('libtango-ldc-dev')
+		# mysql-client
+		if not os.path.isfile('/usr/bin/mysql_client_test'):
+			missing_libs.append('mysql-client')
+		# mysql-server
+		if not os.path.isfile('/usr/bin/mysqltest'):
+			missing_libs.append('mysql-server')
+		# libmysqlclient-dev
+		if not os.path.isfile('/usr/include/mysql/mysql.h'):
+			missing_libs.append('libmysqlclient-dev')
+		# libpcre3-dev
+		if not os.path.isfile('/usr/include/pcre.h'):
+			missing_libs.append('libpcre3-dev')
+		# libfcgi-dev
+		if not os.path.isfile('/usr/include/fastcgi.h'):
+			missing_libs.append('libfcgi-dev')
+		# inotify-tools
+		if not os.path.isfile('/usr/bin/inotifywatch'):
+			missing_libs.append('inotify-tools')
+
+		# Tell the user which packages to install
+		if missing_libs:
+			print 'Please install the missing requirements. Exiting ...'
+			print 'sudo apt-get install ' + str.join(' ', missing_libs)
+			exit()
+	elif os_name == 'fedora':
+		tango = '-I /usr/include/d/ldc/ -L /usr/lib/libtango.a'
+		mysql = '/usr/lib/mysql/libmysqlclient'
+	else:
+		print "Unknown Operating System. Please update the code '" + __file__ + \
+		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
+		exit()
+
 '''
 test_debian: test_ubuntu
 
@@ -250,15 +321,23 @@ test_fedora:
 '''
 
 if len(sys.argv) == 2 and sys.argv[1] == 'remove':
+	ensure_root()
 	remove()
-if len(sys.argv) == 2 and sys.argv[1] == 'uninstall':
+elif len(sys.argv) == 2 and sys.argv[1] == 'uninstall':
+	ensure_root()
 	remove()
 elif len(sys.argv) == 2 and sys.argv[1] == 'dev':
+	ensure_root()
+	ensure_requirements()
 	remove()
 	dev()
 elif len(sys.argv) == 2 and sys.argv[1] == 'install':
+	ensure_root()
+	ensure_requirements()
 	remove()
 	install()
 else:
 	all()
+
+
 
