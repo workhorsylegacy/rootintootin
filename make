@@ -229,8 +229,49 @@ def ensure_requirements():
 			print 'sudo apt-get install ' + str.join(' ', missing_libs)
 			exit()
 	elif os_name == 'fedora':
-		tango = '-I /usr/include/d/ldc/ -L /usr/lib/libtango.a'
-		mysql = '/usr/lib/mysql/libmysqlclient'
+		missing_libs = []
+		# GCC
+		if not os.path.isfile('/usr/bin/gcc'):
+			missing_libs.append('gcc')
+		# MySQL-python
+		if not os.path.isfile('/usr/lib/python2.7/site-packages/MySQLdb/__init__.py'):
+			missing_libs.append('MySQL-python')
+		# pexpect
+		if not os.path.isfile('/usr/lib/python2.7/site-packages/pexpect.py'):
+			missing_libs.append('pexpect')
+		# python-mako
+		if not os.path.isfile('/usr/lib/python2.7/site-packages/mako/__init__.py'):
+			missing_libs.append('python-mako')
+		# LDC
+		if not os.path.isfile('/usr/bin/ldc'):
+			missing_libs.append('ldc')
+		# Tango setup for LDC
+		if not os.path.isfile('/usr/lib/libtango.a'):
+			missing_libs.append('tango-devel')
+		# mysql-client
+		if not os.path.isfile('/usr/bin/mysqladmin'):
+			missing_libs.append('mysql')
+		# mysql-server
+		if not os.path.isfile('/usr/bin/mysqltest'):
+			missing_libs.append('mysql-server')
+		# mysql-devel
+		if not os.path.isfile('/usr/include/mysql/mysql.h'):
+			missing_libs.append('mysql-devel')
+		# pcre-devel
+		if not os.path.isfile('/usr/include/pcre.h'):
+			missing_libs.append('pcre-devel')
+		# libfcgi-dev
+		if not os.path.isfile('/usr/include/fastcgi.h'):
+			missing_libs.append('fcgi-devel')
+		# inotify-tools
+		if not os.path.isfile('/usr/bin/inotifywatch'):
+			missing_libs.append('inotify-tools')
+
+		# Tell the user which packages to install
+		if missing_libs:
+			print 'Please install the missing requirements. Exiting ...'
+			print 'sudo yum install ' + str.join(' ', missing_libs)
+			exit()
 	else:
 		print "Unknown Operating System. Please update the code '" + __file__ + \
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
@@ -350,12 +391,15 @@ elif len(sys.argv) == 2 and sys.argv[1] == 'install':
 	install()
 elif len(sys.argv) == 2 and sys.argv[1] == 'test_debian':
 	ensure_not_root()
+	ensure_requirements()
 	test_debian()
 elif len(sys.argv) == 2 and sys.argv[1] == 'test_ubuntu':
 	ensure_not_root()
+	ensure_requirements()
 	test_ubuntu()
 elif len(sys.argv) == 2 and sys.argv[1] == 'test_fedora':
 	ensure_not_root()
+	ensure_requirements()
 	test_fedora()
 else:
 	all()
