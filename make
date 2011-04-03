@@ -328,7 +328,7 @@ def test():
 		# Compile the test program and link against the static and shared libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-		'-I /usr/include/d/ldc/ -L /usr/lib/libtango.al')
+		'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
 
 	# Run the tests
 	run_say('./test')
