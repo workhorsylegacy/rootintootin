@@ -90,9 +90,7 @@ def all():
 	print "'sudo ./make install' - Install for normal web development."
 	print "'sudo ./make dev' - Install for development on the framework itself."
 	print "'sudo ./make remove' - Removes it from the system."
-	print "'./make test_debian' - Compiles it and runs all the unit tests on Debian."
-	print "',.make test_fedora' - Compiles it and runs all the unit tests on Fedora."
-	print "',.make test_ubuntu' - Compiles it and runs all the unit tests on Ubuntu."
+	print "'./make test' - Compiles it and runs all the unit tests."
 
 def remove():
 	rmdir('/usr/share/doc/rootintootin/')
@@ -177,14 +175,8 @@ def ensure_not_root():
 		exit()
 
 def ensure_requirements():
-	# Make sure lsb release is installed
-	if run('which lsb_release') == '':
-		print 'Please install lsb_release. Exiting ...'
-		exit()
-
 	# Make sure all the requirements are installed
-	os_name = run('lsb_release -is').lower()
-	if os_name in ['ubuntu', 'debian']:
+	if os_name in ['ubuntu', 'debian', 'linuxmint']:
 		missing_libs = []
 		# build-essential
 		if not os.path.isdir('/usr/share/build-essential/'):
@@ -287,14 +279,19 @@ def run(command):
 
 def run_say(command):
 	print command
-	output = run(command)
-	if len(output) > 0:
-		print output
+	p = Popen(command, stderr=PIPE, stdout=PIPE, shell=True)
+	p.wait()
+	o = p.stdout.read().rstrip()
+	e = p.stderr.read().rstrip()
+	if len(o):
+		print o
+	if len(e):
+		print e
+	if p.returncode:
+		print "Failed to run command. Exiting ..."
+		exit()
 
-def test_ubuntu():
-	test_debian()
-
-def test_debian():
+def test():
 	# Remove the old test files
 	rmdir('test/')
 	cpdir('src/', 'test/')
@@ -313,8 +310,7 @@ def test_debian():
 	run_say('ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d ' + \
 	'ui.d rootintootin_server.d http_server.d tcp_server.d ' + \
 	'rootintootin_process.d app_builder.d ' + \
-	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d ' + \
-	'-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a')
+	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d')
 
 	# Combine the Rootin Tootin object files into a static library
 	run_say('ar rcs rootintootin.a language_helper.o web_helper.o ' + \
@@ -322,11 +318,17 @@ def test_debian():
 	'tcp_server.o rootintootin_process.o app_builder.o ' + \
 	'db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
 
-	# Compile the test program and link against the static libraries
-	run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-	'-L-lz ' + \
-	'-L/usr/lib/libmysqlclient.a -L/usr/lib/libpcre.a -L/usr/lib/libfcgi.a ' + \
-	'-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a')
+	if os_name in ['ubuntu', 'debian', 'linuxmint']:
+		# Compile the test program and link against the static libraries
+		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+		'-L-lz ' + \
+		'-L/usr/lib/libmysqlclient.a -L/usr/lib/libpcre.a -L/usr/lib/libfcgi.a ' + \
+		'-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a')
+	elif os_name == 'fedora':
+		# Compile the test program and link against the static and shared libraries
+		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+		'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
+		'-I /usr/include/d/ldc/ -L /usr/lib/libtango.al')
 
 	# Run the tests
 	run_say('./test')
@@ -334,45 +336,13 @@ def test_debian():
 	# Remove the old test files
 	rmdir('test/')
 
-def test_fedora():
-	# Remove the old test files
-	rmdir('test/')
-	cpdir('src/', 'test/')
-	cd('test/')
+# Make sure we can get an OS name using lsb release
+if run('which lsb_release') == '':
+	print 'Please install lsb_release. Exiting ...'
+	exit()
+os_name = run('lsb_release -is').lower()
 
-	# Compile the D wrappers for the C libraries and combine them into a static library
-	run_say('gcc -g -c -Wall -Werror db.c -o db.o -lmysqlclient')
-	run_say('gcc -g -c -Wall -Werror file_system.c -o file_system.o')
-	run_say('gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre')
-	run_say('gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o')
-	run_say('gcc -g -c -Wall -Werror socket.c -o socket.o')
-	run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi')
-	run_say('ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
-
-	# Compile all the Rootin Tootin files into object files
-	run_say('ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d ' + \
-	'ui.d rootintootin_server.d http_server.d tcp_server.d ' + \
-	'rootintootin_process.d app_builder.d ' + \
-	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d ' + \
-	'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
-
-	# Combine the Rootin Tootin object files into a static library
-	run_say('ar rcs rootintootin.a language_helper.o web_helper.o ' + \
-	'rootintootin.o ui.o rootintootin_server.o http_server.o ' + \
-	'tcp_server.o rootintootin_process.o app_builder.o ' + \
-	'db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
-
-	# Compile the test program and link against the static and shared libraries
-	run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-	'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-	'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
-
-	# Run the tests
-	run_say('./test')
-
-	# Remove the old test files
-	rmdir('test/')
-
+# Run the command depending on the args
 if len(sys.argv) == 2 and sys.argv[1] == 'remove':
 	ensure_root()
 	remove()
@@ -389,18 +359,10 @@ elif len(sys.argv) == 2 and sys.argv[1] == 'install':
 	ensure_requirements()
 	remove()
 	install()
-elif len(sys.argv) == 2 and sys.argv[1] == 'test_debian':
+elif len(sys.argv) == 2 and sys.argv[1] == 'test':
 	ensure_not_root()
 	ensure_requirements()
-	test_debian()
-elif len(sys.argv) == 2 and sys.argv[1] == 'test_ubuntu':
-	ensure_not_root()
-	ensure_requirements()
-	test_ubuntu()
-elif len(sys.argv) == 2 and sys.argv[1] == 'test_fedora':
-	ensure_not_root()
-	ensure_requirements()
-	test_fedora()
+	test()
 else:
 	all()
 
