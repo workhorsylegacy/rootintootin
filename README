@@ -24,6 +24,29 @@ python-mako mysql mysql-devel mysql-server ldc pcre-devel fcgi-devel \
 tango-devel inotify-tools redhat-lsb
 sudo service mysqld start
 
+# open suse
+sudo zypper install make gcc gcc-c++ \
+libmysqlclient-devel python-mako python-pexpect \
+python-mysql pcre-devel FastCGI-devel \
+mysql-community-server mysql-community-server-client \
+lsb-release
+sudo /etc/init.d/mysql start
+# Install libconfig
+cd ~
+wget http://www.hyperrealm.com/libconfig/libconfig-1.4.7.tar.gz
+tar -zxvf libconfig-1.4.7.tar.gz
+cd libconfig-1.4.7
+./configure --prefix=/usr
+make
+sudo make install
+sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8
+# Install ldc
+cd ~
+wget http://downloads.dsource.org/projects/tango/0.99.9/tango-0.99.9-bin-linux32-with-ldc.1.056.tar.gz
+tar -zxvf tango-0.99.9-bin-linux32-with-ldc.1.056.tar.gz
+echo 'PATH=$PATH:~/tango-bundle/bin' >> ~/.bashrc
+echo 'export PATH' >> ~/.bashrc
+. ~/.bashrc
 
 2. Install Rootin Tootin from source
 cd ~

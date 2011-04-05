@@ -29,6 +29,9 @@ if os_name in ['ubuntu', 'debian']:
 elif os_name == "fedora":
 	tango = "-I /usr/include/d/ldc/ -L /usr/lib/libtango.a"
 	mysql = "/usr/lib/mysql/libmysqlclient"
+elif os_name == 'suse linux':
+	tango = ""
+	mysql = "/usr/lib/libmysqlclient"
 else:
 	print "Unknown Operating System. Please update the code '" + __file__ + \
 	"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
@@ -783,10 +786,14 @@ def build_framework(include_unit_test = False):
 		is_library_changed = True
 
 	if is_file_newer("fcgi.c", "fcgi.o"):
+		l = ''
+		if os_name == 'suse linux':
+			l = ' -I/usr/include/fastcgi/'
+
 		if config[mode]['server']['is_linked_statically']:
-			result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -Wl,-static -lfcgi")
+			result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -Wl,-static -lfcgi" + l)
 		else:
-			result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi")
+			result += commands.getoutput("gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi" + l)
 		is_library_changed = True
 
 	if is_library_changed:

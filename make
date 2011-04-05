@@ -264,6 +264,54 @@ def ensure_requirements():
 			print 'Please install the missing requirements. Exiting ...'
 			print 'sudo yum install ' + str.join(' ', missing_libs)
 			exit()
+	elif os_name == 'suse linux':
+		missing_libs = []
+		# GCC
+		if not os.path.isfile('/usr/bin/gcc'):
+			missing_libs.append('gcc')
+		# GCC C++
+		if not os.path.isfile('/usr/bin/g++'):
+			missing_libs.append('gcc-c++')
+		# MySQL-python
+		if not os.path.isfile('/usr/lib/python2.7/site-packages/MySQLdb/constants/__init__.py'):
+			missing_libs.append('python-mysql')
+		# python-pexpect
+		if not os.path.isfile('/usr/lib/python2.7/site-packages/pexpect.py'):
+			missing_libs.append('python-pexpect')
+		# python-mako
+		if not os.path.isfile('/usr/lib/python2.7/site-packages/mako/__init__.py'):
+			missing_libs.append('python-mako')
+		# LDC
+		#if not os.path.isfile('/usr/bin/ldc'):
+		#	missing_libs.append('ldc')
+		# Tango setup for LDC
+		#if not os.path.isfile('/usr/lib/libtango.a'):
+		#	missing_libs.append('tango-devel')
+		# mysql-community-server-client
+		if not os.path.isfile('/usr/bin/mysqladmin'):
+			missing_libs.append('mysql-community-server-client')
+		# mysql-community-server
+		if not os.path.isfile('/usr/bin/innochecksum'):
+			missing_libs.append('mysql-community-server')
+		# libmysqlclient-devel
+		if not os.path.isfile('/usr/include/mysql/mysql.h'):
+			missing_libs.append('libmysqlclient-devel')
+		# pcre-devel
+		if not os.path.isfile('/usr/include/pcre.h'):
+			missing_libs.append('pcre-devel')
+		# FastCGI-devel
+		if not os.path.isfile('/usr/include/fastcgi/fastcgi.h'):
+			missing_libs.append('FastCGI-devel')
+		# inotify-tools
+		#if not os.path.isfile('/usr/bin/inotifywatch'):
+		#	missing_libs.append('inotify-tools')
+
+		# Tell the user which packages to install
+		if missing_libs:
+			print 'Please install the missing requirements. Exiting ...'
+			print 'sudo zypper install ' + str.join(' ', missing_libs)
+			exit()
+
 	else:
 		print "Unknown Operating System. Please update the code '" + __file__ + \
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
@@ -303,7 +351,10 @@ def test():
 	run_say('gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre')
 	run_say('gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o')
 	run_say('gcc -g -c -Wall -Werror socket.c -o socket.o')
-	run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi')
+	if os_name == 'suse linux':
+		run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi -I/usr/include/fastcgi/')
+	else:
+		run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi')
 	run_say('ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
 
 	# Compile all the Rootin Tootin files into object files
@@ -329,6 +380,14 @@ def test():
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
 		'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
+	elif os_name == 'suse linux':
+		# Compile the test program and link against the static and shared libraries
+		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+		'-L/usr/lib/libmysqlclient.so -L-lpcre -L-lfcgi')
+	else:
+		print "Unknown Operating System. Please update the code '" + __file__ + \
+		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
+		exit()
 
 	# Run the tests
 	run_say('./test')
