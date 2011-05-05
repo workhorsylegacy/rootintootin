@@ -44,8 +44,7 @@ sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8
 cd ~
 wget http://downloads.dsource.org/projects/tango/0.99.9/tango-0.99.9-bin-linux32-with-ldc.1.056.tar.gz
 tar -zxvf tango-0.99.9-bin-linux32-with-ldc.1.056.tar.gz
-echo 'PATH=$PATH:~/tango-bundle/bin' >> ~/.bashrc
-echo 'export PATH' >> ~/.bashrc
+echo 'export PATH=:~/tango-bundle/bin' >> ~/.bashrc
 . ~/.bashrc
 
 2. Install Rootin Tootin from source
