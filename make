@@ -32,6 +32,10 @@ if platform.architecture()[0] == '64bit':
 else:
 	bits = '32'
 
+user_name = os.environ["LOGNAME"]
+if os.getenv("SUDO_USER"):
+	user_name = os.getenv("SUDO_USER")
+
 def __line__():
 	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
 
@@ -261,6 +265,20 @@ def ensure_requirements():
 			print 'Please install the missing requirements. Exiting ...'
 			print 'sudo yum install ' + str.join(' ', missing_libs)
 			exit()
+
+		# Install libconfig
+		if not os.path.isfile('/usr/lib/libconfig++.so.8'):
+			print 'Please install the missing requirements. Exiting ...'
+			print 'cd ~'
+			print 'wget http://www.hyperrealm.com/libconfig/libconfig-1.4.7.tar.gz'
+			print 'tar -zxvf libconfig-1.4.7.tar.gz'
+			print 'cd libconfig-1.4.7'
+			print './configure --prefix=/usr'
+			print 'make'
+			print 'sudo make install'
+			print 'sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8'
+			exit()
+
 	elif os_name == 'suse linux':
 		missing_libs = []
 		# GCC
@@ -308,8 +326,8 @@ def ensure_requirements():
 		exit()
 
 	# LDC and Tango
-	if not os.path.isfile(os.path.expanduser('~/tango-bundle/bin/ldc')) or \
-		not os.path.isfile(os.path.expanduser('~/tango-bundle/lib/libtango-ldc.a')):
+	if not os.path.isfile(os.path.expanduser('~' + user_name + '/tango-bundle/bin/ldc')) or \
+		not os.path.isfile(os.path.expanduser('~' + user_name + '/tango-bundle/lib/libtango-ldc.a')):
 
 		print "Please install LDC and Tango for %sbit. Exiting ..." % (bits)
 		print "cd ~"
@@ -381,11 +399,12 @@ def test():
 		# Compile the test program and link against the static and shared libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-		'-I /usr/include/d/ldc/ -L /usr/lib/libtango.a')
+		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	elif os_name == 'suse linux':
 		# Compile the test program and link against the static and shared libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-		'-L/usr/lib/libmysqlclient.so -L-lpcre -L-lfcgi')
+		'-L/usr/lib/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
+		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	else:
 		print "Unknown Operating System. Please update the code '" + __file__ + \
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."

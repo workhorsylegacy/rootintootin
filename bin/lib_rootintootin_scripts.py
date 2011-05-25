@@ -27,10 +27,10 @@ if os_name in ['ubuntu', 'debian']:
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"
 elif os_name == "fedora":
-	tango = "-I /usr/include/d/ldc/ -L /usr/lib/libtango.a"
+	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/mysql/libmysqlclient"
 elif os_name == 'suse linux':
-	tango = ""
+	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"
 else:
 	print "Unknown Operating System. Please update the code '" + __file__ + \
