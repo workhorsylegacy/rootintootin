@@ -12,6 +12,8 @@ import os, sys
 import shutil
 import inspect
 from subprocess import *
+import commands
+import platform
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
@@ -22,6 +24,13 @@ version = "%s.%s" % (sys.version_info[0:2])
 if version not in ['2.6', '2.7']:
 	print "Only Python 2.6 and 2.7 are supported, not %s. Exiting ..." % (version)
 	exit()
+
+# Figure out if the CPU is 32bit or 64bit
+bits = None
+if platform.architecture()[0] == '64bit':
+	bits = '64'
+else:
+	bits = '32'
 
 def __line__():
 	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
@@ -190,12 +199,6 @@ def ensure_requirements():
 		# python-mako
 		if not os.path.isfile('/usr/share/pyshared/mako/__init__.py'):
 			missing_libs.append('python-mako')
-		# LDC
-		if not os.path.isfile('/usr/bin/ldc'):
-			missing_libs.append('ldc')
-		# Tango setup for LDC
-		if not os.path.isfile('/usr/lib/d/libtango-user-ldc.a'):
-			missing_libs.append('libtango-ldc-dev')
 		# mysql-client
 		if not os.path.isfile('/usr/bin/mysql_client_test'):
 			missing_libs.append('mysql-client')
@@ -234,12 +237,6 @@ def ensure_requirements():
 		# python-mako
 		if not os.path.isfile('/usr/lib/python2.7/site-packages/mako/__init__.py'):
 			missing_libs.append('python-mako')
-		# LDC
-		if not os.path.isfile('/usr/bin/ldc'):
-			missing_libs.append('ldc')
-		# Tango setup for LDC
-		if not os.path.isfile('/usr/lib/libtango.a'):
-			missing_libs.append('tango-devel')
 		# mysql-client
 		if not os.path.isfile('/usr/bin/mysqladmin'):
 			missing_libs.append('mysql')
@@ -281,13 +278,6 @@ def ensure_requirements():
 		# python-mako
 		if not os.path.isfile('/usr/lib/python2.7/site-packages/mako/__init__.py'):
 			missing_libs.append('python-mako')
-		# LDC
-		#if not os.path.isfile('/usr/bin/ldc'):
-		#	missing_libs.append('ldc')
-		# Tango setup for LDC
-		#if not os.path.isfile('/usr/lib/libtango.a'):
-		#	missing_libs.append('tango-devel')
-		# mysql-community-server-client
 		if not os.path.isfile('/usr/bin/mysqladmin'):
 			missing_libs.append('mysql-community-server-client')
 		# mysql-community-server
@@ -315,6 +305,18 @@ def ensure_requirements():
 	else:
 		print "Unknown Operating System. Please update the code '" + __file__ + \
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
+		exit()
+
+	# LDC and Tango
+	if not os.path.isfile(os.path.expanduser('~/tango-bundle/bin/ldc')) or \
+		not os.path.isfile(os.path.expanduser('~/tango-bundle/lib/libtango-ldc.a')):
+
+		print "Please install LDC and Tango for %sbit. Exiting ..." % (bits)
+		print "cd ~"
+		print "wget http://downloads.dsource.org/projects/tango/0.99.9/tango-0.99.9-bin-linux" + bits + "-with-ldc.1.056.tar.gz"
+		print "tar -zxvf tango-0.99.9-bin-linux" + bits + "-with-ldc.1.056.tar.gz"
+		print "echo 'export PATH=:~/tango-bundle/bin' >> ~/.bashrc"
+		print ". ~/.bashrc"
 		exit()
 
 def run(command):
@@ -374,7 +376,7 @@ def test():
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L-lz ' + \
 		'-L/usr/lib/libmysqlclient.a -L/usr/lib/libpcre.a -L/usr/lib/libfcgi.a ' + \
-		'-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a')
+		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	elif os_name == 'fedora':
 		# Compile the test program and link against the static and shared libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \

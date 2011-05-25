@@ -24,7 +24,7 @@ def __line__():
 tango, mysql = None, None
 os_name = commands.getoutput("lsb_release -is").lower()
 if os_name in ['ubuntu', 'debian']:
-	tango = "-I /usr/include/d/ldc/ -L /usr/lib/d/libtango-user-ldc.a"
+	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"
 elif os_name == "fedora":
 	tango = "-I /usr/include/d/ldc/ -L /usr/lib/libtango.a"

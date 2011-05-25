@@ -4,72 +4,38 @@ designed to scale well by default, while still providing a developer experience
 similar to Ruby on Rails.
 
 Documentation is generated with RoboDoc:
-robodoc --src src/ --doc html/ --multidoc --index --html --tabsize 4 --documenttitle "Rootin Tootin 0.7 API"
+robodoc --src src/ --doc html/ --multidoc --index --html --tabsize 4 --documenttitle "Rootin Tootin 0.8 API"
 
 See http://rootin.toot.in for details.
 
 
-1. Install the dependencies for your distro:
-# ubuntu
-sudo apt-get install python-mysqldb python-pexpect \
-python-mako mysql-client mysql-server libmysqlclient-dev build-essential \
-ldc libtango-ldc-dev libpcre3-dev libfcgi-dev inotify-tools
-sudo service mysql start
 
-# fedora
-# Install ldc and tango from here:
-# http://www.dsource.org/projects/ldc/
-sudo yum install gcc redhat-lsb MySQL-python pexpect \
-python-mako mysql mysql-devel mysql-server ldc pcre-devel fcgi-devel \
-tango-devel inotify-tools redhat-lsb
-sudo service mysqld start
+# Download Rootin Tootin
+wget http://launchpad.net/rester/trunk/0.7/+download/rootintootin-0.8.0.tar.gz
+tar -zxvf rootintootin-0.8.0.tar.gz
+cd rootintootin-0.8.0
 
-# open suse
-sudo zypper install make gcc gcc-c++ \
-libmysqlclient-devel python-mako python-pexpect \
-python-mysql pcre-devel FastCGI-devel \
-mysql-community-server mysql-community-server-client \
-lsb-release
-sudo /etc/init.d/mysql start
-# Install libconfig
-cd ~
-wget http://www.hyperrealm.com/libconfig/libconfig-1.4.7.tar.gz
-tar -zxvf libconfig-1.4.7.tar.gz
-cd libconfig-1.4.7
-./configure --prefix=/usr
-make
-sudo make install
-sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8
-# Install ldc
-cd ~
-wget http://downloads.dsource.org/projects/tango/0.99.9/tango-0.99.9-bin-linux32-with-ldc.1.056.tar.gz
-tar -zxvf tango-0.99.9-bin-linux32-with-ldc.1.056.tar.gz
-echo 'export PATH=:~/tango-bundle/bin' >> ~/.bashrc
-. ~/.bashrc
+# Try running the test. It will look for missing dependencies and 
+# tell you how to install them on your OS.
+./make test
 
-2. Install Rootin Tootin from source
-cd ~
-wget http://launchpad.net/rester/trunk/0.7.0/+download/rootintootin-0.7.0.tar.gz
-tar -zxvf rootintootin-0.7.0.tar.gz
-cd rootintootin-0.7.0
-sudo make install
+# Once the dependencies are installed you can install Rootin Tootin
+sudo ./make install
 
 
-3. Copy the examples to your desktop, to play with:
-cp -r examples/ ~/Desktop/examples/
-cd ~/Desktop/examples/users
 
-
-4. Configure and run the user example:
-./gen configure development database user:root password:letmein
-./gen configure development server port:3000
+# Create a new project
+rootintootin name:journal port:3000 db_user:root db_password:letmein
+cd journal
 ./gen recreate development database
+./gen create noun singular:note plural:notes
+./gen create scaffold note title:unique_string content:text validates presence_of:title,content
 ./gen migrate development
 ./run
 
 
-6. Navigate your web browser to http://localhost:3000/users and you should 
-see a basic CRUD example.
+# Navigate your web browser to http://localhost:3000/users and you should 
+# see a basic CRUD example.
 
 
 
