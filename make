@@ -333,7 +333,7 @@ def ensure_requirements():
 		print "cd ~"
 		print "wget http://downloads.dsource.org/projects/tango/0.99.9/tango-0.99.9-bin-linux" + bits + "-with-ldc.1.056.tar.gz"
 		print "tar -zxvf tango-0.99.9-bin-linux" + bits + "-with-ldc.1.056.tar.gz"
-		print "echo 'export PATH=:~/tango-bundle/bin' >> ~/.bashrc"
+		print "echo 'export PATH=$PATH:$HOME/tango-bundle/bin' >> ~/.bashrc"
 		print ". ~/.bashrc"
 		exit()
 
