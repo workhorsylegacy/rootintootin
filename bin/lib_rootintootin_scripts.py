@@ -733,7 +733,7 @@ def load_configurations():
 
 		if libs:
 			print "The following static libraries are missing: " + str.join(', ', libs) + ". "
-			print "Please install them, or change your config file to link dynamically: config/config.json > " + mode + " > server > is_linked_statically > true"
+			print "Please install them, or change your config file to link dynamically: config/config.json > " + mode + " > server > is_linked_statically > false"
 			exit()
 
 def generate_application_files(include_unit_test = False):
