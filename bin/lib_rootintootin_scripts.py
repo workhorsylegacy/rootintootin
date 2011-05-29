@@ -33,7 +33,7 @@ else:
 
 # Determine the OS specific locations of libraries
 tango, mysql = None, None
-os_name = commands.getoutput("lsb_release -is").lower()
+os_name = platform.dist()[0].lower()
 if os_name in ['ubuntu', 'debian']:
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"

@@ -429,11 +429,8 @@ def test():
 	# Remove the old test files
 	rmdir('test/')
 
-# Make sure we can get an OS name using lsb release
-if run('which lsb_release') == '':
-	print 'Please install lsb_release. Exiting ...'
-	exit()
-os_name = run('lsb_release -is').lower()
+# Make sure we can get an OS
+os_name = platform.dist()[0].lower()
 
 # Run the command depending on the args
 if len(sys.argv) == 2 and sys.argv[1] == 'remove':
