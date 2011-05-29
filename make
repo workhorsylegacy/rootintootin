@@ -13,7 +13,7 @@ import shutil
 import inspect
 from subprocess import *
 import commands
-import platform
+import platform, re
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
@@ -31,6 +31,16 @@ if platform.architecture()[0] == '64bit':
 	bits = '64'
 else:
 	bits = '32'
+
+# Figure out the CPU architecture
+arch = None
+if re.match('^i\d86', platform.machine()):
+	arch = 'i386'
+elif platform.machine() == 'x86_64':
+	arch = 'x86_64'
+else:
+	print "Unknown architecture: " + platform.machine() + " . Exiting ..."
+	exit()
 
 user_name = os.environ["LOGNAME"]
 if os.getenv("SUDO_USER"):
@@ -221,6 +231,9 @@ def ensure_requirements():
 		# inotify-tools
 		if not os.path.isfile('/usr/bin/inotifywatch'):
 			missing_libs.append('inotify-tools')
+		# libconfig++8
+		if not os.path.isfile('/usr/lib/libconfig++.so.8'):
+			missing_libs.append('libconfig++8')
 
 		# Tell the user which packages to install
 		if missing_libs:
@@ -393,7 +406,7 @@ def test():
 		# Compile the test program and link against the static libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L-lz ' + \
-		'-L/usr/lib/libmysqlclient.a -L/usr/lib/libpcre.a -L/usr/lib/libfcgi.a ' + \
+		'-L/usr/lib/libmysqlclient.a -L/usr/lib/' + arch + '-linux-gnu/libpcre.a -L/usr/lib/libfcgi.a ' + \
 		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	elif os_name == 'fedora':
 		# Compile the test program and link against the static and shared libraries

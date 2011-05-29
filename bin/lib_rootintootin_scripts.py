@@ -15,10 +15,21 @@ import errno
 import functools
 import commands
 import json
+import platform, re
 from lib_rootintootin import *
 
 def __line__():
 	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
+
+# Figure out the CPU architecture
+arch = None
+if re.match('^i\d86', platform.machine()):
+	arch = 'i386'
+elif platform.machine() == 'x86_64':
+	arch = 'x86_64'
+else:
+	print "Unknown architecture: " + platform.machine() + " . Exiting ..."
+	exit()
 
 # Determine the OS specific locations of libraries
 tango, mysql = None, None
@@ -722,7 +733,7 @@ def load_configurations():
 		libs = []
 		if not os.path.exists("/usr/lib/libfcgi.a"):
 			libs.append("Lib FastCGI")
-		if not os.path.exists("/usr/lib/libpcre.a"):
+		if not os.path.exists("/usr/lib/" + arch + "-linux-gnu/libpcre.a"):
 			libs.append("Lib PCRE")
 		if os_name in ['ubuntu', 'debian']:
 			if not os.path.exists("/usr/lib/libmysqlclient.a"):
@@ -850,7 +861,7 @@ def build_server():
 	command = "ldc -g -w -of server server.d -L rootintootin.a "
 
 	if config[mode]['server']['is_linked_statically']:
-		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/libpcre.a\" " + tango
+		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/" + arch + "-linux-gnu/libpcre.a\" " + tango
 	else:
 		command += "-L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
@@ -919,7 +930,7 @@ def build_application(include_unit_test = False):
 		str.join(' ', files)
 
 	if config[mode]['server']['is_linked_statically']:
-		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/libpcre.a\" " + tango
+		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/" + arch + "-linux-gnu/libpcre.a\" " + tango
 	else:
 		command += " -L rootintootin.a -L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	compile_error = commands.getoutput(command)
