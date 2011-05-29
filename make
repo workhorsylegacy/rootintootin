@@ -13,7 +13,7 @@ import shutil
 import inspect
 from subprocess import *
 import commands
-import platform, re
+import platform, re, glob
 
 # Move the path to the location of the current file
 os.chdir(os.sys.path[0])
@@ -272,6 +272,9 @@ def ensure_requirements():
 		# inotify-tools
 		if not os.path.isfile('/usr/bin/inotifywatch'):
 			missing_libs.append('inotify-tools')
+		# libconfig
+		if not glob.glob('/usr/lib/libconfig++.so.*'):
+			missing_libs.append('libconfig')
 
 		# Tell the user which packages to install
 		if missing_libs:
@@ -280,16 +283,10 @@ def ensure_requirements():
 			exit()
 
 		# Install libconfig
-		if not os.path.isfile('/usr/lib/libconfig++.so.8'):
-			print 'Please install the missing requirements. Exiting ...'
-			print 'cd ~'
-			print 'wget http://www.hyperrealm.com/libconfig/libconfig-1.4.7.tar.gz'
-			print 'tar -zxvf libconfig-1.4.7.tar.gz'
-			print 'cd libconfig-1.4.7'
-			print './configure --prefix=/usr'
-			print 'make'
-			print 'sudo make install'
-			print 'sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8'
+		if not '/usr/lib/libconfig++.so.8' in glob.glob('/usr/lib/libconfig++.so.*'):
+			c = glob.glob('/usr/lib/libconfig++.so.*')[0]
+			print 'Please link your libconfig++ so it can be used by LDC. Exiting ...'
+			print 'sudo ln -s ' + c + ' /usr/lib/libconfig++.so.8'
 			exit()
 
 	elif os_name == 'suse linux':
