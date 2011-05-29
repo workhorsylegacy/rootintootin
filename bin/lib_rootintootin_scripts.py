@@ -21,6 +21,13 @@ from lib_rootintootin import *
 def __line__():
 	return str(inspect.getframeinfo(inspect.currentframe().f_back)[1])
 
+# Figure out if the CPU is 32bit or 64bit
+bits = None
+if platform.architecture()[0] == '64bit':
+	bits = '64'
+else:
+	bits = '32'
+
 # Figure out the CPU architecture
 arch = None
 if re.match('^i\d86', platform.machine()):
@@ -39,7 +46,10 @@ if os_name in ['ubuntu', 'debian']:
 	mysql = "/usr/lib/libmysqlclient"
 elif os_name == "fedora":
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
-	mysql = "/usr/lib/mysql/libmysqlclient"
+	if bits == '32':
+		mysql = "/usr/lib/mysql/libmysqlclient"
+	elif bits == '64':
+		mysql = "/usr/lib64/mysql/libmysqlclient"
 elif os_name == 'suse linux':
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"
@@ -739,8 +749,12 @@ def load_configurations():
 			if not os.path.exists("/usr/lib/libmysqlclient.a"):
 				libs.append("Lib MySQL")
 		elif os_name == "fedora":
-			if not os.path.exists("/usr/lib/mysql/libmysqlclient.a"):
-				libs.append("Lib MySQL")
+			if bits == '32':
+				if not os.path.exists("/usr/lib/mysql/libmysqlclient.a"):
+					libs.append("Lib MySQL")
+			elif bits == '64':
+				if not os.path.exists("/usr/lib64/mysql/libmysqlclient.a"):
+					libs.append("Lib MySQL")
 
 		if libs:
 			print "The following static libraries are missing: " + str.join(', ', libs) + ". "

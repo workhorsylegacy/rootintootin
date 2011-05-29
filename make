@@ -246,8 +246,12 @@ def ensure_requirements():
 		if not os.path.isfile('/usr/bin/gcc'):
 			missing_libs.append('gcc')
 		# MySQL-python
-		if not os.path.isfile('/usr/lib/python2.7/site-packages/MySQLdb/__init__.py'):
-			missing_libs.append('MySQL-python')
+		if bits == '32':
+			if not os.path.isfile('/usr/lib/python2.7/site-packages/MySQLdb/__init__.py'):
+				missing_libs.append('MySQL-python')
+		elif bits == '64':
+			if not os.path.isfile('/usr/lib64/python2.7/site-packages/MySQLdb/__init__.py'):
+				missing_libs.append('MySQL-python')
 		# pexpect
 		if not os.path.isfile('/usr/lib/python2.7/site-packages/pexpect.py'):
 			missing_libs.append('pexpect')
@@ -273,8 +277,12 @@ def ensure_requirements():
 		if not os.path.isfile('/usr/bin/inotifywatch'):
 			missing_libs.append('inotify-tools')
 		# libconfig
-		if not glob.glob('/usr/lib/libconfig++.so.*'):
-			missing_libs.append('libconfig')
+		if bits == '32':
+			if not glob.glob('/usr/lib/libconfig++.so.*'):
+				missing_libs.append('libconfig')
+		elif bits == '64':
+			if not glob.glob('/usr/lib64/libconfig++.so.*'):
+				missing_libs.append('libconfig')
 
 		# Tell the user which packages to install
 		if missing_libs:
@@ -283,11 +291,18 @@ def ensure_requirements():
 			exit()
 
 		# Install libconfig
-		if not '/usr/lib/libconfig++.so.8' in glob.glob('/usr/lib/libconfig++.so.*'):
-			c = glob.glob('/usr/lib/libconfig++.so.*')[0]
-			print 'Please link your libconfig++ so it can be used by LDC. Exiting ...'
-			print 'sudo ln -s ' + c + ' /usr/lib/libconfig++.so.8'
-			exit()
+		if bits == '32':
+			if not '/usr/lib/libconfig++.so.8' in glob.glob('/usr/lib/libconfig++.so.*'):
+				c = glob.glob('/usr/lib/libconfig++.so.*')[0]
+				print 'Please link your libconfig++ so it can be used by LDC. Exiting ...'
+				print 'sudo ln -s ' + c + ' /usr/lib/libconfig++.so.8'
+				exit()
+		elif bits == '64':
+			if not '/usr/lib64/libconfig++.so.8' in glob.glob('/usr/lib64/libconfig++.so.*'):
+				c = glob.glob('/usr/lib64/libconfig++.so.*')[0]
+				print 'Please link your libconfig++ so it can be used by LDC. Exiting ...'
+				print 'sudo ln -s ' + c + ' /usr/lib64/libconfig++.so.8'
+				exit()
 
 	elif os_name == 'suse linux':
 		missing_libs = []
@@ -407,9 +422,14 @@ def test():
 		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	elif os_name == 'fedora':
 		# Compile the test program and link against the static and shared libraries
-		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-		'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
+		if bits == '32':
+			run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+			'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
+			'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
+		elif bits == '64':
+			run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+			'-L/usr/lib64/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
+			'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	elif os_name == 'suse linux':
 		# Compile the test program and link against the static and shared libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
