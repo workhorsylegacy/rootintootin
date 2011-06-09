@@ -304,7 +304,7 @@ def ensure_requirements():
 				print 'sudo ln -s ' + c + ' /usr/lib64/libconfig++.so.8'
 				exit()
 
-	elif os_name == 'suse linux':
+	elif os_name == 'suse':
 		missing_libs = []
 		# GCC
 		if not os.path.isfile('/usr/bin/gcc'):
@@ -312,6 +312,9 @@ def ensure_requirements():
 		# GCC C++
 		if not os.path.isfile('/usr/bin/g++'):
 			missing_libs.append('gcc-c++')
+		# Make
+		if not os.path.isfile('/usr/bin/make'):
+			missing_libs.append('make')
 		# MySQL-python
 		if not os.path.isfile('/usr/lib/python2.7/site-packages/MySQLdb/constants/__init__.py'):
 			missing_libs.append('python-mysql')
@@ -335,9 +338,19 @@ def ensure_requirements():
 		# FastCGI-devel
 		if not os.path.isfile('/usr/include/fastcgi/fastcgi.h'):
 			missing_libs.append('FastCGI-devel')
-		# inotify-tools
-		#if not os.path.isfile('/usr/bin/inotifywatch'):
-		#	missing_libs.append('inotify-tools')
+			missing_libs.append('inotify-tools')
+		# Install libconfig
+		if not os.path.isfile('/usr/lib/libconfig++.so.8'):
+			print 'Please install the missing requirements. Exiting ...'
+			print 'cd ~'
+			print 'wget http://www.hyperrealm.com/libconfig/libconfig-1.4.7.tar.gz'
+			print 'tar -zxvf libconfig-1.4.7.tar.gz'
+			print 'cd libconfig-1.4.7'
+			print './configure --prefix=/usr'
+			print 'make'
+			print 'sudo make install'
+			print 'sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8'
+			exit()
 
 		# Tell the user which packages to install
 		if missing_libs:
@@ -396,7 +409,7 @@ def test():
 	run_say('gcc -g -c -Wall -Werror regex.c -o regex.o -lpcre')
 	run_say('gcc -g -c -Wall -Werror shared_memory.c -o shared_memory.o')
 	run_say('gcc -g -c -Wall -Werror socket.c -o socket.o')
-	if os_name == 'suse linux':
+	if os_name == 'suse':
 		run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi -I/usr/include/fastcgi/')
 	else:
 		run_say('gcc -g -c -Wall -Werror fcgi.c -o fcgi.o -lfcgi')
@@ -430,7 +443,7 @@ def test():
 			run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 			'-L/usr/lib64/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
 			'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
-	elif os_name == 'suse linux':
+	elif os_name == 'suse':
 		# Compile the test program and link against the static and shared libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L/usr/lib/libmysqlclient.so -L-lpcre -L-lfcgi ' + \

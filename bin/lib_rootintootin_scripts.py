@@ -50,7 +50,7 @@ elif os_name == "fedora":
 		mysql = "/usr/lib/mysql/libmysqlclient"
 	elif bits == '64':
 		mysql = "/usr/lib64/mysql/libmysqlclient"
-elif os_name == 'suse linux':
+elif os_name == 'suse':
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"
 else:
@@ -812,7 +812,7 @@ def build_framework(include_unit_test = False):
 
 	if is_file_newer("fcgi.c", "fcgi.o"):
 		l = ''
-		if os_name == 'suse linux':
+		if os_name == 'suse':
 			l = ' -I/usr/include/fastcgi/'
 
 		if config[mode]['server']['is_linked_statically']:

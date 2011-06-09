@@ -1,4 +1,5 @@
 2011-05-24 Release 0.8.0
+	* Fixed Bug #787911: 'Move to using official LDC and Tango builds'.
 	* Fixed Bug #789736: 'Use Python platform.dist instead of lsb_release'.
 	* Fixed Bug #751094: 'Move to a python based makefile'.
 	* Fixed Bug #751100: 'Make it install and build on openSUSE'.
