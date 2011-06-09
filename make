@@ -65,12 +65,12 @@ def cpfile(source, dest):
 	shutil.copy2(source, dest)
 	print "Copied the file '%s' to '%s'" % (source, dest)
 
-def cpdir(source, dest):
+def cpdir(source, dest, symlinks = False):
 	if not os.path.isdir(source):
 		print "The command cpdir will only copy a directory. '%s' is not a directory. Exiting ..." % (source)
 		exit()
 
-	shutil.copytree(source, dest)
+	shutil.copytree(source, dest, symlinks = symlinks)
 	print "Copied the dir '%s' to '%s'" % (source, dest)
 
 def mkdir(source):
@@ -159,7 +159,7 @@ def dev():
 
 
 def install():
-	cpdir('.', '/usr/share/rootintootin/')
+	cpdir('.', '/usr/share/rootintootin/', symlinks=True)
 	#robodoc --src src/ --doc istall_doc/ --multidoc --index --html --tabsize 4 --documenttitle "WIP Rootin Tootin 0.7 API"
 	mkdir('/usr/share/doc/rootintootin/')
 	#mv istall_doc/ /usr/share/doc/rootintootin/html/
@@ -428,10 +428,16 @@ def test():
 	'db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
 
 	if os_name in ['ubuntu', 'debian', 'linuxmint']:
+		pcre = None
+		if os.path.exists("/usr/lib/" + arch + "-linux-gnu/libpcre.a"):
+			pcre = "/usr/lib/" + arch + "-linux-gnu/libpcre.a"
+		elif os.path.exists("/usr/lib/libpcre.a"):
+			pcre = "/usr/lib/libpcre.a"
+
 		# Compile the test program and link against the static libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
 		'-L-lz ' + \
-		'-L/usr/lib/libmysqlclient.a -L/usr/lib/' + arch + '-linux-gnu/libpcre.a -L/usr/lib/libfcgi.a ' + \
+		'-L/usr/lib/libmysqlclient.a -L' + pcre + ' -L/usr/lib/libfcgi.a ' + \
 		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
 	elif os_name == 'fedora':
 		# Compile the test program and link against the static and shared libraries

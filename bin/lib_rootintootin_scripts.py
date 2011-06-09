@@ -39,11 +39,15 @@ else:
 	exit()
 
 # Determine the OS specific locations of libraries
-tango, mysql = None, None
+tango, mysql, pcre = None, None, None
 os_name = platform.dist()[0].lower()
 if os_name in ['ubuntu', 'debian']:
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	mysql = "/usr/lib/libmysqlclient"
+	if os.path.exists("/usr/lib/" + arch + "-linux-gnu/libpcre.a"):
+		pcre = "/usr/lib/" + arch + "-linux-gnu/libpcre.a"
+	elif os.path.exists("/usr/lib/libpcre.a"):
+		pcre = "/usr/lib/libpcre.a"
 elif os_name == "fedora":
 	tango = "-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a"
 	if bits == '32':
@@ -57,6 +61,7 @@ else:
 	print "Unknown Operating System. Please update the code '" + __file__ + \
 	"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
 	exit()
+
 
 def _model_generated_properties_class(model_name, model_map, reference_map, model_names):
 	generator = Generator()
@@ -743,7 +748,8 @@ def load_configurations():
 		libs = []
 		if not os.path.exists("/usr/lib/libfcgi.a"):
 			libs.append("Lib FastCGI")
-		if not os.path.exists("/usr/lib/" + arch + "-linux-gnu/libpcre.a"):
+		if not os.path.exists("/usr/lib/" + arch + "-linux-gnu/libpcre.a") and \
+			not os.path.exists("/usr/lib/libpcre.a"):
 			libs.append("Lib PCRE")
 		if os_name in ['ubuntu', 'debian']:
 			if not os.path.exists("/usr/lib/libmysqlclient.a"):
@@ -875,7 +881,7 @@ def build_server():
 	command = "ldc -g -w -of server server.d -L rootintootin.a "
 
 	if config[mode]['server']['is_linked_statically']:
-		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/" + arch + "-linux-gnu/libpcre.a\" " + tango
+		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"" + pcre + "\" " + tango
 	else:
 		command += "-L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
@@ -944,7 +950,7 @@ def build_application(include_unit_test = False):
 		str.join(' ', files)
 
 	if config[mode]['server']['is_linked_statically']:
-		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"/usr/lib/" + arch + "-linux-gnu/libpcre.a\" " + tango
+		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"" + pcre + "\" " + tango
 	else:
 		command += " -L rootintootin.a -L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	compile_error = commands.getoutput(command)
