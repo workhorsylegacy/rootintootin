@@ -160,7 +160,7 @@ def dev():
 
 def install():
 	cpdir('.', '/usr/share/rootintootin/', symlinks=True)
-	#robodoc --src src/ --doc istall_doc/ --multidoc --index --html --tabsize 4 --documenttitle "WIP Rootin Tootin 0.7 API"
+	#robodoc --src src/ --doc istall_doc/ --multidoc --index --html --tabsize 4 --documenttitle "WIP Rootin Tootin API"
 	mkdir('/usr/share/doc/rootintootin/')
 	#mv istall_doc/ /usr/share/doc/rootintootin/html/
 	cpfile('README', '/usr/share/doc/rootintootin/README')

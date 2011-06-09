@@ -11,7 +11,7 @@ See http://rootin.toot.in for details.
 
 
 # Download Rootin Tootin
-wget http://launchpad.net/rester/trunk/0.7/+download/rootintootin-0.8.0.tar.gz
+wget http://launchpad.net/rester/trunk/0.8/+download/rootintootin-0.8.0.tar.gz
 tar -zxvf rootintootin-0.8.0.tar.gz
 cd rootintootin-0.8.0
 
