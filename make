@@ -116,6 +116,7 @@ def all():
 	print "'./make test' - Compiles it and runs all the unit tests."
 
 def remove():
+	rmdir(os.path.expanduser('~' + user_name + '/.rootintootin/'))
 	rmdir('/usr/share/doc/rootintootin/')
 	rmfile('/usr/share/rootintootin')
 	rmdir('/usr/share/rootintootin/')
