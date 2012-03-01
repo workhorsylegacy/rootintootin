@@ -437,9 +437,9 @@ def test():
 
 		# Compile the test program and link against the static libraries
 		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-		'-L-lz ' + \
 		'-L/usr/lib/libmysqlclient.a -L' + pcre + ' -L/usr/lib/libfcgi.a ' + \
-		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
+		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a ' + \
+		'-L-lz')
 	elif os_name == 'fedora':
 		# Compile the test program and link against the static and shared libraries
 		if bits == '32':

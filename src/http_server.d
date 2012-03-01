@@ -186,6 +186,7 @@ class HttpApp {
 	}
 
 	protected void trigger_on_request(char[] raw_request) {
+		write_to_log(raw_request);
 		Request request = new Request();
 		_response = null;
 		_fcgi_raw_body = null;

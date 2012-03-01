@@ -881,7 +881,7 @@ def build_server():
 	command = "ldc -g -w -of server server.d -L rootintootin.a "
 
 	if config[mode]['server']['is_linked_statically']:
-		command += "-L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"" + pcre + "\" " + tango
+		command += "-L clibs.a -L /usr/lib/libfcgi.a -L " + mysql + ".a -L " + pcre + " " + tango + " -L-lz"
 	else:
 		command += "-L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	result += commands.getoutput(command)
@@ -950,7 +950,7 @@ def build_application(include_unit_test = False):
 		str.join(' ', files)
 
 	if config[mode]['server']['is_linked_statically']:
-		command += " -L rootintootin.a -L clibs.a -L=\"-lz\" -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"" + pcre + "\" " + tango
+		command += " -L rootintootin.a -L clibs.a -L=\"/usr/lib/libfcgi.a\" -L=\"" + mysql + ".a\" -L=\"" + pcre + "\" " + tango + " -L-lz"
 	else:
 		command += " -L rootintootin.a -L clibs.a -L" + mysql + ".so -L=\"-lpcre\" -L=\"-lfcgi\" " + tango
 	compile_error = commands.getoutput(command)
