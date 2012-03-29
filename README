@@ -17,10 +17,10 @@ cd rootintootin-0.8.0
 
 # Try running the test. It will look for missing dependencies and 
 # tell you how to install them on your OS.
-./make test
+make test
 
 # Once the dependencies are installed you can install Rootin Tootin
-sudo ./make install
+sudo make install
 
 
 

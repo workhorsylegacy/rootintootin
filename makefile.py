@@ -461,10 +461,14 @@ def test():
 		exit()
 
 	# Run the tests
-	run_say('./test')
+	result = run('./test')
 
 	# Remove the old test files
+	cd('..')
 	rmdir('test/')
+
+	# Show the test results
+	print result
 
 # Make sure we can get an OS
 os_name = platform.dist()[0].lower()
