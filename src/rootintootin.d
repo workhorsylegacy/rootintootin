@@ -16,7 +16,7 @@
  ******
  */
 
-public import language_helper;
+public import dlang_helper;
 public import db;
 private import web_helper;
 private import http_server;

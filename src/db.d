@@ -54,7 +54,7 @@ private:
 
 extern (C):
 
-typedef size_t MysqlAddress;
+alias size_t MysqlAddress;
 
 char* c_db_get_error_message();
 MysqlAddress c_db_connect(char* server, char* user_name, char* password, char* database);

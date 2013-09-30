@@ -39,7 +39,7 @@ private:
 
 extern (C):
 
-typedef size_t RegexAddress;
+alias size_t RegexAddress;
 RegexAddress c_setup_regex(char* pattern, char* error, int erroffset);
 bool c_is_match_regex(RegexAddress address, char* value);
 

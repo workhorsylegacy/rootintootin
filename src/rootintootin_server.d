@@ -19,7 +19,7 @@ private import Path = tango.io.Path;
 
 public import tango.io.Stdout;
 public import http_server;
-private import language_helper;
+private import dlang_helper;
 private import web_helper;
 private import db;
 private import regex;

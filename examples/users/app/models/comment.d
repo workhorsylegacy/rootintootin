@@ -1,5 +1,5 @@
 
-private import language_helper;
+private import dlang_helper;
 private import comment_base;
 private import user;
 

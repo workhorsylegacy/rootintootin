@@ -13,7 +13,7 @@ private import tango.sys.Process;
 private import tango.io.device.File;
 private import tango.io.FilePath;
 
-private import language_helper;
+private import dlang_helper;
 private import file_system;
 
 

@@ -15,7 +15,7 @@
  ******
  */
 
-private import language_helper;
+private import dlang_helper;
 
 private import tango.math.random.engines.Twister;
 private import tango.time.chrono.Gregorian;

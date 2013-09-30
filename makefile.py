@@ -232,9 +232,6 @@ def ensure_requirements():
 		# inotify-tools
 		if not os.path.isfile('/usr/bin/inotifywatch'):
 			missing_libs.append('inotify-tools')
-		# libconfig++8
-		if not os.path.isfile('/usr/lib/libconfig++.so.8'):
-			missing_libs.append('libconfig++8')
 
 		# Tell the user which packages to install
 		if missing_libs:
@@ -277,33 +274,12 @@ def ensure_requirements():
 		# inotify-tools
 		if not os.path.isfile('/usr/bin/inotifywatch'):
 			missing_libs.append('inotify-tools')
-		# libconfig
-		if bits == '32':
-			if not glob.glob('/usr/lib/libconfig++.so.*'):
-				missing_libs.append('libconfig')
-		elif bits == '64':
-			if not glob.glob('/usr/lib64/libconfig++.so.*'):
-				missing_libs.append('libconfig')
 
 		# Tell the user which packages to install
 		if missing_libs:
 			print 'Please install the missing requirements. Exiting ...'
 			print 'sudo yum install ' + str.join(' ', missing_libs)
 			exit()
-
-		# Install libconfig
-		if bits == '32':
-			if not '/usr/lib/libconfig++.so.8' in glob.glob('/usr/lib/libconfig++.so.*'):
-				c = glob.glob('/usr/lib/libconfig++.so.*')[0]
-				print 'Please link your libconfig++ so it can be used by LDC. Exiting ...'
-				print 'sudo ln -s ' + c + ' /usr/lib/libconfig++.so.8'
-				exit()
-		elif bits == '64':
-			if not '/usr/lib64/libconfig++.so.8' in glob.glob('/usr/lib64/libconfig++.so.*'):
-				c = glob.glob('/usr/lib64/libconfig++.so.*')[0]
-				print 'Please link your libconfig++ so it can be used by LDC. Exiting ...'
-				print 'sudo ln -s ' + c + ' /usr/lib64/libconfig++.so.8'
-				exit()
 
 	elif os_name == 'suse':
 		missing_libs = []
@@ -340,18 +316,6 @@ def ensure_requirements():
 		if not os.path.isfile('/usr/include/fastcgi/fastcgi.h'):
 			missing_libs.append('FastCGI-devel')
 			missing_libs.append('inotify-tools')
-		# Install libconfig
-		if not os.path.isfile('/usr/lib/libconfig++.so.8'):
-			print 'Please install the missing requirements. Exiting ...'
-			print 'cd ~'
-			print 'wget http://www.hyperrealm.com/libconfig/libconfig-1.4.7.tar.gz'
-			print 'tar -zxvf libconfig-1.4.7.tar.gz'
-			print 'cd libconfig-1.4.7'
-			print './configure --prefix=/usr'
-			print 'make'
-			print 'sudo make install'
-			print 'sudo ln -s /usr/lib/libconfig++.so /usr/lib/libconfig++.so.8'
-			exit()
 
 		# Tell the user which packages to install
 		if missing_libs:
@@ -362,18 +326,6 @@ def ensure_requirements():
 	else:
 		print "Unknown Operating System. Please update the code '" + __file__ + \
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."
-		exit()
-
-	# LDC and Tango
-	if not os.path.isfile(os.path.expanduser('~' + user_name + '/tango-bundle/bin/ldc')) or \
-		not os.path.isfile(os.path.expanduser('~' + user_name + '/tango-bundle/lib/libtango-ldc.a')):
-
-		print "Please install LDC and Tango for %sbit. Exiting ..." % (bits)
-		print "cd ~"
-		print "wget http://downloads.dsource.org/projects/tango/0.99.9/tango-0.99.9-bin-linux" + bits + "-with-ldc.1.056.tar.gz"
-		print "tar -zxvf tango-0.99.9-bin-linux" + bits + "-with-ldc.1.056.tar.gz"
-		print "echo 'export PATH=$PATH:$HOME/tango-bundle/bin' >> ~/.bashrc"
-		print ". ~/.bashrc"
 		exit()
 
 def run(command):
@@ -417,13 +369,14 @@ def test():
 	run_say('ar rcs clibs.a db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
 
 	# Compile all the Rootin Tootin files into object files
-	run_say('ldc -unittest -g -w -c language_helper.d web_helper.d rootintootin.d ' + \
+	run_say('dmd -unittest -g -w -c web_helper.d rootintootin.d ' + \
 	'ui.d rootintootin_server.d http_server.d tcp_server.d ' + \
 	'rootintootin_process.d app_builder.d ' + \
-	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d')
+	'db.d file_system.d regex.d shared_memory.d socket.d fcgi.d ' + \
+	'-I/usr/include/dlang_helper/0.3.1/ -L/usr/lib/dlang_helper/0.3.1/dlang_helper.a')
 
 	# Combine the Rootin Tootin object files into a static library
-	run_say('ar rcs rootintootin.a language_helper.o web_helper.o ' + \
+	run_say('ar rcs rootintootin.a web_helper.o ' + \
 	'rootintootin.o ui.o rootintootin_server.o http_server.o ' + \
 	'tcp_server.o rootintootin_process.o app_builder.o ' + \
 	'db.o file_system.o regex.o shared_memory.o socket.o fcgi.o')
@@ -436,25 +389,22 @@ def test():
 			pcre = "/usr/lib/libpcre.a"
 
 		# Compile the test program and link against the static libraries
-		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+		run_say('dmd -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+		'-I/usr/include/dlang_helper/0.3.1/ -L/usr/lib/dlang_helper/0.3.1/dlang_helper.a' + \
 		'-L/usr/lib/libmysqlclient.a -L' + pcre + ' -L/usr/lib/libfcgi.a ' + \
-		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a ' + \
 		'-L-lz')
 	elif os_name == 'fedora':
 		# Compile the test program and link against the static and shared libraries
 		if bits == '32':
-			run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-			'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-			'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
+			run_say('dmd -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+			'-L/usr/lib/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ')
 		elif bits == '64':
-			run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-			'-L/usr/lib64/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-			'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
+			run_say('dmd -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+			'-L/usr/lib64/mysql/libmysqlclient.so -L-lpcre -L-lfcgi ')
 	elif os_name == 'suse':
 		# Compile the test program and link against the static and shared libraries
-		run_say('ldc -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
-		'-L/usr/lib/libmysqlclient.so -L-lpcre -L-lfcgi ' + \
-		'-I ~/tango-bundle/import/ -L ~/tango-bundle/lib/libtango-ldc.a')
+		run_say('dmd -unittest -g -w -of test test.d -L rootintootin.a -L clibs.a ' + \
+		'-L/usr/lib/libmysqlclient.so -L-lpcre -L-lfcgi ')
 	else:
 		print "Unknown Operating System. Please update the code '" + __file__ + \
 		"' around line " + __line__() + " to be able to detect your OS. Exiting ..."

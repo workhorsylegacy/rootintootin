@@ -3,7 +3,7 @@ private import tango.io.Stdout;
 private import tango.io.device.File;
 private import tango.text.json.Json;
 
-private import language_helper;
+private import dlang_helper;
 private import web_helper;
 private import regex;
 private import file_system;

@@ -1,5 +1,5 @@
 
-private import language_helper;
+private import dlang_helper;
 private import user_base;
 
 public class User : UserBase {

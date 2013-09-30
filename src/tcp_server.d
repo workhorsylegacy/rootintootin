@@ -18,7 +18,7 @@
 private import tango.io.Stdout;
 private import tango.core.Thread;
 
-private import language_helper;
+private import dlang_helper;
 private import socket;
 
 

@@ -8,7 +8,7 @@
 
 
 module shared_memory;
-private import language_helper;
+private import dlang_helper;
 private import tango.stdc.stringz;
 
 
